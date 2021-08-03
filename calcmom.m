@@ -1,6 +1,8 @@
 function mom = calcmom(x, theta_grid, steady_state, xi_star, ...
     kappa, rho, sigma, alpha, phi, xi_var, A_0_tilde, A_1_tilde, ...
-    c_0_tilde, c_1_tilde, omega, n_periods, v)
+    c_0_tilde, c_1_tilde, omega, n_periods, v, ...
+    A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
+    c_1_tilde_no_delta)
 
    xi_shock = xi_star + kappa;
    shock_state = steady_state - alpha * steady_state;
@@ -53,10 +55,10 @@ function mom = calcmom(x, theta_grid, steady_state, xi_star, ...
    % for steady state ratio
    wages_by_bin = high_wage .* theta_grid + low_wage .* (1 - theta_grid);   
    
-   s0_trans = A_0_tilde(2:end, 2:end);
-   s1_trans = A_1_tilde(2:end, 2:end);
-   s0_intercept = c_0_tilde(2:end, :);
-   s1_intercept = c_1_tilde(2:end, :);
+   s0_trans = A_0_tilde_no_delta(2:end, 2:end);
+   s1_trans = A_1_tilde_no_delta(2:end, 2:end);
+   s0_intercept = c_0_tilde_no_delta(2:end, :);
+   s1_intercept = c_1_tilde_no_delta(2:end, :);
    
    % wage growth and absolute wage growth 
    % by bin, scaled by asymptotic variance of xi

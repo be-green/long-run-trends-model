@@ -1,7 +1,7 @@
 function loss = lrtmodel(paramvec)
 
 % transpose for particlefilter
-paramvec = paramvec'
+paramvec = paramvec';
 
 % set up variables in accordance w/ our model
 
@@ -114,6 +114,55 @@ c_1_tilde = [kappa; A_1(2:end-1,end)];
 A_0_tilde(2:end,2:end) = A_0_tilde(2:end,2:end)- repmat(c_0_tilde(2:end,1),1,size(c_0_tilde,1)-1);
 A_1_tilde(2:end,2:end) = A_1_tilde(2:end,2:end)- repmat(c_1_tilde(2:end,1),1,size(c_1_tilde,1)-1);
 
+
+% VAR Intercept Term
+% first term corresponds to xi
+A_0_no_delta = zeros(n_coefs, n_coefs);
+
+% xi depreciation
+A_0_no_delta(1,1) = 1 - g;
+
+% fill in theta section
+for i = 2:n_coefs 
+   A_0_no_delta(i, i) = (1 - phi);
+   if i < n_coefs 
+       A_0_no_delta(i, i + 1) = phi;
+   else
+       % can't go past 1
+       A_0_no_delta(i, i) = 1;
+   end
+end
+
+
+% VAR Intercept Term
+% first term corresponds to xi
+A_1_no_delta = zeros(n_coefs, n_coefs);
+
+% xi depreciation
+A_1_no_delta(1,1) = 1 - g;
+
+A_1_no_delta(2:end, 2:end) = A_0_no_delta(2:end, 2:end) * (1 - alpha);
+A_1_no_delta(2:end,2) = A_1_no_delta(2:end,2) + alpha;
+
+% transpose for use w/ Bianchi formulas
+% VAR format
+
+A_0_no_delta = A_0_no_delta';
+A_1_no_delta = A_1_no_delta';
+
+
+% next, we will define subsetted matrices which omit the final column (this
+% imposes the restriction that probabilities sum to 1)
+A_0_tilde_no_delta = A_0_no_delta(1:(end-1),1:(end-1));
+A_1_tilde_no_delta = A_1_no_delta(1:(end-1),1:(end-1));
+
+c_0_tilde_no_delta = [0; A_0_no_delta(2:end-1,end)];
+c_1_tilde_no_delta = [kappa; A_1_no_delta(2:end-1,end)];
+
+A_0_tilde_no_delta(2:end,2:end) = A_0_tilde_no_delta(2:end,2:end)- repmat(c_0_tilde_no_delta(2:end,1),1,size(c_0_tilde_no_delta,1)-1);
+A_1_tilde_no_delta(2:end,2:end) = A_1_tilde_no_delta(2:end,2:end)- repmat(c_1_tilde_no_delta(2:end,1),1,size(c_1_tilde_no_delta,1)-1);
+
+
 % transition matrix
 T = [[1 - omega, omega]; [1 - omega, omega]];
 
@@ -164,13 +213,17 @@ xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
 % and ratio of high/low wages
 lambdamu = fsolve(@(x) calcloss(x, theta_grid, steady_state, xi_star, ...
     kappa, rho, sigma, alpha, phi, xi_var, A_0_tilde, A_1_tilde, ...
-    c_0_tilde, c_1_tilde, omega, n_periods, v), [0; 0]); 
+    c_0_tilde, c_1_tilde, omega, n_periods, v, ...
+    A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
+    c_1_tilde_no_delta), [0; 0]); 
 
 normcdf(lambdamu)
 
 theor_mom = calcmom(lambdamu, theta_grid, steady_state, xi_star, ...
     kappa, rho, sigma, alpha, phi, xi_var, A_0_tilde, A_1_tilde, ...
-    c_0_tilde, c_1_tilde, omega, n_periods, v);
+    c_0_tilde, c_1_tilde, omega, n_periods, v, ...
+    A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
+    c_1_tilde_no_delta);
 
 % we target labor share above, now we target other xistuff
 theor_mom = theor_mom(3:end,:);
