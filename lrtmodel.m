@@ -238,10 +238,15 @@ emp_abs_wage_growth = ...
 
 emp_wage_growth = [-0.01486; -0.01008; -0.01178; -0.01167; -0.02467];
 
-emp_mom = [0.025; -0.0125; 1; -1; ...
-            -1;
+tenth_pctile_probs = [0.00286; 0.002619; 0.003889; 0.003941; 0.01255];
+
+top_density_loss = (steady_state(end) > 0.01) * abs((steady_state(end) - 0.01)) * 100;
+bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 100;
+
+emp_mom = [0.025; -0.0125; 0; 0; 0; ...
              emp_abs_wage_growth; ...
-                 emp_wage_growth];
+             emp_wage_growth; ...
+             tenth_pctile_probs];
         
 weight_vec = [5; 3; 1; 1; 1;
          2; 2; 2; 2; 2; ...
@@ -258,7 +263,9 @@ labels = categorical(1:15, 1:15, {'Output IRF','LShare IRF',...
       'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]'}, 'Ordinal',true);
 bar(labels([1:2, 6:end])', [theor_mom([1:2, 6:end]), emp_mom([1:2, 6:end])])
 
-miss = ([theor_mom([1:2, 6:end]) - emp_mom([1:2, 6:end])] ./ (0.01 + abs(emp_mom([1:2, 6:end])))).^2;
+loss_vec = [loss_vec; bottom_density_loss; top_density_loss]
+
+% miss = ([theor_mom([1:2, 6:end]) - emp_mom([1:2, 6:end])] ./ (0.01 + abs(emp_mom([1:2, 6:end])))).^2;
 % miss = miss .* weight_vec ./ sum(miss .* weight_vec);
 % 
 % figure(3)
@@ -267,7 +274,7 @@ miss = ([theor_mom([1:2, 6:end]) - emp_mom([1:2, 6:end])] ./ (0.01 + abs(emp_mom
 
 [theor_mom([1:2, 6:end]), emp_mom([1:2, 6:end])]
 
-displaymat = [theor_mom, emp_mom];
+% displaymat = [theor_mom, emp_mom];
 % displaymat([1:2, 6:end], :)
 
 % paramvec
