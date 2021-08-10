@@ -56,13 +56,13 @@ kappa = g / omega;
 
 % number of theta states
 % used to approximate continuous density
-n_gridpoints = 120;
+n_gridpoints = 80;
 
 % reversed exponential growth per Dimitris
 % top_grid = - normcdf(paramvec(7,:)) * 5;
 theta0 = (paramvec(7,:));
 growth_rate = exp((-log(theta0)) / n_gridpoints) - 1;
-theta_grid = (theta0).*((1 + growth_rate).^(0:(n_gridpoints - 1)));
+theta_grid = (theta0).*((1 + growth_rate).^(1:(n_gridpoints)));
 % need that single obs for xi
 n_coefs = 1 + n_gridpoints;
 
@@ -249,21 +249,21 @@ emp_mom = [0.025; -0.0125; 0; 0; 0; ...
              tenth_pctile_probs];
         
 weight_vec = [5; 3; 1; 1; 1;
-         2; 2; 2; 2; 2; ...
-         2; 2; 2; 2; 2];
-
+         1; 1; 1; 1; 1; ...
+         3.5; 3; 3; 3; .5; ...
+         2.5; 2; 2; 2; 2.5];
 
 loss_vec = (theor_mom - emp_mom) ./ (0.01 + abs(emp_mom)) .* weight_vec;
 % bars(labels, loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
 % 
 % figure(2)
-labels = categorical(1:15, 1:15, {'Output IRF','LShare IRF',...
-     'Output ','Wage Sign', 'Lshare IRF sign', ...
-      'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
-      'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]'}, 'Ordinal',true);
-bar(labels([1:2, 6:end])', [theor_mom([1:2, 6:end]), emp_mom([1:2, 6:end])])
+% labels = categorical(1:15, 1:15, {'Output IRF','LShare IRF',...
+%      'Output ','Wage Sign', 'Lshare IRF sign', ...
+%       'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
+%       'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]'}, 'Ordinal',true);
+% bar(labels([1:2, 6:end])', [theor_mom([1:2, 6:end]), emp_mom([1:2, 6:end])])
 
-loss_vec = [loss_vec; bottom_density_loss; top_density_loss]
+% loss_vec = [loss_vec; bottom_density_loss; top_density_loss];
 
 % miss = ([theor_mom([1:2, 6:end]) - emp_mom([1:2, 6:end])] ./ (0.01 + abs(emp_mom([1:2, 6:end])))).^2;
 % miss = miss .* weight_vec ./ sum(miss .* weight_vec);

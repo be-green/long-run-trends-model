@@ -46,8 +46,8 @@ function mom = calcmom(x, theta_grid, steady_state, xi_star, ...
    low_wage_tp1 = w_l(H_shock, L_shock, xi_shock, rho, sigma, mu, lambda, v);
    
    % signs of IRF for optimizer
-   y_irf_sign = ((Y_shock - Y_star) < 0) * abs(Y_shock - Y_star) * 100;
-   lw_irf_sign = ((low_wage_tp1 - low_wage) > 0) * abs(low_wage_tp1 - low_wage) * 100;
+   y_irf_sign = ((Y_shock - Y_star) < 0) * abs(Y_shock - Y_star) * 10;
+   lw_irf_sign = ((low_wage_tp1 - low_wage) > 0) * abs(low_wage_tp1 - low_wage) * 10;
    
    y_irf = (log(Y_shock) - log(Y_star)) / sqrt(xi_var) * kappa;
    
@@ -245,7 +245,7 @@ function mom = calcmom(x, theta_grid, steady_state, xi_star, ...
    lshare = (H_star * high_wage + L_star * low_wage) / Y_star;
    lshare_shock = (H_shock * high_wage_tp1 + L_shock * low_wage_tp1) / Y_shock;
       
-   lshare_irf_sign = ((log(lshare_shock) - log(lshare)) > 0) * abs(log(lshare_shock) - log(lshare)) * 100;
+   lshare_irf_sign = ((log(lshare_shock) - log(lshare)) > 0) * abs(log(lshare_shock) - log(lshare)) * 10;
    
    lshare_irf = (log(lshare_shock) - log(lshare)) / sqrt(xi_var) * kappa;
    
