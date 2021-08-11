@@ -49,7 +49,7 @@ function mom = calcmom(x, theta_grid, steady_state, xi_star, ...
    y_irf_sign = ((Y_shock - Y_star) < 0) * abs(Y_shock - Y_star) * 10;
    lw_irf_sign = ((low_wage_tp1 - low_wage) > 0) * abs(low_wage_tp1 - low_wage) * 10;
    
-   y_irf = (log(Y_shock) - log(Y_star)) / sqrt(xi_var) * kappa;
+   y_irf = (log(Y_shock) - log(Y_star)) /  (kappa / sqrt(xi_var));
    
    % wages by each part of theta grid
    % for steady state ratio
@@ -78,15 +78,15 @@ function mom = calcmom(x, theta_grid, steady_state, xi_star, ...
                                     wages_by_bin');
 
    % average wage growth and abs wage growth at ergodic steady state
-   ss_wage_growth = sswg(:,1)/sqrt(xi_var) * kappa;
-   ss_abs_wage_growth = sswg(:,2)/sqrt(xi_var) * kappa;
+   ss_wage_growth = sswg(:,1)/ (kappa / sqrt(xi_var));
+   ss_abs_wage_growth = sswg(:,2)/ (kappa / sqrt(xi_var));
    
    % wage growth following shock by income bin
    shock_wage_growth = shockwg(:,1);
    shock_abs_wage_growth = shockwg(:,2);
    
-   shock_wage_growth = shock_wage_growth / sqrt(xi_var) * kappa;
-   shock_abs_wage_growth = shock_abs_wage_growth / sqrt(xi_var) * kappa;
+   shock_wage_growth = shock_wage_growth /  (kappa / sqrt(xi_var));
+   shock_abs_wage_growth = shock_abs_wage_growth /  (kappa / sqrt(xi_var));
    
    % marginal effects by bin
    % since this is a linear combo I think this is the same
@@ -113,7 +113,7 @@ function mom = calcmom(x, theta_grid, steady_state, xi_star, ...
    abs_wage_growth = abs_wage_growth';
    
 %    wage_growth = shock_wage_growth - ss_wage_growth;
-   tenth_pctile_effects = (shock_lt_pctile_probs - ss_lt_pctile_probs) / sqrt(xi_var) * kappa;
+   tenth_pctile_effects = (shock_lt_pctile_probs - ss_lt_pctile_probs) /  (kappa / sqrt(xi_var));
    tenth_pctile_effects = tenth_pctile_effects';
    
    % calculate wage premium at steady state
@@ -247,7 +247,7 @@ function mom = calcmom(x, theta_grid, steady_state, xi_star, ...
       
    lshare_irf_sign = ((log(lshare_shock) - log(lshare)) > 0) * abs(log(lshare_shock) - log(lshare)) * 10;
    
-   lshare_irf = (log(lshare_shock) - log(lshare)) / sqrt(xi_var) * kappa;
+   lshare_irf = (log(lshare_shock) - log(lshare)) / (kappa / sqrt(xi_var));
    
    premium = top_five_wages / bottom_five_wages;
    mom = [lshare; premium; y_irf; lshare_irf; y_irf_sign; lw_irf_sign; ...

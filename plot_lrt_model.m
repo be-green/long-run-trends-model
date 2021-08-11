@@ -361,28 +361,28 @@ displaymat = [theor_mom, emp_mom];
    
 figure(5)
 subplot(3,2,1);
-plot([0, (1:20)./4]', wh(1:end)./wh(1) - 1, '.-')
+plot([0, (1:20)./4]', (wh(1:end)./wh(1) - 1)/(kappa / sqrt(xi_var), '.-')
 title("High Wage")
 
 subplot(3,2,2); 
-plot([0, (1:20)./4]', wl(1:end)./wl(1) - 1, '.-')
+plot([0, (1:20)./4]', (wl(1:end)./wl(1) - 1)/(kappa / sqrt(xi_var), '.-')
 title("Low Wage")
 
 subplot(3,2,3);
-plot([0, (1:20)./4]', L(1:end)./L(1) - 1, '.-')
+plot([0, (1:20)./4]', (L(1:end)./L(1) - 1)/(kappa / sqrt(xi_var)), '.-')
 title("L Skill Level")
 
 subplot(3,2,4); 
-plot([0, (1:20)./4]', H(1:end)./H(1) - 1, '.-')
+plot([0, (1:20)./4]', (H(1:end)./H(1) - 1)/(kappa / sqrt(xi_var), '.-')
 title("H Skill Level")
 
 subplot(3,2,5); 
-plot([0, (1:20)./4]', xi(1:end)./xi(1) - 1, '.-')
+plot([0, (1:20)./4]', (xi(1:end)./xi(1) - 1)/(kappa / sqrt(xi_var), '.-')
 title("Technology Level")
 
 wage_diff = wh - wl;
 subplot(3,2,6); 
-plot([0, (1:20)./4]', wage_diff(1:end)./wage_diff(1) - 1, '.-')
+plot([0, (1:20)./4]', (wage_diff(1:end)./wage_diff(1) - 1)/(kappa / sqrt(xi_var), '.-')
 title("High Wage - Low Wage")
 
 names = {'HC Increase Prob', 'Conditional Fall Prob', ...
