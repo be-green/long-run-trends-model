@@ -20,7 +20,7 @@ alpha = (paramvec(2,:));
 % number of iterations associated with a single shock
 % since a shock is 5 years, this corresponds to there being
 % 4 iterations of the VAR a year
-n_periods = 20;
+n_periods = 60;
 
 g = exp(log(0.02 + 1) / (n_periods / 5)) - 1;
 
