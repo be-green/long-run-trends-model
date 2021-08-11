@@ -41,7 +41,7 @@ rho = (paramvec(5,:));
 % sigma = 0.5;
 sigma = (paramvec(4,:));
 
-v = (paramvec(6, :));
+mu = (paramvec(6, :));
 
 % rho = 0.25;
 % sigma = paramvec(5,:);
@@ -183,19 +183,15 @@ q = (eye((n_coefs-1)*2) - bianchi_omega) \ (C * piVec);         % eq. (3)
 bianchi_omegatilde = [bianchi_omega, C*H; zeros(2, (n_coefs-1)*2), H];  % eq. (5)
 
 w = repmat(eye((n_coefs-1)),1,2);
-mu = w * q;
-mu2 = mu * mu';
+ss_mu = w * q;
 
-wtilde = [w, zeros((n_coefs-1),2)];
-qtilde = [q; piVec];
-
-steady_state = [mu(2:(n_coefs-1)); 1 - sum(mu(2:end))];
+steady_state = [ss_mu(2:(n_coefs-1)); 1 - sum(ss_mu(2:end))];
 % figure(1)
 % plot(theta_grid,steady_state)
 % steady state values
 H_star = theta_grid * steady_state;
 L_star = 1 - H_star;
-xi_star = mu(1);
+xi_star = ss_mu(1);
 
 % shock the system
 % I'm 100% sure there's a cleaner way to do this but
@@ -213,16 +209,16 @@ xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
 % choose mu and lambda to match labor share = 0.66
 % and ratio of high/low wages
 options = optimset('Display','off', 'Algorithm', 'levenberg-marquardt');
-lambdamu = fsolve(@(x) calcloss(x, theta_grid, steady_state, xi_star, ...
+lambdav = fsolve(@(x) calcloss(x, theta_grid, steady_state, xi_star, ...
     kappa, rho, sigma, alpha, phi, xi_var, A_0_tilde, A_1_tilde, ...
-    c_0_tilde, c_1_tilde, omega, n_periods, v, ...
+    c_0_tilde, c_1_tilde, omega, n_periods, mu, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
     c_1_tilde_no_delta), [0; 0], options); 
 % normcdf(lambdamu)
 
-theor_mom = calcmom(lambdamu, theta_grid, steady_state, xi_star, ...
+theor_mom = calcmom(lambdav, theta_grid, steady_state, xi_star, ...
     kappa, rho, sigma, alpha, phi, xi_var, A_0_tilde, A_1_tilde, ...
-    c_0_tilde, c_1_tilde, omega, n_periods, v, ...
+    c_0_tilde, c_1_tilde, omega, n_periods, mu, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
     c_1_tilde_no_delta);
 
