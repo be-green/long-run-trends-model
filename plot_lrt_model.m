@@ -1,4 +1,5 @@
-% transpose for particlefilter
+
+% transpose for particleswarm
 paramvec = paramvec';
 
 % set up variables in accordance w/ our model
@@ -6,24 +7,25 @@ paramvec = paramvec';
 % param vec = [phi; alpha; omega; rho; sigma;]
 
 % rate of moving up the ladder
-% phi = paramvec(1,:);
 phi = (paramvec(1,:));
+% phi = paramvec(1,:);
 
 % conditional fall probability
 alpha = (paramvec(2,:));
 % alpha = paramvec(2,:);
 
 % unconditional growth
-g = 0.02;
 
 % number of iterations associated with a single shock
 % since a shock is 5 years, this corresponds to there being
 % 4 iterations of the VAR a year
 n_periods = 20;
 
+g = exp(log(0.02 + 1) / (n_periods / 5)) - 1;
+
 % death rate
 % corresponds to an average 40 year working life
-delta = 0.025;
+delta =  exp(log(0.025 + 1) / (n_periods / 5)) - 1;
 
 % arrival rate of technology
 % in this case this is also the probability
@@ -34,9 +36,10 @@ delta = 0.025;
 omega = (paramvec(3,:));
 % omega = paramvec(3,:);
 
-rho = paramvec(5,:);
+rho = (paramvec(5,:));
 % sigma = 0.5;
 sigma = (paramvec(4,:));
+
 v = (paramvec(6, :));
 
 % rho = 0.25;
@@ -52,16 +55,16 @@ kappa = g / omega;
 
 % number of theta states
 % used to approximate continuous density
-n_gridpoints = 120;
+n_gridpoints = 80;
 
 % reversed exponential growth per Dimitris
 % top_grid = - normcdf(paramvec(7,:)) * 5;
-top_grid = 0;
 theta0 = (paramvec(7,:));
 growth_rate = exp((-log(theta0)) / n_gridpoints) - 1;
-theta_grid = (theta0).*((1 + growth_rate).^(0:(n_gridpoints - 1)));
+theta_grid = (theta0).*((1 + growth_rate).^(1:(n_gridpoints)));
 % need that single obs for xi
 n_coefs = 1 + n_gridpoints;
+
 
 % VAR Intercept Term
 % first term corresponds to xi
@@ -187,6 +190,7 @@ wtilde = [w, zeros((n_coefs-1),2)];
 qtilde = [q; piVec];
 
 steady_state = [mu(2:(n_coefs-1)); 1 - sum(mu(2:end))];
+
 figure(1)
 plot(theta_grid,steady_state, "-o")
 title('Steady State Theta Grid')
@@ -231,6 +235,8 @@ theor_mom = calcmom(lambdamu, theta_grid, steady_state, xi_star, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
     c_1_tilde_no_delta);
 
+lambda = normcdf(lambdamu(1));
+mu = normcdf(lambdamu(2));
 % we target labor share above, now we target other xistuff
 theor_mom = theor_mom(3:end,:);
 
@@ -243,33 +249,42 @@ emp_abs_wage_growth = ...
 
 emp_wage_growth = [-0.01486; -0.01008; -0.01178; -0.01167; -0.02467];
 
-emp_mom = [0.025; -0.0125; 1; -1; ...
-            -1;
-             emp_abs_wage_growth; ...
-                 emp_wage_growth];
-        
-weight_vec = [10; 5; 1; 1; 1;
-         2; 2; 2; 2; 2; ...
-         2; 2; 2; 2; 2];
+tenth_pctile_probs = [0.00286; 0.002619; 0.003889; 0.003941; 0.01255];
 
-lambda = normcdf(lambdamu(1));
-mu = normcdf(lambdamu(2));
-          
+top_density_loss = (steady_state(end) > 0.01) * abs((steady_state(end) - 0.01)) * 100;
+bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 100;
+
+emp_mom = [0.025; -0.0125; 0; 0; 0; ...
+             emp_abs_wage_growth; ...
+             emp_wage_growth; ...
+             tenth_pctile_probs];
+        
+weight_vec = [5; 3; 1; 1; 1;
+         1; 1; 1; 1; 1; ...
+         3.5; 3; 3; 3; .5; ...
+         2.5; 2; 2; 2; 2.5];
+
 loss_vec = (theor_mom - emp_mom) ./ (0.01 + abs(emp_mom)) .* weight_vec;
+loss_vec = [loss_vec; bottom_density_loss; top_density_loss];
+
 % bars(labels, loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
 % 
 figure(2)
-momlabels = categorical(1:12, 1:12, {'Output IRF','LShare IRF',...
+momlabels = categorical(1:17, 1:17, {'Output IRF','LShare IRF',...
      'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
-     'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]'}, 'Ordinal',true);
+     'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]',...
+     'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]'},...
+     'Ordinal',true);
 bar(momlabels', [theor_mom([1:2, 6:end]), emp_mom([1:2, 6:end])])
 title('Moment Matching (excluding signs)')
 
 % 
-labels = categorical(1:15, 1:15, {'Output IRF','LShare IRF',...
+labels = categorical(1:22, 1:22, {'Output IRF','LShare IRF',...
     'Output ','Wage Sign', 'Lshare IRF sign', ...
      'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
-     'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]'}, 'Ordinal',true);
+     'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]',...
+     'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]',...
+     'Bottom Density Penalty', 'Top Density Penalty'}, 'Ordinal',true);
 
 figure(3)
 bar(labels', loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
@@ -277,9 +292,8 @@ title('Weighted Percent Loss Contribution')
 
 
 figure(4)
-bar(labels', weight_vec .* weight_vec)
+bar(labels(1:20)', [weight_vec .* weight_vec])
 title('Moment Weights')
-
 
 displaymat = [theor_mom, emp_mom];
 % displaymat([1:2, 6:end], :)
@@ -371,9 +385,14 @@ subplot(3,2,6);
 plot([0, (1:20)./4]', wage_diff(1:end)./wage_diff(1) - 1, '.-')
 title("High Wage - Low Wage")
 
-figure(6)
-names = categorical(1:9, 1:9, {'HC Increase Prob', 'Conditional Fall Prob', ...
+names = {'HC Increase Prob', 'Conditional Fall Prob', ...
     'Shock Prob', 'Skilled Share', 'Unskilled Share', 'Skilled Curvature', ...
-    'Unskilled Curvature', 'DRS Param', 'Bottom Rung'}, 'Ordinal', true);
+    'Unskilled Curvature', 'DRS Param', 'Bottom Rung'};
 
-disp([names', [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0]'])
+all_params = [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0]';
+
+disp(table(names', all_params))
+
+
+
+

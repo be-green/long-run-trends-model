@@ -17,14 +17,16 @@
 % [sol, loss] = fminsearch(@lrtmodel, [-1.25; -1.4972; -1.4017; init_rho; init_sigma]);
 % [sol, loss] = fminsearch(@lrtmodel, [norminv([0.0482 0.0672 0.0805]), -0.5, -2]');
 % [sol, loss] = fminsearch(@lrtmodel, [0.4   -1.2   norminv(0.035)   -0.183   -0.79092    0.86]')
-options = optimoptions('particleswarm',...
-'Display', 'iter', 'UseParallel', true,'SwarmSize', 200);
+options = optimoptions('particleswarm',... 
+    'Display', 'iter', 'UseParallel', ...
+    true,'SwarmSize', 100, 'PlotFcn', @pswplotbestf);
 [sol, loss] = particleswarm(@lrtmodel, 7, ...
-    [0.001, 0.001, 0.001, -1, 0.25, 0.5, 0.001], ...
+    [0.001, 0.001, 0.001, -2, 0.25, 0.5, 0.001], ...
     [0.5, 0.95, 0.5, 0.25, 0.8, 0.9, 0.9], options);
 
-% old particleswarm w/ 100 gridpoints
-% sol = [0.4988    0.0095    0.0659    0.1557    0.8000    0.8545    0.0010]
+% particleswarm w/ 80 gridpoints
+% lambda and mu inside inner loop
+% sol = [0.0864    0.0019    0.0010    0.2386    0.3317    0.6554    0.0044]
 
 paramvec = sol;
 publish("plot_lrt_model.m", 'format','pdf', "showCode", false)
