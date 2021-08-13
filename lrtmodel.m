@@ -74,7 +74,7 @@ if theta_order == 0
     
 else 
     growth_rate = exp((log(theta0)) / n_gridpoints) - 1;
-    theta_grid = flip(1.*((1 + growth_rate).^(0:(n_gridpoints - 1))));
+    theta_grid = 1 - (1.*((1 + growth_rate).^(1:(n_gridpoints))));
 end
 
 % need that single obs for xi
