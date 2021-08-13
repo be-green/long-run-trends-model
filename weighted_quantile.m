@@ -5,7 +5,7 @@ function value = weighted_quantile(x, w, prob)
    
    total_mass = 0;
    index = 1;
-   while prob < total_mass
+   while total_mass < prob
        total_mass = total_mass + ws(index);
        index = index + 1;
    end

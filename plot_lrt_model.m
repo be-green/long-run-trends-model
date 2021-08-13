@@ -19,7 +19,7 @@ alpha = (paramvec(2,:));
 % number of iterations associated with a single shock
 % since a shock is 5 years, this corresponds to there being
 % 4 iterations of the VAR a year
-n_periods = 20;
+n_periods = 60;
 
 g = exp(log(0.02 + 1) / (n_periods / 5)) - 1;
 
@@ -233,7 +233,7 @@ theor_mom = calcmom(lambdamu, theta_grid, steady_state, xi_star, ...
     kappa, rho, sigma, alpha, phi, xi_var, A_0_tilde, A_1_tilde, ...
     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
-    c_1_tilde_no_delta);
+    c_1_tilde_no_delta, 1);
 
 lambda = normcdf(lambdamu(1));
 mu = normcdf(lambdamu(2));
@@ -254,15 +254,15 @@ tenth_pctile_probs = [0.00286; 0.002619; 0.003889; 0.003941; 0.01255];
 top_density_loss = (steady_state(end) > 0.01) * abs((steady_state(end) - 0.01)) * 100;
 bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 100;
 
-emp_mom = [0.025; -0.0125; 0; 0; 0; ...
+emp_mom = [0.0281; -0.0125; 0; 0; 0; ...
              emp_abs_wage_growth; ...
              emp_wage_growth; ...
              tenth_pctile_probs];
         
-weight_vec = [5; 3; 1; 1; 1;
-         1; 1; 1; 1; 1; ...
-         3.5; 3; 3; 3; .5; ...
-         2.5; 2; 2; 2; 2.5];
+weight_vec = [20; 10; 1; 1; 1;
+         0.5; 0.5; 0.5; 0.5; 0.5; ...
+         7; 3; 3; 3; 7; ...
+         2; 2; 2; 2; 2];
 
 loss_vec = (theor_mom - emp_mom) ./ (0.01 + abs(emp_mom)) .* weight_vec;
 loss_vec = [loss_vec; bottom_density_loss; top_density_loss];
@@ -361,32 +361,32 @@ displaymat = [theor_mom, emp_mom];
    
 figure(5)
 subplot(3,2,1);
-plot([0, (1:20)./4]', (wh(1:end)./wh(1) - 1)/(kappa / sqrt(xi_var)), '.-')
+plot([0, (1:n_periods)./4]', (wh(1:end)./wh(1) - 1)/(kappa / sqrt(xi_var)), '.-')
 title("High Wage")
 
 subplot(3,2,2); 
-plot([0, (1:20)./4]', (wl(1:end)./wl(1) - 1)/(kappa / sqrt(xi_var)), '.-')
+plot([0, (1:n_periods)./4]', (wl(1:end)./wl(1) - 1)/(kappa / sqrt(xi_var)), '.-')
 title("Low Wage")
 
 subplot(3,2,3);
-plot([0, (1:20)./4]', (L(1:end)./L(1) - 1)/(kappa / sqrt(xi_var)), '.-')
+plot([0, (1:n_periods)./4]', (L(1:end)./L(1) - 1)/(kappa / sqrt(xi_var)), '.-')
 title("L Skill Level")
 
 subplot(3,2,4); 
-plot([0, (1:20)./4]', (H(1:end)./H(1) - 1)/(kappa / sqrt(xi_var)), '.-')
+plot([0, (1:n_periods)./4]', (H(1:end)./H(1) - 1)/(kappa / sqrt(xi_var)), '.-')
 title("H Skill Level")
 
 subplot(3,2,5); 
-plot([0, (1:20)./4]', (xi(1:end)./xi(1) - 1)/(kappa / sqrt(xi_var)), '.-')
+plot([0, (1:n_periods)./4]', (xi(1:end)./xi(1) - 1)/(kappa / sqrt(xi_var)), '.-')
 title("Technology Level")
 
 wage_diff = wh - wl;
 subplot(3,2,6); 
-plot([0, (1:20)./4]', (wage_diff(1:end)./wage_diff(1) - 1)/(kappa / sqrt(xi_var)), '.-')
+plot([0, (1:n_periods)./4]', (wage_diff(1:end)./wage_diff(1) - 1)/(kappa / sqrt(xi_var)), '.-')
 title("High Wage - Low Wage")
 
 names = {'HC Increase Prob', 'Conditional Fall Prob', ...
-    'Shock Prob', 'Skilled Share', 'Unskilled Share', 'Skilled Curvature', ...
+    'Shock Prob', 'Skilled Share', 'Technology Share', 'Skilled Curvature', ...
     'Unskilled Curvature', 'DRS Param', 'Bottom Rung'};
 
 all_params = [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0]';

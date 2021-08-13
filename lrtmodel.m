@@ -1,7 +1,7 @@
 function loss = lrtmodel(paramvec)
 
 % transpose for particleswarm
-paramvec = paramvec';
+paramvec = paramvec' ./ 100;
 
 % set up variables in accordance w/ our model
 
@@ -20,7 +20,7 @@ alpha = (paramvec(2,:));
 % number of iterations associated with a single shock
 % since a shock is 5 years, this corresponds to there being
 % 4 iterations of the VAR a year
-n_periods = 20;
+n_periods = 60;
 
 g = exp(log(0.02 + 1) / (n_periods / 5)) - 1;
 
@@ -38,8 +38,7 @@ omega = (paramvec(3,:));
 % omega = paramvec(3,:);
 
 rho = (paramvec(5,:));
-% sigma = 0.5;
-sigma = (paramvec(4,:));
+sigma = rho - (paramvec(4,:));
 
 v = (paramvec(6, :));
 
@@ -56,11 +55,14 @@ kappa = g / omega;
 
 % number of theta states
 % used to approximate continuous density
+
 n_gridpoints = 80;
 
 % reversed exponential growth per Dimitris
 % top_grid = - normcdf(paramvec(7,:)) * 5;
 theta0 = (paramvec(7,:));
+% growth_rate = paramvec(8,:);
+% n_gridpoints = floor(-log(theta0) / log(1 + growth_rate));
 growth_rate = exp((-log(theta0)) / n_gridpoints) - 1;
 theta_grid = (theta0).*((1 + growth_rate).^(1:(n_gridpoints)));
 % need that single obs for xi
@@ -240,8 +242,11 @@ emp_wage_growth = [-0.01486; -0.01008; -0.01178; -0.01167; -0.02467];
 
 tenth_pctile_probs = [0.00286; 0.002619; 0.003889; 0.003941; 0.01255];
 
-top_density_loss = (steady_state(end) > 0.01) * abs((steady_state(end) - 0.01)) * 20;
-bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 20;
+top_density_loss = (steady_state(end) > 0.01) * abs((steady_state(end) - 0.01)) * 100;
+bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 100;
+alphatomega = (alpha * omega < 0.0028) * abs(alpha * omega - 0.0028)/0.0028 * 100;
+% half_income_from_low_skill = low_wage *(1-theta_0) / (low_wage * (1-theta_0) +  theta_0 * high_wage) >= 0.5;
+
 
 emp_mom = [0.0281; -0.0125; 0; 0; 0; ...
              emp_abs_wage_growth; ...
@@ -249,22 +254,22 @@ emp_mom = [0.0281; -0.0125; 0; 0; 0; ...
              tenth_pctile_probs];
         
 weight_vec = [20; 10; 1; 1; 1;
-         0.5; 0.5; 0.5; 0.5; 0.5; ...
-         5; 3; 3; 3; 7; ...
-         2; 2; 2; 2; 2];
+         2; 2; 2; 2; 2; ...
+         7; 3; 3; 3; 7; ...
+         1; 1; 1; 1; 2];
 
 loss_vec = (theor_mom - emp_mom) ./ (0.01 + abs(emp_mom)) .* weight_vec;
 % bars(labels, loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
 % 
-% figure(2)
-% momlabels = categorical(1:17, 1:17, {'Output IRF','LShare IRF',...
-%      'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
-%      'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]',...
-%      'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]'},...
-%      'Ordinal',true);
-% bar(momlabels', [theor_mom([1:2, 6:end]), emp_mom([1:2, 6:end])])
-% title('Moment Matching (excluding signs)')
-loss_vec = [loss_vec; bottom_density_loss; top_density_loss];
+figure(2)
+momlabels = categorical(1:17, 1:17, {'Output IRF','LShare IRF',...
+       'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
+        'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]',...
+        'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]'},...
+        'Ordinal',true);
+   bar(momlabels', [theor_mom([1:2, 6:end]), emp_mom([1:2, 6:end])])
+  title('Moment Matching (excluding signs)')
+loss_vec = [loss_vec; bottom_density_loss; top_density_loss; alphatomega];
 
 % miss = ([theor_mom([1:2, 6:end]) - emp_mom([1:2, 6:end])] ./ (0.01 + abs(emp_mom([1:2, 6:end])))).^2;
 % miss = miss .* weight_vec ./ sum(miss .* weight_vec);
