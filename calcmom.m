@@ -8,6 +8,8 @@ function mom = calcmom(x, theta_grid, steady_state, xi_star, ...
    shock_state = steady_state - alpha * steady_state;
    shock_state(1) = shock_state(1) + alpha;
 
+   H_inside = 0;
+   
    H_star = theta_grid * steady_state;
    L_star = 1 - H_star;
    
@@ -30,20 +32,20 @@ function mom = calcmom(x, theta_grid, steady_state, xi_star, ...
    mu = normcdf(x(2, 1));
    
    % steady state production values
-   X_star = calc_X(xi_star, L_star, lambda, rho);
-   Y_star = calc_Y(H_star, X_star, mu, sigma, v);
+   X_star = calc_X(xi_star, H_star, L_star, lambda, rho, H_inside);
+   Y_star = calc_Y(H_star, L_star, X_star, mu, sigma, v, H_inside);
    
    % high and low wages at steady state
-   high_wage = w_h(H_star, L_star, xi_star, rho, sigma, mu, lambda, v);
-   low_wage = w_l(H_star, L_star, xi_star, rho, sigma, mu, lambda, v);
+   high_wage = w_h(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
+   low_wage = w_l(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
    
    % shock state production values
-   X_shock = calc_X(xi_shock, L_shock, lambda, rho);
-   Y_shock = calc_Y(H_shock, X_shock, mu, sigma, v);
+   X_shock = calc_X(xi_shock, H_shock, L_shock, lambda, rho, H_inside);
+   Y_shock = calc_Y(H_shock, L_shock, X_shock, mu, sigma, v, H_inside);
    
    % high and low wages at shock state
-   high_wage_tp1 = w_h(H_shock, L_shock, xi_shock, rho, sigma, mu, lambda, v);
-   low_wage_tp1 = w_l(H_shock, L_shock, xi_shock, rho, sigma, mu, lambda, v);
+   high_wage_tp1 = w_h(H_shock, L_shock, xi_shock, rho, sigma, mu, lambda, v, H_inside);
+   low_wage_tp1 = w_l(H_shock, L_shock, xi_shock, rho, sigma, mu, lambda, v, H_inside);
    
    % signs of IRF for optimizer
    y_irf_sign = ((Y_shock - Y_star) < 0) * abs(Y_shock - Y_star) * 10;

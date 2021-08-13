@@ -3,6 +3,10 @@ function loss = lrtmodel(paramvec)
 % transpose for particleswarm
 paramvec = paramvec' ./ 100;
 
+% 0 is geometric increasing from theta
+% 1 is geometric decreasing from 1
+theta_order = 0;
+
 % set up variables in accordance w/ our model
 
 % param vec = [phi; alpha; omega; rho; sigma;]
@@ -61,10 +65,18 @@ n_gridpoints = 80;
 % reversed exponential growth per Dimitris
 % top_grid = - normcdf(paramvec(7,:)) * 5;
 theta0 = (paramvec(7,:));
-% growth_rate = paramvec(8,:);
-% n_gridpoints = floor(-log(theta0) / log(1 + growth_rate));
-growth_rate = exp((-log(theta0)) / n_gridpoints) - 1;
-theta_grid = (theta0).*((1 + growth_rate).^(1:(n_gridpoints)));
+
+if theta_order == 0
+    % growth_rate = paramvec(8,:);
+    % n_gridpoints = floor(-log(theta0) / log(1 + growth_rate));
+    growth_rate = exp((-log(theta0)) / n_gridpoints) - 1;
+    theta_grid = (theta0).*((1 + growth_rate).^(1:(n_gridpoints)));
+    
+else 
+    growth_rate = exp((log(theta0)) / n_gridpoints) - 1;
+    theta_grid = 1 - (1.*((1 + growth_rate).^(1:(n_gridpoints))));
+end
+
 % need that single obs for xi
 n_coefs = 1 + n_gridpoints;
 
