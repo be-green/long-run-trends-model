@@ -10,6 +10,8 @@
 %  
 % lrtmodel([0.1, 0.05, 0.2, 0.1, 0.4, 0.4]')
 
+% LS changed this!
+
 % this gets a promising u-shape:
 % [-1.1452; -1.2892; -0.9310; -1.68; -0.0961]
 % init_sigma = log(0.5 - 0.4);
