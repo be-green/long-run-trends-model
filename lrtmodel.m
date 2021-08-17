@@ -1,4 +1,4 @@
-function loss = lrtmodel(paramvec)
+function loss = lrtmodel(paramvec, H_inside)
 
 % transpose for particleswarm
 paramvec = paramvec';
@@ -41,8 +41,15 @@ delta =  exp(log(0.025 + 1) / (n_periods / 5)) - 1;
 omega = (paramvec(3,:));
 % omega = paramvec(3,:);
 
-rho = (paramvec(5,:));
-sigma = rho - (paramvec(4,:));
+% sigma is outer nest exponent
+% rho is inner nest exponent
+if H_inside == 1
+    sigma = (paramvec(5,:));
+    rho = sigma - (paramvec(4,:));
+else
+    rho = (paramvec(5,:));
+    sigma = rho - (paramvec(4,:));
+end
 
 v = (paramvec(6, :));
 
@@ -65,6 +72,8 @@ n_gridpoints = 80;
 % reversed exponential growth per Dimitris
 % top_grid = - normcdf(paramvec(7,:)) * 5;
 theta0 = (paramvec(7,:));
+
+pz = exp(paramvec(8,:) + log(alpha)) / (1 + exp(paramvec(8,:) + log(alpha)));
 
 if theta_order == 0
     % growth_rate = paramvec(8,:);
@@ -177,6 +186,55 @@ c_1_tilde_no_delta = [kappa; A_1_no_delta(2:end-1,end)];
 A_0_tilde_no_delta(2:end,2:end) = A_0_tilde_no_delta(2:end,2:end)- repmat(c_0_tilde_no_delta(2:end,1),1,size(c_0_tilde_no_delta,1)-1);
 A_1_tilde_no_delta(2:end,2:end) = A_1_tilde_no_delta(2:end,2:end)- repmat(c_1_tilde_no_delta(2:end,1),1,size(c_1_tilde_no_delta,1)-1);
 
+% VAR Intercept Term
+% first term corresponds to xi
+A_0_no_delta_pz = zeros(n_coefs, n_coefs);
+
+% xi depreciation
+A_0_no_delta_pz(1,1) = 1 - g;
+
+% fill in theta section
+for i = 2:n_coefs 
+   A_0_no_delta_pz(i, i) = (1 - phi);
+   if i < n_coefs 
+       A_0_no_delta_pz(i, i + 1) = phi;
+   else
+       % can't go past 1
+       A_0_no_delta_pz(i, i) = 1;
+   end
+end
+
+
+% VAR Intercept Term
+% first term corresponds to xi
+A_1_no_delta_pz = zeros(n_coefs, n_coefs);
+
+% xi depreciation
+A_1_no_delta_pz(1,1) = 1 - g;
+
+A_1_no_delta_pz(2:end, 2:end) = A_0_no_delta(2:end, 2:end) * (1 - pz);
+A_1_no_delta_pz(2:end,2) = A_1_no_delta_pz(2:end,2) + pz;
+
+% transpose for use w/ Bianchi formulas
+% VAR format
+
+A_0_no_delta_pz = A_0_no_delta_pz';
+A_1_no_delta_pz = A_1_no_delta_pz';
+
+
+% next, we will define subsetted matrices which omit the final column (this
+% imposes the restriction that probabilities sum to 1)
+A_0_tilde_no_delta_pz = A_0_no_delta_pz(1:(end-1),1:(end-1));
+A_1_tilde_no_delta_pz = A_1_no_delta_pz(1:(end-1),1:(end-1));
+
+c_0_tilde_no_delta_pz = [0; A_0_no_delta_pz(2:end-1,end)];
+c_1_tilde_no_delta_pz = [kappa; A_1_no_delta_pz(2:end-1,end)];
+
+A_0_tilde_no_delta_pz(2:end,2:end) = A_0_tilde_no_delta_pz(2:end,2:end)- ...
+    repmat(c_0_tilde_no_delta_pz(2:end,1),1,size(c_0_tilde_no_delta_pz,1)-1);
+A_1_tilde_no_delta_pz(2:end,2:end) = A_1_tilde_no_delta_pz(2:end,2:end)- ...
+    repmat(c_1_tilde_no_delta_pz(2:end,1),1,size(c_1_tilde_no_delta_pz,1)-1);
+
 
 % transition matrix
 T = [[1 - omega, omega]; [1 - omega, omega]];
@@ -228,17 +286,25 @@ xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
 % and ratio of high/low wages
 options = optimset('Display','off', 'Algorithm', 'levenberg-marquardt');
 lambdamu = fsolve(@(x) calcloss(x, theta_grid, steady_state, xi_star, ...
-    kappa, rho, sigma, alpha, phi, xi_var, A_0_tilde, A_1_tilde, ...
+    kappa, rho, sigma, alpha, phi, xi_var, ...
+    A_0_tilde, A_1_tilde, ...
     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
-    c_1_tilde_no_delta), [0; 0], options); 
+    c_1_tilde_no_delta, A_0_tilde_no_delta_pz, ...
+    A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
+    c_1_tilde_no_delta_pz), [0; 0], options); 
 % normcdf(lambdamu)
 
 theor_mom = calcmom(lambdamu, theta_grid, steady_state, xi_star, ...
-    kappa, rho, sigma, alpha, phi, xi_var, A_0_tilde, A_1_tilde, ...
+    kappa, rho, sigma, alpha, phi, xi_var, ...
+    A_0_tilde, A_1_tilde, ...
     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
-    c_1_tilde_no_delta, 1);
+    c_1_tilde_no_delta, A_0_tilde_no_delta_pz, ...
+    A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
+    c_1_tilde_no_delta_pz, 1);
+
+
 
 % we target labor share above, now we target other xistuff
 theor_mom = theor_mom(3:end,:);
@@ -273,14 +339,14 @@ weight_vec = [20; 10; 1; 1; 1;
 loss_vec = (theor_mom - emp_mom) ./ (0.01 + abs(emp_mom)) .* weight_vec;
 %  bars(labels, loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
 %  
-%   figure(2)
-%   momlabels = categorical(1:17, 1:17, {'Output IRF','LShare IRF',...
-%          'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
-%           'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]',...
-%           'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]'},...
-%           'Ordinal',true);
-%      bar(momlabels', [theor_mom([1:2, 6:(end - 5)]), emp_mom([1:2, 6:(end - 5)])])
-%     title('Moment Matching (excluding signs)')
+   figure(2)
+   momlabels = categorical(1:17, 1:17, {'Output IRF','LShare IRF',...
+          'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
+           'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]',...
+           'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]'},...
+           'Ordinal',true);
+      bar(momlabels(1:end - 5)', [theor_mom([1:2, 6:(end - 5)]), emp_mom([1:2, 6:(end - 5)])])
+     title('Moment Matching (excluding signs)')
 loss_vec = [loss_vec; bottom_density_loss; top_density_loss; alphatomega];
 
 % miss = ([theor_mom([1:2, 6:end]) - emp_mom([1:2, 6:end])] ./ (0.01 + abs(emp_mom([1:2, 6:end])))).^2;
