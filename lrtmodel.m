@@ -74,7 +74,7 @@ n_gridpoints = 80;
 theta0 = (paramvec(7,:));
 
 pz = exp(paramvec(8,:) + log(alpha)) / (1 + exp(paramvec(8,:) + log(alpha)));
-
+p_z = pz;
 if theta_order == 0
     % growth_rate = paramvec(8,:);
     % n_gridpoints = floor(-log(theta0) / log(1 + growth_rate));
@@ -292,7 +292,7 @@ lambdamu = fsolve(@(x) calcloss(x, theta_grid, steady_state, xi_star, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
     c_1_tilde_no_delta, A_0_tilde_no_delta_pz, ...
     A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
-    c_1_tilde_no_delta_pz), [0; 0], options); 
+    c_1_tilde_no_delta_pz, p_z), [0; 0], options); 
 % normcdf(lambdamu)
 
 theor_mom = calcmom(lambdamu, theta_grid, steady_state, xi_star, ...
@@ -302,7 +302,7 @@ theor_mom = calcmom(lambdamu, theta_grid, steady_state, xi_star, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
     c_1_tilde_no_delta, A_0_tilde_no_delta_pz, ...
     A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
-    c_1_tilde_no_delta_pz, 1);
+    c_1_tilde_no_delta_pz, p_z, 1);
 
 
 
@@ -356,6 +356,9 @@ loss_vec = [loss_vec; bottom_density_loss; top_density_loss; alphatomega];
 % bar(labels', miss)
 % bar(labels', loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
 
-
-loss = loss_vec' * loss_vec;
+if any(isnan(loss_vec))
+    loss = 1e16;
+else
+    loss = loss_vec' * loss_vec;
+end
 
