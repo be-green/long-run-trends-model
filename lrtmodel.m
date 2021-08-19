@@ -38,7 +38,8 @@ delta =  exp(log(0.025 + 0.02 + 1) / (n_periods / 5)) - 1;
 % of state 1 happening in period t + 1
 % these shocks are IID so this is true for both
 % initial states
-omega = (paramvec(3,:));
+omegatalpha = (paramvec(3,:));
+omega = omegatalpha / alpha;
 % omega = paramvec(3,:);
 
 % sigma is outer nest exponent
