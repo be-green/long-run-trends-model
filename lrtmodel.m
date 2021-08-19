@@ -323,7 +323,6 @@ tenth_pctile_probs = [0.00286; 0.002619; 0.003889; 0.003941; 0.01255];
 
 top_density_loss = (steady_state(end) > 0.01) * abs((steady_state(end) - 0.01)) * 100;
 bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 100;
-alphatomega = (alpha * omega < 0.0028) * abs(alpha * omega - 0.0028)/0.0028 * 100;
 % half_income_from_low_skill = low_wage *(1-theta_0) / (low_wage * (1-theta_0) +  theta_0 * high_wage) >= 0.5;
 
 
@@ -332,7 +331,7 @@ emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
              emp_wage_growth; ...
              tenth_pctile_probs];
         
-weight_vec = [25; 1; 20; 10; 1; 1; 1;
+weight_vec = [25; 0; 20; 10; 1; 1; 1;
          3; 3; 3; 3; 4; ...
          7; 4; 4; 4; 7; ...
          1; 1; 1; 1; 1];
@@ -370,19 +369,19 @@ if make_plots > 0
     disp(table(names', all_params))
 end 
      
-loss_vec = [loss_vec; bottom_density_loss; top_density_loss; alphatomega];
+loss_vec = [loss_vec; bottom_density_loss; top_density_loss];
 
 % miss = ([theor_mom([1:2, 6:end]) - emp_mom([1:2, 6:end])] ./ (0.01 + abs(emp_mom([1:2, 6:end])))).^2;
 % miss = miss .* weight_vec ./ sum(miss .* weight_vec);
 % 
 % figure(3)
 if make_plots > 0
-labels = categorical(1:25, 1:25, {'Labor Share', 'Wage Ratio','Output IRF','LShare IRF',...
+labels = categorical(1:24, 1:24, {'Labor Share', 'Wage Ratio','Output IRF','LShare IRF',...
     'Output ','Wage Sign', 'Lshare IRF sign', ...
      'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
      'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]',...
      'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]',...
-     'Bottom Density Penalty', 'Top Density Penalty', 'AlphatOmega'}, 'Ordinal',true);
+     'Bottom Density Penalty', 'Top Density Penalty'}, 'Ordinal',true);
 
 figure(4)
 bar(labels', loss_vec .* loss_vec ./ (loss_vec' * loss_vec))

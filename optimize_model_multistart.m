@@ -1,14 +1,47 @@
 custom_iter = optimoptions(@fmincon,'MaxIterations',200);
-prob = createOptimProblem('fmincon', 'objective', @(x) lrtmodel(x, 0, 0, 80), ...
-    'x0', [0.0990    0.0273    0.1000    0.2500    0.7500    0.9000    0.0225    1.3780],...
-    'lb', [0.005, 0.005, 0.005, 0.25, -1,   0.5, 0.005, -10], ...
-    'ub', [0.1,   0.99,  0.1,    5, 0.75,    1, 0.25, 10],...
-    'nonlcon', @nlconst, ...
-    'options', custom_iter);
-%  
-MS = MultiStart('UseParallel',1, 'Display', 'iter', 'StartPointsToRun', 'bounds-ineqs');
-%  
-[sol, loss] = run(MS, prob, 10);
-%  
-% lrtmodel([0.1, 0.05, 0.2, 0.1, 0.4, 0.4]')
+% parpool()
+
+n_gridpoints = 80;
+n_periods = 60;
+
+g = exp(log(0.02 + 1) / (n_periods / 5)) - 1;
+% death rate
+% corresponds to an average 40 year working life
+delta =  exp(log(0.025 + 0.02 + 1) / (n_periods / 5)) - 1;
+delta = delta + g;
+top_density_rho_const = 0.02^(1/n_gridpoints);
+
+% 0 >= omega * alpha - alpha
+b = 0;
+A = [0, -1, 1, 0, 0, 0, 0, 0, 0, 0];
+
+% top gridpoint has < 2% of the total mass
+% implies top density rho constraint 
+b = [b; -top_density_rho_const * delta];
+A = [A; [(top_density_rho_const - 1), 0, top_density_rho_const, 0, 0, 0, 0, 0, 0, 0]];
+
+% bottom gridpoint has < 10% of the total mass
+% implies botom density constraint , where
+% -0.9 delta >= 0.9 alpha * omega - 0.1 * phi
+b = [b; -0.9 * delta];
+A = [A; [-0.1, 0, 0.9, 0, 0, 0, 0, 0, 0, 0]];
+
+lower = [0.001, 0.005, 1/360, 0.25, -2,   0.5, 0.001, -10, 0.1, 0.1];
+upper = [0.05,   0.7,  1/120,    5, 0.75,    1, 0.1, 10, 0.9, 0.9];
+
+nstarts = 1000;
+startvals = sim_with_constraints(nstarts, upper, lower, A, b);
+
+sol = zeros(nstarts, length(lower));
+loss = zeros(nstarts, 1);
+
+parfor i = 1:nstarts
+   [sol(i,:), loss(i,:)] = fmincon(@(x) lrtmodel(x, 0, 0, n_gridpoints), ...
+                                    startvals(i,:), ...
+                                    A, b, [], [], ...
+                                    lower, ...
+                                    upper,...
+                                    [],custom_iter);
+end
+
 

@@ -4,7 +4,7 @@ function [c, ceq] = nlconst(x)
     alpha = x(2);
     omega = omegatalpha / alpha;
     delta = 0.0053;
-    rho = (phi / (delta + phi -delta *  phi + omega *  alpha));
+    rho = (phi / (delta + phi - delta *  phi + omega *  alpha));
     
     
     bottom_density = (delta + alpha * omega) /  ...
