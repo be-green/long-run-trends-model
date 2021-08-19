@@ -1,4 +1,4 @@
-function loss = lrtmodel(paramvec, H_inside)
+function loss = lrtmodel(paramvec, H_inside, make_plots, n_gridpoints)
 
 % transpose for particleswarm
 paramvec = paramvec';
@@ -66,8 +66,6 @@ kappa = g / omega;
 
 % number of theta states
 % used to approximate continuous density
-
-n_gridpoints = 80;
 
 % reversed exponential growth per Dimitris
 % top_grid = - normcdf(paramvec(7,:)) * 5;
@@ -331,7 +329,7 @@ emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
              emp_wage_growth; ...
              tenth_pctile_probs];
         
-weight_vec = [100; 100; 20; 10; 1; 1; 1;
+weight_vec = [25; 25; 20; 10; 1; 1; 1;
          1; 1; 1; 1; 1; ...
          7; 4; 4; 4; 7; ...
          0; 0; 0; 0; 0];
@@ -339,23 +337,56 @@ weight_vec = [100; 100; 20; 10; 1; 1; 1;
 loss_vec = (theor_mom - emp_mom) ./ (0.01 + abs(emp_mom)) .* weight_vec;
 %  bars(labels, loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
 %  
+% [emp_mom, theor_mom]
+
+if make_plots > 0
    figure(2)
    momlabels = categorical(1:19, 1:19, {'Labor Share', 'Wage Ratios', 'Output IRF','LShare IRF',...
           'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
            'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]',...
            'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]'},...
            'Ordinal',true);
-      bar(momlabels(1:end - 4)', [theor_mom([1:4, 8:(end - 4)]), emp_mom([1:4, 8:(end - 4)])])
-     title('Moment Matching (excluding signs)')
+      bar(momlabels(3:end)', [theor_mom([3:4, 8:(end)]), emp_mom([3:4, 8:(end)])])
+     title('Moment Matching (excluding signs & levels)')
+     
+     figure(1)
+     bar(momlabels(1:2)', [theor_mom(1:2), emp_mom(1:2)])
+     title('Labor Share & Wage Ratio')
+     
+     figure(3)
+     bar(momlabels(1:end)', weight_vec([1:4, 8:(end)]).^2)
+     title('Weights)')
+     
+     
+    names = {'HC Increase Prob', 'Conditional Fall Prob', ...
+        'Shock Prob', 'Skilled Share', 'Technology Share', 'Skilled Curvature', ...
+        'Unskilled Curvature', 'DRS Param', 'Bottom Rung', 'P(fall | shock, exposed)'};
+
+    lambda = normcdf(lambdamu(1));
+    mu = normcdf(lambdamu(2));
+    all_params = [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0 p_z]';
+
+    disp(table(names', all_params))
+end 
+     
 loss_vec = [loss_vec; bottom_density_loss; top_density_loss; alphatomega];
 
 % miss = ([theor_mom([1:2, 6:end]) - emp_mom([1:2, 6:end])] ./ (0.01 + abs(emp_mom([1:2, 6:end])))).^2;
 % miss = miss .* weight_vec ./ sum(miss .* weight_vec);
 % 
 % figure(3)
-% bar(labels', miss)
-% bar(labels', loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
+if make_plots > 0
+labels = categorical(1:25, 1:25, {'Labor Share', 'Wage Ratio','Output IRF','LShare IRF',...
+    'Output ','Wage Sign', 'Lshare IRF sign', ...
+     'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
+     'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]',...
+     'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]',...
+     'Bottom Density Penalty', 'Top Density Penalty', 'AlphatOmega'}, 'Ordinal',true);
 
+figure(4)
+bar(labels', loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
+title('Weighted Percent Loss Contribution')
+end
 if any(isnan(loss_vec) | ~isreal(loss_vec))
     loss = 1e16;
 else
