@@ -1,11 +1,11 @@
-function loss = lrtmodel(paramvec, H_inside)
+
 
 % transpose for particleswarm
 paramvec = paramvec';
 
 % 0 is geometric increasing from theta
 % 1 is geometric decreasing from 1
-theta_order = 0;
+theta_order = 1;
 
 % set up variables in accordance w/ our model
 
@@ -30,7 +30,7 @@ g = exp(log(0.02 + 1) / (n_periods / 5)) - 1;
 
 % death rate
 % corresponds to an average 40 year working life
-delta =  exp(log(0.025 + 0.02 + 1) / (n_periods / 5)) - 1;
+delta =  exp(log(0.025 + 1) / (n_periods / 5)) - 1;
 
 % arrival rate of technology
 % in this case this is also the probability
@@ -41,15 +41,8 @@ delta =  exp(log(0.025 + 0.02 + 1) / (n_periods / 5)) - 1;
 omega = (paramvec(3,:));
 % omega = paramvec(3,:);
 
-% sigma is outer nest exponent
-% rho is inner nest exponent
-if H_inside == 1
-    sigma = (paramvec(5,:));
-    rho = sigma - (paramvec(4,:));
-else
-    rho = (paramvec(5,:));
-    sigma = rho - (paramvec(4,:));
-end
+rho = (paramvec(5,:));
+sigma = (paramvec(4,:));
 
 v = (paramvec(6, :));
 
@@ -73,8 +66,6 @@ n_gridpoints = 80;
 % top_grid = - normcdf(paramvec(7,:)) * 5;
 theta0 = (paramvec(7,:));
 
-pz = exp(paramvec(8,:) + log(alpha)) / (1 + exp(paramvec(8,:) + log(alpha)));
-p_z = pz;
 if theta_order == 0
     % growth_rate = paramvec(8,:);
     % n_gridpoints = floor(-log(theta0) / log(1 + growth_rate));
@@ -186,55 +177,6 @@ c_1_tilde_no_delta = [kappa; A_1_no_delta(2:end-1,end)];
 A_0_tilde_no_delta(2:end,2:end) = A_0_tilde_no_delta(2:end,2:end)- repmat(c_0_tilde_no_delta(2:end,1),1,size(c_0_tilde_no_delta,1)-1);
 A_1_tilde_no_delta(2:end,2:end) = A_1_tilde_no_delta(2:end,2:end)- repmat(c_1_tilde_no_delta(2:end,1),1,size(c_1_tilde_no_delta,1)-1);
 
-% VAR Intercept Term
-% first term corresponds to xi
-A_0_no_delta_pz = zeros(n_coefs, n_coefs);
-
-% xi depreciation
-A_0_no_delta_pz(1,1) = 1 - g;
-
-% fill in theta section
-for i = 2:n_coefs 
-   A_0_no_delta_pz(i, i) = (1 - phi);
-   if i < n_coefs 
-       A_0_no_delta_pz(i, i + 1) = phi;
-   else
-       % can't go past 1
-       A_0_no_delta_pz(i, i) = 1;
-   end
-end
-
-
-% VAR Intercept Term
-% first term corresponds to xi
-A_1_no_delta_pz = zeros(n_coefs, n_coefs);
-
-% xi depreciation
-A_1_no_delta_pz(1,1) = 1 - g;
-
-A_1_no_delta_pz(2:end, 2:end) = A_0_no_delta(2:end, 2:end) * (1 - pz);
-A_1_no_delta_pz(2:end,2) = A_1_no_delta_pz(2:end,2) + pz;
-
-% transpose for use w/ Bianchi formulas
-% VAR format
-
-A_0_no_delta_pz = A_0_no_delta_pz';
-A_1_no_delta_pz = A_1_no_delta_pz';
-
-
-% next, we will define subsetted matrices which omit the final column (this
-% imposes the restriction that probabilities sum to 1)
-A_0_tilde_no_delta_pz = A_0_no_delta_pz(1:(end-1),1:(end-1));
-A_1_tilde_no_delta_pz = A_1_no_delta_pz(1:(end-1),1:(end-1));
-
-c_0_tilde_no_delta_pz = [0; A_0_no_delta_pz(2:end-1,end)];
-c_1_tilde_no_delta_pz = [kappa; A_1_no_delta_pz(2:end-1,end)];
-
-A_0_tilde_no_delta_pz(2:end,2:end) = A_0_tilde_no_delta_pz(2:end,2:end)- ...
-    repmat(c_0_tilde_no_delta_pz(2:end,1),1,size(c_0_tilde_no_delta_pz,1)-1);
-A_1_tilde_no_delta_pz(2:end,2:end) = A_1_tilde_no_delta_pz(2:end,2:end)- ...
-    repmat(c_1_tilde_no_delta_pz(2:end,1),1,size(c_1_tilde_no_delta_pz,1)-1);
-
 
 % transition matrix
 T = [[1 - omega, omega]; [1 - omega, omega]];
@@ -256,14 +198,17 @@ bianchi_omegatilde = [bianchi_omega, C*H; zeros(2, (n_coefs-1)*2), H];  % eq. (5
 
 w = repmat(eye((n_coefs-1)),1,2);
 mu = w * q;
-mu2 = mu * mu';
-
-wtilde = [w, zeros((n_coefs-1),2)];
-qtilde = [q; piVec];
-
 steady_state = [mu(2:(n_coefs-1)); 1 - sum(mu(2:end))];
-% figure(1)
-% plot(theta_grid,steady_state)
+
+figure(1)
+plot(theta_grid,steady_state, "-o")
+title('Steady State Theta Grid')
+
+
+figure(9)
+plot(log(theta_grid),steady_state, "-o")
+title('Steady State Theta Grid, log scale for x axis')
+xlabel('log(theta)')
 % steady state values
 H_star = theta_grid * steady_state;
 L_star = 1 - H_star;
@@ -286,28 +231,22 @@ xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
 % and ratio of high/low wages
 options = optimset('Display','off', 'Algorithm', 'levenberg-marquardt');
 lambdamu = fsolve(@(x) calcloss(x, theta_grid, steady_state, xi_star, ...
-    kappa, rho, sigma, alpha, phi, xi_var, ...
-    A_0_tilde, A_1_tilde, ...
+    kappa, rho, sigma, alpha, phi, xi_var, A_0_tilde, A_1_tilde, ...
     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
-    c_1_tilde_no_delta, A_0_tilde_no_delta_pz, ...
-    A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
-    c_1_tilde_no_delta_pz, p_z), [0; 0], options); 
+    c_1_tilde_no_delta), [0; 0], options); 
 % normcdf(lambdamu)
 
 theor_mom = calcmom(lambdamu, theta_grid, steady_state, xi_star, ...
-    kappa, rho, sigma, alpha, phi, xi_var, ...
-    A_0_tilde, A_1_tilde, ...
+    kappa, rho, sigma, alpha, phi, xi_var, A_0_tilde, A_1_tilde, ...
     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
-    c_1_tilde_no_delta, A_0_tilde_no_delta_pz, ...
-    A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
-    c_1_tilde_no_delta_pz, p_z, 1);
+    c_1_tilde_no_delta, 1);
 
-
-
+lambda = normcdf(lambdamu(1));
+mu = normcdf(lambdamu(2));
 % we target labor share above, now we target other xistuff
-theor_mom = theor_mom(1:end,:);
+theor_mom = theor_mom(3:end,:);
 
 emp_abs_wage_growth = ... 
     [-0.002551; ...
@@ -322,43 +261,163 @@ tenth_pctile_probs = [0.00286; 0.002619; 0.003889; 0.003941; 0.01255];
 
 top_density_loss = (steady_state(end) > 0.01) * abs((steady_state(end) - 0.01)) * 100;
 bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 100;
-alphatomega = (alpha * omega < 0.0028) * abs(alpha * omega - 0.0028)/0.0028 * 100;
-% half_income_from_low_skill = low_wage *(1-theta_0) / (low_wage * (1-theta_0) +  theta_0 * high_wage) >= 0.5;
 
-
-emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
+emp_mom = [0.0281; -0.0125; 0; 0; 0; ...
              emp_abs_wage_growth; ...
              emp_wage_growth; ...
              tenth_pctile_probs];
         
-weight_vec = [100; 100; 20; 10; 1; 1; 1;
-         1; 1; 1; 1; 1; ...
-         7; 4; 4; 4; 7; ...
+weight_vec = [20; 10; 1; 1; 1;
+         2; 2; 2; 2; 2; ...
+         7; 3; 3; 3; 7; ...
          0; 0; 0; 0; 0];
 
 loss_vec = (theor_mom - emp_mom) ./ (0.01 + abs(emp_mom)) .* weight_vec;
-%  bars(labels, loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
-%  
-   figure(2)
-   momlabels = categorical(1:19, 1:19, {'Labor Share', 'Wage Ratios', 'Output IRF','LShare IRF',...
-          'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
-           'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]',...
-           'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]'},...
-           'Ordinal',true);
-      bar(momlabels(1:end - 4)', [theor_mom([1:4, 8:(end - 4)]), emp_mom([1:4, 8:(end - 4)])])
-     title('Moment Matching (excluding signs)')
-loss_vec = [loss_vec; bottom_density_loss; top_density_loss; alphatomega];
+loss_vec = [loss_vec; bottom_density_loss; top_density_loss];
 
-% miss = ([theor_mom([1:2, 6:end]) - emp_mom([1:2, 6:end])] ./ (0.01 + abs(emp_mom([1:2, 6:end])))).^2;
-% miss = miss .* weight_vec ./ sum(miss .* weight_vec);
+% bars(labels, loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
 % 
-% figure(3)
-% bar(labels', miss)
-% bar(labels', loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
+figure(2)
+momlabels = categorical(1:17, 1:17, {'Output IRF','LShare IRF',...
+     'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
+     'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]',...
+     'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]'},...
+     'Ordinal',true);
+bar(momlabels(1:(end - 5))', [theor_mom([1:2, 6:(end - 5)]), emp_mom([1:2, 6:(end - 5)])])
+title('Moment Matching (excluding signs)')
 
-if any(isnan(loss_vec) | ~isreal(loss_vec))
-    loss = 1e16;
-else
-    loss = loss_vec' * loss_vec;
-end
+% 
+labels = categorical(1:22, 1:22, {'Output IRF','LShare IRF',...
+    'Output ','Wage Sign', 'Lshare IRF sign', ...
+     'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
+     'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]',...
+     'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]',...
+     'Bottom Density Penalty', 'Top Density Penalty'}, 'Ordinal',true);
+
+figure(3)
+bar(labels', loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
+title('Weighted Percent Loss Contribution')
+
+
+figure(4)
+bar(labels(1:20)', [weight_vec .* weight_vec])
+title('Moment Weights')
+
+displaymat = [theor_mom, emp_mom];
+% displaymat([1:2, 6:end], :)
+
+
+   xi_shock = xi_star + kappa;
+   shock_state = steady_state - alpha * steady_state;
+   shock_state(1) = shock_state(1) + alpha;
+
+   H_star = theta_grid * steady_state;
+   L_star = 1 - H_star;
+   
+   H_inside = 0;
+   % steady state production values
+   X_star = calc_X(xi_star, H_star, L_star, lambda, rho, H_inside);
+   Y_star = calc_Y(H_star, L_star, X_star, mu, sigma, v, H_inside);
+
+   % high and low wages at steady state
+   high_wage = w_h(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
+   low_wage = w_l(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
+ H = zeros(n_periods + 1, 1);
+   L = zeros(n_periods + 1, 1);
+   xi = zeros(n_periods + 1, 1);
+   
+   wh = zeros(n_periods + 1, 1);
+   wl = zeros(n_periods + 1, 1);
+   
+   X = zeros(n_periods + 1, 1);
+   Y = zeros(n_periods + 1, 1);
+   
+   
+   lshare = zeros(n_periods + 1, 1);
+   
+   H(1) = H_star;
+   L(1) = L_star;
+   xi(1) = xi_star;
+   wh(1) = high_wage;
+   wl(1) = low_wage;
+   lshare(1) = (H(1) * wh(1) + L(1) * wl(1)) / Y_star;
+   
+   H(2) = theta_grid * shock_state;
+   L(2) = 1 - H(2);
+   xi(2) = xi_shock;
+   wh(2) = w_h(H(2), L(2), xi(2), rho, sigma, mu, lambda, v);
+   wl(2) = w_l(H(2), L(2), xi(2), rho, sigma, mu, lambda, v);
+   X_shock = calc_X(xi(2), H(2), L(2), lambda, rho);
+   Y_shock = calc_Y(H(2), L(2), X_shock, mu, sigma, v);
+   lshare(2) = (H(2) * wh(2) + L(2) * wl(2)) / Y_shock;
+   
+   X(1) = X_star;
+   Y(1) = Y_star;
+   
+   X(2) = X_shock;
+   Y(2) = Y_shock;
+   
+   
+   shock_vec = [xi_shock; shock_state(1:(end - 1))];
+   for i=1:(n_periods - 1)
+       shock_vec = (1 - omega) * (A_0_tilde * shock_vec + c_0_tilde) + ...
+           omega  * (A_1_tilde * shock_vec + c_1_tilde);
+          
+       xi(i + 2) = shock_vec(1,:);
+       shock_state = shock_vec(2:end,:);
+
+       shock_vec_for_calcs = [shock_state; 1 - sum(shock_state)];
+
+       H(i + 2) = theta_grid * shock_vec_for_calcs;
+       L(i + 2) = 1 - H(i + 2);
+
+       % shock state production values
+       X(i + 2) = calc_X(xi(i + 2), L(i + 2), lambda, rho);
+       Y(i + 2) = calc_Y(H(i + 2), X(i + 2), mu, sigma, v);
+
+
+       % high and low wages at shock state
+       wh(i + 2) = w_h(H(i + 2), L(i + 2), xi(i + 2), rho, sigma, mu, lambda, v);
+       wl(i + 2) = w_l(H(i + 2), L(i + 2), xi(i + 2), rho, sigma, mu, lambda, v);
+       lshare(i + 2) = (H(i + 2) * wh(i + 2) + L(i + 2) * wl(i + 2)) / Y_shock;
+
+   end
+   
+figure(5)
+subplot(3,3,1);
+plot([0, (1:n_periods)./4]', (wh(1:end)./wh(1) - 1)/(kappa / sqrt(xi_var)), '.-')
+title("High Wage")
+
+subplot(3,3,2); 
+plot([0, (1:n_periods)./4]', (wl(1:end)./wl(1) - 1)/(kappa / sqrt(xi_var)), '.-')
+title("Low Wage")
+
+subplot(3,3,3);
+plot([0, (1:n_periods)./4]', (L(1:end)./L(1) - 1)/(kappa / sqrt(xi_var)), '.-')
+title("L Skill Level")
+
+subplot(3,3,4); 
+plot([0, (1:n_periods)./4]', (H(1:end)./H(1) - 1)/(kappa / sqrt(xi_var)), '.-')
+title("H Skill Level")
+
+subplot(3,3,5); 
+plot([0, (1:n_periods)./4]', (xi(1:end)./xi(1) - 1)/(kappa / sqrt(xi_var)), '.-')
+title("Technology Level")
+
+
+wage_diff = wh - wl;
+subplot(3,2,6); 
+plot([0, (1:n_periods)./4]', (wage_diff(1:end)./wage_diff(1) - 1)/(kappa / sqrt(xi_var)), '.-')
+title("High Wage - Low Wage")
+
+names = {'HC Increase Prob', 'Conditional Fall Prob', ...
+    'Shock Prob', 'Skilled Share', 'Technology Share', 'Skilled Curvature', ...
+    'Unskilled Curvature', 'DRS Param', 'Bottom Rung'};
+
+all_params = [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0]';
+
+disp(table(names', all_params))
+
+
+
 

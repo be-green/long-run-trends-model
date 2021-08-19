@@ -6,6 +6,9 @@ function mom = calcmom(x, theta_grid, steady_state, xi_star, ...
     A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
     c_1_tilde_no_delta_pz, p_z, calc_irfs)
 
+   % so I don't get a billion "singular" warnings 
+   warning('off','all')
+
    xi_shock = xi_star + kappa;
    shock_state = steady_state - alpha * steady_state;
    shock_state(1) = shock_state(1) + alpha;
@@ -404,8 +407,12 @@ function mom = calcmom(x, theta_grid, steady_state, xi_star, ...
 
        agg_prob(5, 1) = sum(steady_state(index:end));
        
+       % which outcomes are associated with shocks
        S = [ones(5, 1); zeros(5, 1); ones(5, 1); zeros(5, 1);];
+       % which outcomes are associated with shocks and exposure
        T = [zeros(5, 1); zeros(5, 1); ones(5, 1); ones(5, 1);].*S;
+       % diagonal matrix of indicators for income bins and interactions of
+       % income bins with T
        D = [repmat(diag(ones(5, 1)), 4, 1), repmat(diag(ones(5, 1)), 4, 1) .* T];
               
        y_vec_wg = [agg_shock_unexposed_wg; agg_noshock_unexposed_wg; ...
@@ -425,10 +432,14 @@ function mom = calcmom(x, theta_grid, steady_state, xi_star, ...
        b =  alpha / p_z ;
        b_vec = b * T + (1 - b) * (1 - T);
        
+       % compute the expectation E(y * S)
+       % the only relevant state is S = 1 because the rest is 0
        e_xy_wg(1,:) = omega * (S .* b_vec .* probvec)' * y_vec_wg;
        e_xy_awg(1,:) =  omega * (S .* b_vec .* probvec)' * y_vec_awg;
        e_xy_pctile(1,:) =  omega * (S .* b_vec .* probvec)' * y_vec_pctile;
        
+       % loop over the columns of the D matrix and
+       % compute the expectation E(y * D)
        for i = 2:6
            D_i = D(:,i - 1);
            e_xy_wg(i,:) = agg_prob(i - 1) * (D_i .* (omega * (S .* b_vec) + ...
@@ -439,6 +450,9 @@ function mom = calcmom(x, theta_grid, steady_state, xi_star, ...
                (1 - omega) * ((1 - S) .* b_vec)))' * y_vec_pctile;
        end
        
+       % loop over the columns of the D matrix and
+       % compute the expectation E(y * D * T)
+       % T is already included in D
        for i = 7:11
            D_i = D(:,i - 1);
            e_xy_wg(i,:) = agg_prob(i - 6) * b * (D_i .* (omega * (S) + ...
@@ -465,8 +479,6 @@ function mom = calcmom(x, theta_grid, steady_state, xi_star, ...
        
        tenth_pctile_probs = (xtx) \ e_xy_pctile;
        tenth_pctile_probs = tenth_pctile_probs((end - 4):end) .* irf_scale_factor;
-          
-       wage_growth
    else 
        wage_growth = zeros(5, 1);
        abs_wage_growth = zeros(5, 1);
