@@ -19,6 +19,9 @@ phi = (paramvec(1,:));
 alpha = (paramvec(2,:));
 % alpha = paramvec(2,:);
 
+lambda = paramvec(10,:);
+mu = paramvec(9,:);
+
 % unconditional growth
 
 % number of iterations associated with a single shock
@@ -253,19 +256,18 @@ q = (eye((n_coefs-1)*2) - bianchi_omega) \ (C * piVec);         % eq. (3)
 bianchi_omegatilde = [bianchi_omega, C*H; zeros(2, (n_coefs-1)*2), H];  % eq. (5)
 
 w = repmat(eye((n_coefs-1)),1,2);
-mu = w * q;
-mu2 = mu * mu';
+mu_ss = w * q;
 
 wtilde = [w, zeros((n_coefs-1),2)];
 qtilde = [q; piVec];
 
-steady_state = [mu(2:(n_coefs-1)); 1 - sum(mu(2:end))];
+steady_state = [mu_ss(2:(n_coefs-1)); 1 - sum(mu_ss(2:end))];
 % figure(1)
 % plot(theta_grid,steady_state)
 % steady state values
 H_star = theta_grid * steady_state;
 L_star = 1 - H_star;
-xi_star = mu(1);
+xi_star = mu_ss(1);
 
 % shock the system
 % I'm 100% sure there's a cleaner way to do this but
@@ -282,18 +284,18 @@ xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
 % fsolve() for 2 x 2 system
 % choose mu and lambda to match labor share = 0.66
 % and ratio of high/low wages
-options = optimset('Display','off', 'Algorithm', 'levenberg-marquardt');
-lambdamu = fsolve(@(x) calcloss(x, theta_grid, steady_state, xi_star, ...
-    kappa, rho, sigma, alpha, phi, xi_var, ...
-    A_0_tilde, A_1_tilde, ...
-    c_0_tilde, c_1_tilde, omega, n_periods, v, ...
-    A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
-    c_1_tilde_no_delta, A_0_tilde_no_delta_pz, ...
-    A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
-    c_1_tilde_no_delta_pz, p_z), [0; 0], options); 
+% options = optimset('Display','off', 'Algorithm', 'levenberg-marquardt');
+% lambdamu = fsolve(@(x) calcloss(x, theta_grid, steady_state, xi_star, ...
+%     kappa, rho, sigma, alpha, phi, xi_var, ...
+%     A_0_tilde, A_1_tilde, ...
+%     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
+%     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
+%     c_1_tilde_no_delta, A_0_tilde_no_delta_pz, ...
+%     A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
+%     c_1_tilde_no_delta_pz, p_z), [0; 0], options); 
 % normcdf(lambdamu)
 
-theor_mom = calcmom(lambdamu, theta_grid, steady_state, xi_star, ...
+theor_mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
     kappa, rho, sigma, alpha, phi, xi_var, ...
     A_0_tilde, A_1_tilde, ...
     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
@@ -329,10 +331,10 @@ emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
              emp_wage_growth; ...
              tenth_pctile_probs];
         
-weight_vec = [25; 25; 20; 10; 1; 1; 1;
-         1; 1; 1; 1; 1; ...
+weight_vec = [25; 1; 20; 10; 1; 1; 1;
+         3; 3; 3; 3; 4; ...
          7; 4; 4; 4; 7; ...
-         0; 0; 0; 0; 0];
+         1; 1; 1; 1; 1];
 
 loss_vec = (theor_mom - emp_mom) ./ (0.01 + abs(emp_mom)) .* weight_vec;
 %  bars(labels, loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
@@ -362,8 +364,6 @@ if make_plots > 0
         'Shock Prob', 'Skilled Share', 'Technology Share', 'Skilled Curvature', ...
         'Unskilled Curvature', 'DRS Param', 'Bottom Rung', 'P(fall | shock, exposed)'};
 
-    lambda = normcdf(lambdamu(1));
-    mu = normcdf(lambdamu(2));
     all_params = [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0 p_z]';
 
     disp(table(names', all_params))
