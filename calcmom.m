@@ -483,16 +483,17 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
       
       subplot(2, 1, 1);
       bar([agg_shock_unexposed_wg, agg_shock_exposed_wg, agg_noshock_exposed_wg]);
-      legend('Shock Unexposed','Shock Exposed','No Shock','Location','southwest');
+      legend('Shock Unexposed','Shock Exposed','No Shock','Location','southoutside', ...
+          'Orientation', 'horizontal');
       title("Breakdown Numbers")
       
       subplot(2, 1, 2);
       bar([agg_shock_unexposed_wg - agg_noshock_unexposed_wg,  ... 
           agg_shock_exposed_wg - agg_noshock_exposed_wg]);
       legend('Shock Unexposed - No Shock Unexposed',...
-          'Shock Exposed - No Shock Exposed','Location','southwest');
+          'Shock Exposed - No Shock Exposed','Location','southoutside', ...
+          'Orientation', 'horizontal');
       title("Diff Coefs")
-      
       
       figure(7)
       subplot(2, 1, 1);
@@ -524,8 +525,9 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    if make_plots > 0
        
        figure(5)
-      theta_plot_x_axis = (high_wage * theta_grid + (low_wage) * (1 - theta_grid) ) ./ low_wage;
-      plot(theta_plot_x_axis, steady_state);
+      theta_plot_x_axis = (high_wage * theta_grid + (low_wage) * (1 - theta_grid) ) ./ ...
+          ((low_wage * (1 - min(theta_grid))) + high_wage * min(theta_grid));
+      plot(cumsum(steady_state), theta_plot_x_axis, "-o");
       title("Density by Wage / W_l")
    end
    
