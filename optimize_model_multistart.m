@@ -1,4 +1,6 @@
-custom_iter = optimoptions(@fmincon,'MaxIterations',200);
+custom_iter = optimoptions(@fmincon,'MaxIterations',200, 'Display', ...
+    'iter', 'FiniteDifferenceType', 'central', 'ScaleProblem', 'obj-and-constr', ...
+    'HessianApproximation', 'lbfgs');
 % parpool()
 
 n_gridpoints = 80;
@@ -29,19 +31,22 @@ A = [A; [-0.1, 0, 0.9, 0, 0, 0, 0, 0, 0, 0]];
 lower = [0.001, 0.005, 1/360, 0.25, -2,   0.5, 0.001, -10, 0.1, 0.1];
 upper = [0.05,   0.7,  1/120,    5, 0.75,    1, 0.1, 10, 0.9, 0.9];
 
-nstarts = 1000;
+nstarts = 10;
 startvals = sim_with_constraints(nstarts, upper, lower, A, b);
 
 sol = zeros(nstarts, length(lower));
 loss = zeros(nstarts, 1);
+exitflg = zeros(nstarts, 1);
 
 parfor i = 1:nstarts
-   [sol(i,:), loss(i,:)] = fmincon(@(x) lrtmodel(x, 0, 0, n_gridpoints), ...
+   [sol(i,:), loss(i,:), exitflg(i,:)] = fmincon(@(x) lrtmodel(x, 0, 0, n_gridpoints), ...
                                     startvals(i,:), ...
                                     A, b, [], [], ...
                                     lower, ...
                                     upper,...
                                     [],custom_iter);
+                                
+                                publish(@(x) lrtmodel(x, 0, 1, n_gridpoints))
 end
 
 

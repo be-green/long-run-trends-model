@@ -321,8 +321,8 @@ emp_wage_growth = [-0.01486; -0.01008; -0.01178; -0.01167; -0.02467];
 
 tenth_pctile_probs = [0.00286; 0.002619; 0.003889; 0.003941; 0.01255];
 
-top_density_loss = (steady_state(end) > 0.01) * abs((steady_state(end) - 0.01)) * 100;
-bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 100;
+top_density_loss = (steady_state(end) > 0.01) * abs((steady_state(end) - 0.01)) * 0;
+bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 0;
 % half_income_from_low_skill = low_wage *(1-theta_0) / (low_wage * (1-theta_0) +  theta_0 * high_wage) >= 0.5;
 
 
@@ -330,11 +330,11 @@ emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
              emp_abs_wage_growth; ...
              emp_wage_growth; ...
              tenth_pctile_probs];
-        
+         
 weight_vec = [25; 0; 20; 10; 1; 1; 1;
          3; 3; 3; 3; 4; ...
          7; 4; 4; 4; 7; ...
-         1; 1; 1; 1; 1];
+         0; 0; 0; 0; 0];
 
 loss_vec = (theor_mom - emp_mom) ./ (0.01 + abs(emp_mom)) .* weight_vec;
 %  bars(labels, loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
