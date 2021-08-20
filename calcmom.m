@@ -524,7 +524,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    
    if make_plots > 0
        
-       figure(5)
+      figure(5)
       theta_plot_x_axis = (high_wage * theta_grid + (low_wage) * (1 - theta_grid) ) ./ ...
           ((low_wage * (1 - min(theta_grid))) + high_wage * min(theta_grid));
       plot(cumsum(steady_state), theta_plot_x_axis, "-o");

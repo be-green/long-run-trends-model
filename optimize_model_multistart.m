@@ -14,43 +14,43 @@ top_density_rho_const = 0.02^(1/n_gridpoints);
 
 % 0 >= omega * alpha - alpha
 b = 0;
-A = [0, -1, 1, 0, 0, 0, 0, 0, 0, 0];
+A = [0, -1, 1, 0, 0, 0, 0, 0, 0];
 
 % top gridpoint has < 2% of the total mass
 % implies top density rho constraint 
 b = [b; -top_density_rho_const * delta];
-A = [A; [(top_density_rho_const - 1), 0, top_density_rho_const, 0, 0, 0, 0, 0, 0, 0]];
+A = [A; [(top_density_rho_const - 1), 0, top_density_rho_const, 0, 0, 0, 0, 0, 0]];
 
 % bottom gridpoint has < 10% of the total mass
 % implies botom density constraint , where
 % -0.9 delta >= 0.9 alpha * omega - 0.1 * phi
 b = [b; -0.9 * delta];
-A = [A; [-0.1, 0, 0.9, 0, 0, 0, 0, 0, 0, 0]];
+A = [A; [-0.1, 0, 0.9, 0, 0, 0, 0, 0, 0]];
 
-lower = [0.001, ... phi * (p - ( 1 - p) )
+lower = [0.001, ... phi
     0.005, ... alpha
     1/360, ... omega * alpha
     0.25, ... H diff from L (curvature exponent)
     0,   ... L curvature exponent
-    0.5, ... DRS parameter
-    0.001,... theta0
+    0.01, ... percent human capital loss
     0.1, ... a (for p_z log odds)
     0.001, ... lambda
     0.001]; % mu
-upper = [0.3, ... % phi * (p - (1 - p) )
+upper = [0.3, ... % phi
          0.7,  ... % alpha
-         1/120, ...    % omega
+         1/12, ...    % omega
          3, ...H diff from L (curvature exponent)
          0.75,    ...L curvature exponent
-         1, ... phi
-         0.25, ... theta0
-         10, ... a (for p_z log odds)
+         0.99, ... percent human capital loss
+         5, ... a (for p_z log odds)
          0.999, ... lamba
          0.999]; % mu
 
-nstarts = 1000;
+nstarts = 10;
 startvals = sim_with_constraints(nstarts, upper, lower, A, b);
-
+    if ~exist('./model-output', 'dir')
+       mkdir('./model-output')
+    end
 save('model-output/starting-values.mat', 'startvals')
 
 sol = zeros(nstarts, length(lower));
@@ -67,7 +67,6 @@ parfor i = 1:nstarts
     sol(i,:) = this_solution;
     loss(i,:) = this_loss;
     exitflg(i,:) = this_exit;
-    
     
     outdir = ['./model-output/model-run-number',num2str(i)];
     

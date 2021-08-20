@@ -19,8 +19,8 @@ phi = (paramvec(1,:));
 alpha = (paramvec(2,:));
 % alpha = paramvec(2,:);
 
-lambda = paramvec(10,:);
-mu = paramvec(9,:);
+lambda = paramvec(9,:);
+mu = paramvec(8,:);
 
 % unconditional growth
 
@@ -55,7 +55,7 @@ else
     sigma = rho - (paramvec(4,:));
 end
 
-v = (paramvec(6, :));
+v = 1;
 
 % rho = 0.25;
 % sigma = paramvec(5,:);
@@ -73,7 +73,7 @@ kappa = g / omega;
 
 % reversed exponential growth per Dimitris
 % top_grid = - normcdf(paramvec(7,:)) * 5;
-theta0 = (paramvec(7,:));
+theta0 = 0.05;
 
 pz = exp(paramvec(8,:) + log(alpha)) / (1 + exp(paramvec(8,:) + log(alpha)));
 p_z = pz;
@@ -81,8 +81,7 @@ if theta_order == 0
     % growth_rate = paramvec(8,:);
     % n_gridpoints = floor(-log(theta0) / log(1 + growth_rate));
     growth_rate = exp((-log(theta0)) / n_gridpoints) - 1;
-    theta_grid = (theta0).*((1 + growth_rate).^(1:(n_gridpoints)));
-    
+    theta_grid = (theta0).*((1 + growth_rate).^(1:(n_gridpoints))); 
 else 
     growth_rate = exp((log(theta0)) / n_gridpoints) - 1;
     theta_grid = 1 - (1.*((1 + growth_rate).^(1:(n_gridpoints))));
@@ -112,6 +111,8 @@ end
 A_0(2:end, 2:end) = A_0(2:end, 2:end) * (1 - delta);
 A_0(2:end,2) = A_0(2:end,2) + delta;
 
+
+
 % VAR Intercept Term
 % first term corresponds to xi
 A_1 = zeros(n_coefs, n_coefs);
@@ -120,25 +121,12 @@ A_1 = zeros(n_coefs, n_coefs);
 A_1(1,1) = 1 - g;
 
 A_1(2:end, 2:end) = A_0(2:end, 2:end) * (1 - alpha);
-A_1(2:end,2) = A_1(2:end,2) + alpha;
 
-% transpose for use w/ Bianchi formulas
-% VAR format
-
-A_0 = A_0';
-A_1 = A_1';
+hc_loss = paramvec(6,:);
 
 
-% next, we will define subsetted matrices which omit the final column (this
-% imposes the restriction that probabilities sum to 1)
-A_0_tilde = A_0(1:(end-1),1:(end-1));
-A_1_tilde = A_1(1:(end-1),1:(end-1));
 
-c_0_tilde = [0; A_0(2:end-1,end)];
-c_1_tilde = [kappa; A_1(2:end-1,end)];
 
-A_0_tilde(2:end,2:end) = A_0_tilde(2:end,2:end)- repmat(c_0_tilde(2:end,1),1,size(c_0_tilde,1)-1);
-A_1_tilde(2:end,2:end) = A_1_tilde(2:end,2:end)- repmat(c_1_tilde(2:end,1),1,size(c_1_tilde,1)-1);
 
 
 % VAR Intercept Term
@@ -168,25 +156,7 @@ A_1_no_delta = zeros(n_coefs, n_coefs);
 A_1_no_delta(1,1) = 1 - g;
 
 A_1_no_delta(2:end, 2:end) = A_0_no_delta(2:end, 2:end) * (1 - alpha);
-A_1_no_delta(2:end,2) = A_1_no_delta(2:end,2) + alpha;
 
-% transpose for use w/ Bianchi formulas
-% VAR format
-
-A_0_no_delta = A_0_no_delta';
-A_1_no_delta = A_1_no_delta';
-
-
-% next, we will define subsetted matrices which omit the final column (this
-% imposes the restriction that probabilities sum to 1)
-A_0_tilde_no_delta = A_0_no_delta(1:(end-1),1:(end-1));
-A_1_tilde_no_delta = A_1_no_delta(1:(end-1),1:(end-1));
-
-c_0_tilde_no_delta = [0; A_0_no_delta(2:end-1,end)];
-c_1_tilde_no_delta = [kappa; A_1_no_delta(2:end-1,end)];
-
-A_0_tilde_no_delta(2:end,2:end) = A_0_tilde_no_delta(2:end,2:end)- repmat(c_0_tilde_no_delta(2:end,1),1,size(c_0_tilde_no_delta,1)-1);
-A_1_tilde_no_delta(2:end,2:end) = A_1_tilde_no_delta(2:end,2:end)- repmat(c_1_tilde_no_delta(2:end,1),1,size(c_1_tilde_no_delta,1)-1);
 
 % VAR Intercept Term
 % first term corresponds to xi
@@ -215,14 +185,90 @@ A_1_no_delta_pz = zeros(n_coefs, n_coefs);
 A_1_no_delta_pz(1,1) = 1 - g;
 
 A_1_no_delta_pz(2:end, 2:end) = A_0_no_delta(2:end, 2:end) * (1 - pz);
-A_1_no_delta_pz(2:end,2) = A_1_no_delta_pz(2:end,2) + pz;
 
 % transpose for use w/ Bianchi formulas
 % VAR format
 
+new_theta = theta_grid - theta_grid * hc_loss;
+
+lower_fall_index = zeros(size(theta_grid))';
+upper_fall_index = zeros(size(theta_grid))';
+lower_fall_weight = zeros(size(theta_grid))';
+upper_fall_weight = zeros(size(theta_grid))';
+
+for i = 1:length(new_theta) 
+   new_gridpoint_l = max(cumsum(theta_grid < new_theta(i)));
+   if new_gridpoint_l == 0
+      lower_fall_index(i,:) = 1;
+      upper_fall_index(i,:) = 1;
+      lower_fall_weight(i,:) = 1;
+      upper_fall_weight(i,:) = 0;
+   else 
+      new_gridpoint_u = new_gridpoint_l + 1;
+      lower_fall_index(i,:) = new_gridpoint_l;
+      upper_fall_index(i,:) = new_gridpoint_u;
+      
+      upper_fall_weight(i,:) = (log(theta_grid(new_gridpoint_u)) - log(new_theta(i)))...
+          / (log(theta_grid(new_gridpoint_u)) - log(theta_grid(new_gridpoint_l)));
+      lower_fall_weight(i,:) = 1 - upper_fall_weight(i,:);
+   end
+   A_1((i + 1),upper_fall_index(i,:) + 1) = A_1((i + 1),upper_fall_index(i,:) + 1)...
+       + alpha * upper_fall_weight(i,:);
+   A_1((i + 1),lower_fall_index(i,:) + 1) = A_1((i + 1),lower_fall_index(i,:) + 1)...
+       + alpha * lower_fall_weight(i,:);
+   
+   A_1_no_delta((i + 1),upper_fall_index(i,:) + 1) = A_1_no_delta((i + 1),upper_fall_index(i,:) + 1)...
+       + alpha * upper_fall_weight(i,:);
+   A_1_no_delta((i + 1),lower_fall_index(i,:) + 1) = A_1_no_delta((i + 1),lower_fall_index(i,:) + 1)...
+       + alpha * lower_fall_weight(i,:);
+   
+  A_1_no_delta_pz((i + 1),upper_fall_index(i,:) + 1) = A_1_no_delta_pz((i + 1),upper_fall_index(i,:) + 1)...
+       + pz * upper_fall_weight(i,:);
+   A_1_no_delta_pz((i + 1),lower_fall_index(i,:) + 1) = A_1_no_delta_pz((i + 1),lower_fall_index(i,:) + 1)...
+       + pz * lower_fall_weight(i,:);
+end
+
+% transpose for use w/ Bianchi formulas
+% VAR format
+
+A_0 = A_0';
+A_1 = A_1';
+
+% transpose for use w/ Bianchi formulas
+% VAR format
+
+A_0_no_delta = A_0_no_delta';
+A_1_no_delta = A_1_no_delta';
+
+
+
 A_0_no_delta_pz = A_0_no_delta_pz';
 A_1_no_delta_pz = A_1_no_delta_pz';
 
+
+% next, we will define subsetted matrices which omit the final column (this
+% imposes the restriction that probabilities sum to 1)
+A_0_tilde = A_0(1:(end-1),1:(end-1));
+A_1_tilde = A_1(1:(end-1),1:(end-1));
+
+c_0_tilde = [0; A_0(2:end-1,end)];
+c_1_tilde = [kappa; A_1(2:end-1,end)];
+
+A_0_tilde(2:end,2:end) = A_0_tilde(2:end,2:end)- repmat(c_0_tilde(2:end,1),1,size(c_0_tilde,1)-1);
+A_1_tilde(2:end,2:end) = A_1_tilde(2:end,2:end)- repmat(c_1_tilde(2:end,1),1,size(c_1_tilde,1)-1);
+
+% next, we will define subsetted matrices which omit the final column (this
+% imposes the restriction that probabilities sum to 1)
+A_0_tilde_no_delta = A_0_no_delta(1:(end-1),1:(end-1));
+A_1_tilde_no_delta = A_1_no_delta(1:(end-1),1:(end-1));
+
+c_0_tilde_no_delta = [0; A_0_no_delta(2:end-1,end)];
+c_1_tilde_no_delta = [kappa; A_1_no_delta(2:end-1,end)];
+
+A_0_tilde_no_delta(2:end,2:end) = A_0_tilde_no_delta(2:end,2:end)- repmat(c_0_tilde_no_delta(2:end,1),1,...
+    size(c_0_tilde_no_delta,1)-1);
+A_1_tilde_no_delta(2:end,2:end) = A_1_tilde_no_delta(2:end,2:end)- repmat(c_1_tilde_no_delta(2:end,1),1,...
+    size(c_1_tilde_no_delta,1)-1);
 
 % next, we will define subsetted matrices which omit the final column (this
 % imposes the restriction that probabilities sum to 1)
@@ -236,7 +282,6 @@ A_0_tilde_no_delta_pz(2:end,2:end) = A_0_tilde_no_delta_pz(2:end,2:end)- ...
     repmat(c_0_tilde_no_delta_pz(2:end,1),1,size(c_0_tilde_no_delta_pz,1)-1);
 A_1_tilde_no_delta_pz(2:end,2:end) = A_1_tilde_no_delta_pz(2:end,2:end)- ...
     repmat(c_1_tilde_no_delta_pz(2:end,1),1,size(c_1_tilde_no_delta_pz,1)-1);
-
 
 % transition matrix
 T = [[1 - omega, omega]; [1 - omega, omega]];
@@ -263,8 +308,8 @@ wtilde = [w, zeros((n_coefs-1),2)];
 qtilde = [q; piVec];
 
 steady_state = [mu_ss(2:(n_coefs-1)); 1 - sum(mu_ss(2:end))];
-% figure(1)
-% plot(theta_grid,steady_state)
+figure(1)
+plot(theta_grid,steady_state)
 % steady state values
 H_star = theta_grid * steady_state;
 L_star = 1 - H_star;
@@ -321,8 +366,8 @@ emp_wage_growth = [-0.01486; -0.01008; -0.01178; -0.01167; -0.02467];
 
 tenth_pctile_probs = [0.00286; 0.002619; 0.003889; 0.003941; 0.01255];
 
-top_density_loss = (steady_state(end) > 0.01) * abs((steady_state(end) - 0.01)) * 0;
-bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 0;
+top_density_loss = (steady_state(end) > 0.01) * abs((steady_state(end) - 0.01)) * 100;
+bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 100;
 % half_income_from_low_skill = low_wage *(1-theta_0) / (low_wage * (1-theta_0) +  theta_0 * high_wage) >= 0.5;
 
 
