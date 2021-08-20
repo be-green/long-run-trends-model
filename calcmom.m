@@ -4,7 +4,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
     c_1_tilde_no_delta, A_0_tilde_no_delta_pz, ...
     A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
-    c_1_tilde_no_delta_pz, p_z, calc_irfs)
+    c_1_tilde_no_delta_pz, p_z, calc_irfs, make_plots)
 
    % so I don't get a billion "singular" warnings 
    warning('off','all')
@@ -475,6 +475,37 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        
        tenth_pctile_probs = (xtx) \ e_xy_pctile;
        tenth_pctile_probs = tenth_pctile_probs((end - 4):end) .* irf_scale_factor;
+       
+   if make_plots > 0
+       
+      figure(6)
+      
+      
+      subplot(2, 1, 1);
+      bar([agg_shock_unexposed_wg, agg_shock_exposed_wg, agg_noshock_exposed_wg]);
+      legend('Shock Unexposed','Shock Exposed','No Shock','Location','southwest');
+      title("Breakdown Numbers")
+      
+      subplot(2, 1, 2);
+      bar([agg_shock_unexposed_wg - agg_noshock_unexposed_wg,  ... 
+          agg_shock_exposed_wg - agg_noshock_exposed_wg]);
+      legend('Shock Unexposed - No Shock Unexposed',...
+          'Shock Exposed - No Shock Exposed','Location','southwest');
+      title("Diff Coefs")
+      
+      
+      figure(7)
+      subplot(2, 1, 1);
+      bar([agg_shock_exposed_wg - agg_noshock_exposed_wg - ...
+          (agg_shock_unexposed_wg - agg_noshock_unexposed_wg)]);
+      title("Diff in Diff Coefs")
+    
+      subplot(2, 1, 2);
+      bar(wage_growth);
+      title("Regression Coefs")
+   
+   end
+       
    else 
        wage_growth = zeros(5, 1);
        abs_wage_growth = zeros(5, 1);
@@ -489,6 +520,15 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    lshare_irf = (log(lshare_shock) - log(lshare)) * agg_scale_factor;
    
    premium = top_five_wages / bottom_five_wages;
+   
+   if make_plots > 0
+       
+       figure(5)
+      theta_plot_x_axis = (high_wage * theta_grid + (low_wage) * (1 - theta_grid) ) ./ low_wage;
+      plot(theta_plot_x_axis, steady_state);
+      title("Density by Wage / W_l")
+   end
+   
    mom = [lshare; premium; y_irf; lshare_irf; y_irf_sign; lw_irf_sign; ...
        lshare_irf_sign; ...
        abs_wage_growth; ...

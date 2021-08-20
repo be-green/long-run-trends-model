@@ -27,7 +27,7 @@ A = [A; [(top_density_rho_const - 1), 0, top_density_rho_const, 0, 0, 0, 0, 0, 0
 b = [b; -0.9 * delta];
 A = [A; [-0.1, 0, 0.9, 0, 0, 0, 0, 0, 0, 0]];
 
-lower = [0.001, ... phi
+lower = [0.001, ... phi * (p - ( 1 - p) )
     0.005, ... alpha
     1/360, ... omega * alpha
     0.25, ... H diff from L (curvature exponent)
@@ -37,12 +37,12 @@ lower = [0.001, ... phi
     0.1, ... a (for p_z log odds)
     0.001, ... lambda
     0.001]; % mu
-upper = [0.3, ... % phi
+upper = [0.3, ... % phi * (p - (1 - p) )
          0.7,  ... % alpha
          1/120, ...    % omega
          3, ...H diff from L (curvature exponent)
          0.75,    ...L curvature exponent
-         1, ... DRS parameter
+         1, ... phi
          0.25, ... theta0
          10, ... a (for p_z log odds)
          0.999, ... lamba
