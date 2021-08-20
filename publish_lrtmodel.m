@@ -1,0 +1,1 @@
+lrtmodel(this_solution, 0, 1, n_gridpoints)
