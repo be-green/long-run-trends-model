@@ -4,14 +4,15 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
     c_1_tilde_no_delta, A_0_tilde_no_delta_pz, ...
     A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
-    c_1_tilde_no_delta_pz, p_z, calc_irfs, make_plots)
+    c_1_tilde_no_delta_pz, p_z, calc_irfs, make_plots, A_1)
 
    % so I don't get a billion "singular" warnings 
    warning('off','all')
 
-   xi_shock = xi_star + kappa;
-   shock_state = steady_state - alpha * steady_state;
-   shock_state(1) = shock_state(1) + alpha;
+   shock_vars = A_1 * [xi_star; steady_state];
+   
+   xi_shock = shock_vars(1) + kappa;
+   shock_state = shock_vars(2:end);
 
    H_inside = 0;
    
