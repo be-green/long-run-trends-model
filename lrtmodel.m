@@ -315,14 +315,6 @@ H_star = theta_grid * steady_state;
 L_star = 1 - H_star;
 xi_star = mu_ss(1);
 
-% shock the system
-% I'm 100% sure there's a cleaner way to do this but
-% hey, it works
-xi_shock = xi_star + kappa;
-shock_state = steady_state - alpha * steady_state;
-shock_state(1) = shock_state(1) + alpha;
-
-shock_vec = [xi_shock;shock_state];
 % figure(2)
 % plot(shock_state)
 xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
