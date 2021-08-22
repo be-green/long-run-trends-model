@@ -8,7 +8,8 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
 
    % so I don't get a billion "singular" warnings 
    warning('off','all')
-
+   
+   % TODO: should we incorporate the constants for kappa more explicitly? 
    shock_vars = A_1 * [xi_star; steady_state];
    
    xi_shock = shock_vars(1) + kappa;
@@ -16,6 +17,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
 
    H_inside = 0;
    
+   % scaling factors to convert from one shock units to 1 SD units
    agg_scale_factor = sqrt(n_periods / 5) * sqrt(omega * (1 - omega));
    irf_scale_factor = sqrt(n_periods / 5) * sqrt(omega * alpha / p_z * (1 - omega * alpha / p_z));
    
@@ -28,12 +30,18 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
            omega  * (A_1_tilde * shock_vec + c_1_tilde);
    end
    
+   %Note: if we add a nonzero mass with zero skill, almost nothing would
+   %change, except that we would have 1-p0 in place of 1 here. 
    shock_vec = [shock_vec; 1 - sum(shock_vec(2:end))];
+   
+   % We also might want to put the zero in on the grid somewhere, in which case we
+   %need to tweak things to be the following
+   % shock_vec = [shock_vec(1); p0; shock_vec(2:end); 1-p0 - sum(shock_vec(2:end))];
    
    xi_shock = shock_vec(1,:);
    shock_state = shock_vec(2:end,:);
    
-   H_shock = theta_grid * shock_state;
+   H_shock = theta_grid * shock_state; %if we add the zero to theta_grid, this doesn't change
    L_shock = 1 - H_shock;
    
    % steady state production values
@@ -156,6 +164,23 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        for i = 1:length(targets)
            q(i) = weighted_quantile(quantile_wage_vec, quantile_dist_vec, targets(i));
        end 
+       
+       if make_plots > 0
+           figure
+           plot(targets,q)
+           title('Quantiles of wage growth distribution')
+           xline(0.05)
+           xline(0.25)
+           xline(0.5)
+           xline(0.75)
+           xline(0.95)
+           
+           %TODO: we could add lines by income group. This might be a
+           %pretty useful diagnostic to make sure things don't work for the
+           %wrong reason
+           
+       end
+       
        
        % steady state wage growth percentile
        tenth_pctile = weighted_quantile(quantile_wage_vec, quantile_dist_vec, 0.1);

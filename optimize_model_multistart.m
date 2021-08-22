@@ -47,11 +47,15 @@ upper = [0.3, ... % phi
          0.999]; % mu
 
 nstarts = 10;
+% TODO: could check that objective function doesn't error at starting vals
 startvals = sim_with_constraints(nstarts, upper, lower, A, b);
     if ~exist('./model-output', 'dir')
        mkdir('./model-output')
     end
 save('model-output/starting-values.mat', 'startvals')
+
+% evaluate objective at one, just as a sanity check;
+lrtmodel(startvals(1,:), 0, 1, n_gridpoints)
 
 sol = zeros(nstarts, length(lower));
 loss = zeros(nstarts, 1);

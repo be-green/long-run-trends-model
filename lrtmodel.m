@@ -22,6 +22,8 @@ alpha = (paramvec(2,:));
 lambda = paramvec(9,:);
 mu = paramvec(8,:);
 
+hc_loss = paramvec(6,:);
+
 % unconditional growth
 
 % number of iterations associated with a single shock
@@ -120,12 +122,10 @@ A_1 = zeros(n_coefs, n_coefs);
 % xi depreciation
 A_1(1,1) = 1 - g;
 
+
+% Displacement shock happens last. Below, we will redistribute mass from
+% alpha * A_0 across different columns, incorporating the hc loss
 A_1(2:end, 2:end) = A_0(2:end, 2:end) * (1 - alpha);
-
-hc_loss = paramvec(6,:);
-
-
-
 
 
 
@@ -177,7 +177,7 @@ for i = 2:n_coefs
 end
 
 
-% VAR Intercept Term
+% VAR Intercept Term, for "exposed" workers
 % first term corresponds to xi
 A_1_no_delta_pz = zeros(n_coefs, n_coefs);
 
@@ -189,6 +189,7 @@ A_1_no_delta_pz(2:end, 2:end) = A_0_no_delta(2:end, 2:end) * (1 - pz);
 % transpose for use w/ Bianchi formulas
 % VAR format
 
+% TODO: probably better to make this exp(-hc_loss) instead...
 new_theta = theta_grid - theta_grid * hc_loss;
 
 lower_fall_index = zeros(size(theta_grid))';
@@ -212,20 +213,23 @@ for i = 1:length(new_theta)
           / (log(theta_grid(new_gridpoint_u)) - log(theta_grid(new_gridpoint_l)));
       lower_fall_weight(i,:) = 1 - upper_fall_weight(i,:);
    end
-   A_1((i + 1),upper_fall_index(i,:) + 1) = A_1((i + 1),upper_fall_index(i,:) + 1)...
-       + alpha * upper_fall_weight(i,:);
-   A_1((i + 1),lower_fall_index(i,:) + 1) = A_1((i + 1),lower_fall_index(i,:) + 1)...
-       + alpha * lower_fall_weight(i,:);
    
-   A_1_no_delta((i + 1),upper_fall_index(i,:) + 1) = A_1_no_delta((i + 1),upper_fall_index(i,:) + 1)...
-       + alpha * upper_fall_weight(i,:);
-   A_1_no_delta((i + 1),lower_fall_index(i,:) + 1) = A_1_no_delta((i + 1),lower_fall_index(i,:) + 1)...
-       + alpha * lower_fall_weight(i,:);
+   % TODO: this seems to only address the diagonal. What about one above
+   % the diagonal (since people learn too)?
+   A_1(2:end,upper_fall_index(i,:) + 1) = A_1(2:end,upper_fall_index(i,:) + 1)...
+       + alpha * upper_fall_weight(i,:)*A_0(2:end,i+1);
+   A_1(2:end,lower_fall_index(i,:) + 1) = A_1(2:end,lower_fall_index(i,:) + 1)...
+       + alpha * lower_fall_weight(i,:)*A_0(2:end,i+1);
    
-  A_1_no_delta_pz((i + 1),upper_fall_index(i,:) + 1) = A_1_no_delta_pz((i + 1),upper_fall_index(i,:) + 1)...
-       + pz * upper_fall_weight(i,:);
-   A_1_no_delta_pz((i + 1),lower_fall_index(i,:) + 1) = A_1_no_delta_pz((i + 1),lower_fall_index(i,:) + 1)...
-       + pz * lower_fall_weight(i,:);
+   A_1_no_delta(2:end,upper_fall_index(i,:) + 1) = A_1_no_delta(2:end,upper_fall_index(i,:) + 1)...
+       + alpha * upper_fall_weight(i,:)*A_0_no_delta(2:end,i+1);
+   A_1_no_delta(2:end,lower_fall_index(i,:) + 1) = A_1_no_delta(2:end,lower_fall_index(i,:) + 1)...
+       + alpha * lower_fall_weight(i,:)*A_0_no_delta(2:end,i+1);
+   
+  A_1_no_delta_pz(2:end,upper_fall_index(i,:) + 1) = A_1_no_delta_pz(2:end,upper_fall_index(i,:) + 1)...
+       + pz * upper_fall_weight(i,:)*A_0_no_delta_pz(2:end,i+1);
+   A_1_no_delta_pz(2:end,lower_fall_index(i,:) + 1) = A_1_no_delta_pz(2:end,lower_fall_index(i,:) + 1)...
+       + pz * lower_fall_weight(i,:)*A_0_no_delta_pz(2:end,i+1);
 end
 
 % transpose for use w/ Bianchi formulas
