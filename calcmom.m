@@ -12,7 +12,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    % TODO: should we incorporate the constants for kappa more explicitly? 
    shock_vars = A_1 * [xi_star; steady_state];
    
-   xi_shock = shock_vars(1) + kappa;
+   xi_shock = shock_vars(1) + c_1_tilde(1);
    shock_state = shock_vars(2:end);
 
    H_inside = 0;
@@ -233,201 +233,62 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        agg_noshock_unexposed_pctile = zeros(5, 1);
        
        agg_prob = zeros(5, 1);
+       quantile_targets = [0.25,0.5,0.75,0.95,1];
        
        % calculate wage growth and abs wage growth bins
        index = 1;
+       next_start_index = 1;
        cumulative_density = 0;
+       
+       %TODO: we could "split the mass" to have exactly x% in each one of
+       %the bins. This would have the advantage of never blowing up even if
+       %there are mass points in the density. All that would be required is
+       %to do weighted averages in place of raw averages
+       
+       for i = 1:length(quantile_targets)
 
-       while(cumulative_density < 0.25)
-           cumulative_density = cumulative_density + steady_state(index);
+           while(cumulative_density < quantile_targets(i))
+               cumulative_density = cumulative_density + steady_state(index);
+               index = index + 1;
+           end
+
+           % correct last bit of loop (since that corresponds with
+           % something that exceeds the target probability)
+           index = index - 1;
+
+           % compute probability weights that appear in weighted averages
+           bin_indices = next_start_index:index;
+           
+           % compute the mass associated with each one of the grid points
+           % we can make this a weighted sum instead
+           agg_prob(i, 1) = sum(steady_state(bin_indices));
+           
+           pweights = steady_state(bin_indices) ./  agg_prob(i, 1);
+           
+           % compute average wage growth 
+           agg_shock_exposed_wg(i,1) = exposed_shockwg(bin_indices, 1)' * pweights;
+           agg_noshock_exposed_wg(i,1) = exposed_cfwg(bin_indices, 1)' * pweights;      
+           agg_shock_unexposed_wg(i,1) = unexposed_shockwg(bin_indices, 1)' * pweights;
+           agg_noshock_unexposed_wg(i,1) = unexposed_cfwg(bin_indices, 1)' * pweights; 
+
+           % average absolute wage growth
+           agg_shock_exposed_awg(i,1) = exposed_shockwg(bin_indices, 2)' * pweights;
+           agg_noshock_exposed_awg(i,1) = exposed_cfwg(bin_indices, 2)' * pweights;      
+           agg_shock_unexposed_awg(i,1) = unexposed_shockwg(bin_indices, 2)' * pweights;
+           agg_noshock_unexposed_awg(i,1) = unexposed_cfwg(bin_indices, 2)' * pweights; 
+
+           % probability of a wage decline larger than p10
+           agg_shock_exposed_pctile(i,1) = exposed_shock_lt_pctile_probs(bin_indices, 1)' * pweights;
+           agg_noshock_exposed_pctile(i,1) = exposed_cf_lt_pctile_probs(bin_indices, 1)' * pweights;      
+           agg_shock_unexposed_pctile(i,1) = unexposed_shock_lt_pctile_probs(bin_indices, 1)' * pweights;
+           agg_noshock_unexposed_pctile(i,1) = unexposed_cf_lt_pctile_probs(bin_indices, 1)' * pweights; 
+
+
            index = index + 1;
+           next_start_index = index;
+
        end
-
-       % correct last bit of loop
-       index = index - 1;
-
-       agg_shock_exposed_wg(1,1) = exposed_shockwg(1:index, 1)' * ...
-           (steady_state(1:index) ./ sum(steady_state(1:index)));
-       agg_noshock_exposed_wg(1,1) = exposed_cfwg(1:index, 1)' * ...
-           (steady_state(1:index) ./ sum(steady_state(1:index)));      
-       agg_shock_unexposed_wg(1,1) = unexposed_shockwg(1:index, 1)' * ...
-           (steady_state(1:index) ./ sum(steady_state(1:index)));
-       agg_noshock_unexposed_wg(1,1) = unexposed_cfwg(1:index, 1)' * ...
-           (steady_state(1:index) ./ sum(steady_state(1:index))); 
-       
-       agg_shock_exposed_awg(1,1) = exposed_shockwg(1:index, 2)' * ...
-           (steady_state(1:index) ./ sum(steady_state(1:index)));
-       agg_noshock_exposed_awg(1,1) = exposed_cfwg(1:index, 2)' * ...
-           (steady_state(1:index) ./ sum(steady_state(1:index)));      
-       agg_shock_unexposed_awg(1,1) = unexposed_shockwg(1:index, 2)' * ...
-           (steady_state(1:index) ./ sum(steady_state(1:index)));
-       agg_noshock_unexposed_awg(1,1) = unexposed_cfwg(1:index, 2)' * ...
-           (steady_state(1:index) ./ sum(steady_state(1:index))); 
-       
-       agg_shock_exposed_pctile(1,1) = exposed_shock_lt_pctile_probs(1:index, 1)' * ...
-           (steady_state(1:index) ./ sum(steady_state(1:index)));
-       agg_noshock_exposed_pctile(1,1) = exposed_cf_lt_pctile_probs(1:index, 1)' * ...
-           (steady_state(1:index) ./ sum(steady_state(1:index)));      
-       agg_shock_unexposed_pctile(1,1) = unexposed_shock_lt_pctile_probs(1:index, 1)' * ...
-           (steady_state(1:index) ./ sum(steady_state(1:index)));
-       agg_noshock_unexposed_pctile(1,1) = unexposed_cf_lt_pctile_probs(1:index, 1)' * ...
-           (steady_state(1:index) ./ sum(steady_state(1:index))); 
-       
-       agg_prob(1, 1) = sum(steady_state(1:index));
-
-       
-       index = index + 1;
-       next_start_index = index;
-       while(cumulative_density < 0.5)
-           cumulative_density = cumulative_density + steady_state(index);
-           index = index + 1;
-       end
-
-       % correct last bit of loop
-       index = index - 1;
-
-       agg_shock_exposed_wg(2,1) = exposed_shockwg(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_exposed_wg(2,1) = exposed_cfwg(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));      
-       agg_shock_unexposed_wg(2,1) = unexposed_shockwg(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_unexposed_wg(2,1) = unexposed_cfwg(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index))); 
-       
-       agg_shock_exposed_awg(2,1) = exposed_shockwg(next_start_index:index, 2)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_exposed_awg(2,1) = exposed_cfwg(next_start_index:index, 2)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));      
-       agg_shock_unexposed_awg(2,1) = unexposed_shockwg(next_start_index:index, 2)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_unexposed_awg(2,1) = unexposed_cfwg(next_start_index:index, 2)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index))); 
-       
-       agg_shock_exposed_pctile(2,1) = exposed_shock_lt_pctile_probs(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_exposed_pctile(2,1) = exposed_cf_lt_pctile_probs(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));      
-       agg_shock_unexposed_pctile(2,1) = unexposed_shock_lt_pctile_probs(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_unexposed_pctile(2,1) = unexposed_cf_lt_pctile_probs(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index))); 
-
-       agg_prob(2, 1) = sum(steady_state(next_start_index:index));
-       
-       index = index + 1;
-       next_start_index = index;
-
-
-       while(cumulative_density < 0.75)
-           cumulative_density = cumulative_density + steady_state(index);
-           index = index + 1;
-       end
-
-       % correct last bit of loop
-       index = index - 1;
-
-       agg_shock_exposed_wg(3,1) = exposed_shockwg(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_exposed_wg(3,1) = exposed_cfwg(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));      
-       agg_shock_unexposed_wg(3,1) = unexposed_shockwg(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_unexposed_wg(3,1) = unexposed_cfwg(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index))); 
-       
-       agg_shock_exposed_awg(3,1) = exposed_shockwg(next_start_index:index, 2)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_exposed_awg(3,1) = exposed_cfwg(next_start_index:index, 2)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));      
-       agg_shock_unexposed_awg(3,1) = unexposed_shockwg(next_start_index:index, 2)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_unexposed_awg(3,1) = unexposed_cfwg(next_start_index:index, 2)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index))); 
-       
-       agg_shock_exposed_pctile(3,1) = exposed_shock_lt_pctile_probs(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_exposed_pctile(3,1) = exposed_cf_lt_pctile_probs(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));      
-       agg_shock_unexposed_pctile(3,1) = unexposed_shock_lt_pctile_probs(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_unexposed_pctile(3,1) = unexposed_cf_lt_pctile_probs(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index))); 
-
-       agg_prob(3, 1) = sum(steady_state(next_start_index:index));
-       
-       
-
-       index = index + 1;
-       next_start_index = index;
-
-       while(cumulative_density < 0.95)
-           cumulative_density = cumulative_density + steady_state(index);
-           index = index + 1;
-       end
-
-       % correct last bit of loop
-       index = index - 1;
-
-       agg_shock_exposed_wg(4,1) = exposed_shockwg(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_exposed_wg(4,1) = exposed_cfwg(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));      
-       agg_shock_unexposed_wg(4,1) = unexposed_shockwg(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_unexposed_wg(4,1) = unexposed_cfwg(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index))); 
-       
-       agg_shock_exposed_awg(4,1) = exposed_shockwg(next_start_index:index, 2)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_exposed_awg(4,1) = exposed_cfwg(next_start_index:index, 2)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));      
-       agg_shock_unexposed_awg(4,1) = unexposed_shockwg(next_start_index:index, 2)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_unexposed_awg(4,1) = unexposed_cfwg(next_start_index:index, 2)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index))); 
-       
-       agg_shock_exposed_pctile(4,1) = exposed_shock_lt_pctile_probs(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_exposed_pctile(4,1) = exposed_cf_lt_pctile_probs(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));      
-       agg_shock_unexposed_pctile(4,1) = unexposed_shock_lt_pctile_probs(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index)));
-       agg_noshock_unexposed_pctile(4,1) = unexposed_cf_lt_pctile_probs(next_start_index:index, 1)' * ...
-           (steady_state(next_start_index:index) ./ sum(steady_state(next_start_index:index))); 
-
-       agg_prob(4, 1) = sum(steady_state(next_start_index:index));
-       
-       
-       index = index + 1;
-       agg_shock_exposed_wg(5,1) = exposed_shockwg(index:end, 1)' * ...
-           (steady_state(index:end) ./ sum(steady_state(index:end)));
-       agg_noshock_exposed_wg(5,1) = exposed_cfwg(index:end, 1)' * ...
-           (steady_state(index:end) ./ sum(steady_state(index:end)));      
-       agg_shock_unexposed_wg(5,1) = unexposed_shockwg(index:end, 1)' * ...
-           (steady_state(index:end) ./ sum(steady_state(index:end)));
-       agg_noshock_unexposed_wg(5,1) = unexposed_cfwg(index:end, 1)' * ...
-           (steady_state(index:end) ./ sum(steady_state(index:end))); 
-       
-       agg_shock_exposed_awg(5,1) = exposed_shockwg(index:end, 2)' * ...
-           (steady_state(index:end) ./ sum(steady_state(index:end)));
-       agg_noshock_exposed_awg(5,1) = exposed_cfwg(index:end, 2)' * ...
-           (steady_state(index:end) ./ sum(steady_state(index:end)));      
-       agg_shock_unexposed_awg(5,1) = unexposed_shockwg(index:end, 2)' * ...
-           (steady_state(index:end) ./ sum(steady_state(index:end)));
-       agg_noshock_unexposed_awg(5,1) = unexposed_cfwg(index:end, 2)' * ...
-           (steady_state(index:end) ./ sum(steady_state(index:end))); 
-       
-       agg_shock_exposed_pctile(5,1) = exposed_shock_lt_pctile_probs(index:end, 1)' * ...
-           (steady_state(index:end) ./ sum(steady_state(index:end)));
-       agg_noshock_exposed_pctile(5,1) = exposed_cf_lt_pctile_probs(index:end, 1)' * ...
-           (steady_state(index:end) ./ sum(steady_state(index:end)));      
-       agg_shock_unexposed_pctile(5,1) = unexposed_shock_lt_pctile_probs(index:end, 1)' * ...
-           (steady_state(index:end) ./ sum(steady_state(index:end)));
-       agg_noshock_unexposed_pctile(5,1) = unexposed_cf_lt_pctile_probs(index:end, 1)' * ...
-           (steady_state(index:end) ./ sum(steady_state(index:end))); 
-
-       agg_prob(5, 1) = sum(steady_state(index:end));
+      
        
        % which outcomes are associated with shocks
        S = [ones(5, 1); zeros(5, 1); ones(5, 1); zeros(5, 1);];
@@ -485,9 +346,10 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                (1 - omega) * ((1 - S))))' * y_vec_pctile;
        end
               
-       state_stuff = [omega * agg_prob', omega * alpha / p_z * agg_prob']';
+       % Compute the E[x * x'] moments needed for the ols formula
+       first_col_off_diag_elems = [omega * agg_prob', omega * alpha / p_z * agg_prob']';
        
-       xtx = [[omega; state_stuff], [state_stuff'; ...
+       xtx = [[omega; first_col_off_diag_elems], [first_col_off_diag_elems'; ...
            [[diag(agg_prob'); ...
            diag(omega * alpha / p_z * agg_prob')],...
            [diag(omega * alpha / p_z * agg_prob'); ...

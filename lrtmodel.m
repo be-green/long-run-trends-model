@@ -66,7 +66,11 @@ v = 1;
 % size of technology shock
 % this implies an asymptotic
 % mean of 1 for the xi process
+
+% TODO: BREAK THIS LINK !!
 kappa = g / omega;
+
+
 % kappa = 0.01;
 % kappa = 0.01;
 
@@ -401,11 +405,18 @@ if make_plots > 0
      title('Weights)')
      
      
+     
+   % scaling factors to convert from one shock units to 1 SD units
+   agg_scale_factor = sqrt(n_periods / 5) * sqrt(omega * (1 - omega));
+   irf_scale_factor = sqrt(n_periods / 5) * sqrt(omega * alpha / p_z * (1 - omega * alpha / p_z));
+     
     names = {'HC Increase Prob', 'Conditional Fall Prob', ...
         'Shock Prob', 'Skilled Share', 'Technology Share', 'Skilled Curvature', ...
-        'Unskilled Curvature', 'DRS Param', 'Bottom Rung', 'P(fall | shock, exposed)'};
+        'Unskilled Curvature', 'DRS Param', 'Bottom Rung', 'P(fall | shock, exposed)',...
+        'kappa','Xi shock size (annualized)','Xi mean','Xi std dev','Human capital loss'};
 
-    all_params = [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0 p_z]';
+    all_params = [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0 p_z, ...
+                  kappa,kappa*agg_scale_factor, xi_star, sqrt(xi_var), hc_loss]';
 
     disp(table(names', all_params))
 end 
