@@ -1,93 +1,100 @@
 function loss = lrtmodel(paramvec, H_inside, make_plots, n_gridpoints)
 
 % transpose for particleswarm
-paramvec = paramvec';
+if nargin < 5
+    paramvec = paramvec';
 
-% 0 is geometric increasing from theta
-% 1 is geometric decreasing from 1
-theta_order = 0;
+    % 0 is geometric increasing from theta
+    % 1 is geometric decreasing from 1
+    theta_order = 0;
 
-% set up variables in accordance w/ our model
+    % set up variables in accordance w/ our model
 
-% param vec = [phi; alpha; omega; rho; sigma;]
+    % param vec = [phi; alpha; omega; rho; sigma;]
 
-% rate of moving up the ladder
-phi = (paramvec(1,:));
-% phi = paramvec(1,:);
+    % rate of moving up the ladder
+    phi = (paramvec(1,:));
+    % phi = paramvec(1,:);
 
-% conditional fall probability
-alpha = (paramvec(2,:));
-% alpha = paramvec(2,:);
+    % conditional fall probability
+    alpha = (paramvec(2,:));
+    % alpha = paramvec(2,:);
 
-lambda = paramvec(9,:);
-mu = paramvec(8,:);
+    lambda = paramvec(9,:);
+    mu = paramvec(8,:);
 
-hc_loss = paramvec(6,:);
+    hc_loss = paramvec(6,:);
 
-% unconditional growth
+    % unconditional growth
 
-% number of iterations associated with a single shock
-% since a shock is 5 years, this corresponds to there being
-% 4 iterations of the VAR a year
-n_periods = 60;
+    % number of iterations associated with a single shock
+    % since a shock is 5 years, this corresponds to there being
+    % 4 iterations of the VAR a year
+    n_periods = 60;
 
-g = exp(log(0.02 + 1) / (n_periods / 5)) - 1;
+    g = exp(log(0.02 + 1) / (n_periods / 5)) - 1;
 
-% death rate
-% corresponds to an average 40 year working life
-delta =  exp(log(0.025 + 0.02 + 1) / (n_periods / 5)) - 1;
+    % death rate
+    % corresponds to an average 40 year working life
+    delta =  exp(log(0.025 + 0.02 + 1) / (n_periods / 5)) - 1;
 
-% arrival rate of technology
-% in this case this is also the probability
-% at period t
-% of state 1 happening in period t + 1
-% these shocks are IID so this is true for both
-% initial states
-omegatalpha = (paramvec(3,:));
-omega = omegatalpha / alpha;
-% omega = paramvec(3,:);
+    % arrival rate of technology
+    % in this case this is also the probability
+    % at period t
+    % of state 1 happening in period t + 1
+    % these shocks are IID so this is true for both
+    % initial states
+    omegatalpha = (paramvec(3,:));
+    omega = omegatalpha / alpha;
+    % omega = paramvec(3,:);
 
-% sigma is outer nest exponent
-% rho is inner nest exponent
-if H_inside == 1
-    sigma = (paramvec(5,:));
-    rho = sigma - (paramvec(4,:));
-else
-    rho = (paramvec(5,:));
-    sigma = rho - (paramvec(4,:));
+    % sigma is outer nest exponent
+    % rho is inner nest exponent
+    if H_inside == 1
+        sigma = (paramvec(5,:));
+        rho = sigma - (paramvec(4,:));
+    else
+        rho = (paramvec(5,:));
+        sigma = rho - (paramvec(4,:));
+    end
+
+    v = 1;
+
+    % rho = 0.25;
+    % sigma = paramvec(5,:);
+    % rho = paramvec(4,:);
+
+    % size of technology shock
+    % this implies an asymptotic
+    % mean of 1 for the xi process
+
+    % TODO: BREAK THIS LINK !!
+    kappa = g / omega;
+
+
+    % kappa = 0.01;
+    % kappa = 0.01;
+
+    % number of theta states
+    % used to approximate continuous density
+
+    % reversed exponential growth per Dimitris
+    % top_grid = - normcdf(paramvec(7,:)) * 5;
+    theta0 = 0.05;
+
+    p_z = exp(paramvec(7,:) + log(alpha)) / (1 + exp(paramvec(7,:) + log(alpha)));
+    if theta_order == 0
+        % growth_rate = paramvec(8,:);
+        % n_gridpoints = floor(-log(theta0) / log(1 + growth_rate));
+        growth_rate = exp((-log(theta0)) / n_gridpoints) - 1;
+        theta_grid = (theta0).*((1 + growth_rate).^(1:(n_gridpoints))); 
+    else 
+        growth_rate = exp((log(theta0)) / n_gridpoints) - 1;
+        theta_grid = 1 - (1.*((1 + growth_rate).^(1:(n_gridpoints))));
+    end
+
 end
 
-v = 1;
-
-% rho = 0.25;
-% sigma = paramvec(5,:);
-% rho = paramvec(4,:);
-
-% size of technology shock
-% this implies an asymptotic
-% mean of 1 for the xi process
-kappa = g / omega;
-% kappa = 0.01;
-% kappa = 0.01;
-
-% number of theta states
-% used to approximate continuous density
-
-% reversed exponential growth per Dimitris
-% top_grid = - normcdf(paramvec(7,:)) * 5;
-theta0 = 0.05;
-
-pz = exp(paramvec(8,:) + log(alpha)) / (1 + exp(paramvec(8,:) + log(alpha)));
-p_z = pz;
-if theta_order == 0
-    % growth_rate = paramvec(8,:);
-    % n_gridpoints = floor(-log(theta0) / log(1 + growth_rate));
-    growth_rate = exp((-log(theta0)) / n_gridpoints) - 1;
-    theta_grid = (theta0).*((1 + growth_rate).^(1:(n_gridpoints))); 
-else 
-    growth_rate = exp((log(theta0)) / n_gridpoints) - 1;
-    theta_grid = 1 - (1.*((1 + growth_rate).^(1:(n_gridpoints))));
-end
 
 % need that single obs for xi
 n_coefs = 1 + n_gridpoints;
@@ -184,7 +191,7 @@ A_1_no_delta_pz = zeros(n_coefs, n_coefs);
 % xi depreciation
 A_1_no_delta_pz(1,1) = 1 - g;
 
-A_1_no_delta_pz(2:end, 2:end) = A_0_no_delta(2:end, 2:end) * (1 - pz);
+A_1_no_delta_pz(2:end, 2:end) = A_0_no_delta(2:end, 2:end) * (1 - p_z);
 
 % transpose for use w/ Bianchi formulas
 % VAR format
@@ -227,9 +234,9 @@ for i = 1:length(new_theta)
        + alpha * lower_fall_weight(i,:)*A_0_no_delta(2:end,i+1);
    
   A_1_no_delta_pz(2:end,upper_fall_index(i,:) + 1) = A_1_no_delta_pz(2:end,upper_fall_index(i,:) + 1)...
-       + pz * upper_fall_weight(i,:)*A_0_no_delta_pz(2:end,i+1);
+       + p_z * upper_fall_weight(i,:)*A_0_no_delta_pz(2:end,i+1);
    A_1_no_delta_pz(2:end,lower_fall_index(i,:) + 1) = A_1_no_delta_pz(2:end,lower_fall_index(i,:) + 1)...
-       + pz * lower_fall_weight(i,:)*A_0_no_delta_pz(2:end,i+1);
+       + p_z * lower_fall_weight(i,:)*A_0_no_delta_pz(2:end,i+1);
 end
 
 % transpose for use w/ Bianchi formulas
@@ -401,11 +408,18 @@ if make_plots > 0
      title('Weights)')
      
      
+     
+   % scaling factors to convert from one shock units to 1 SD units
+   agg_scale_factor = sqrt(n_periods / 5) * sqrt(omega * (1 - omega));
+   irf_scale_factor = sqrt(n_periods / 5) * sqrt(omega * alpha / p_z * (1 - omega * alpha / p_z));
+     
     names = {'HC Increase Prob', 'Conditional Fall Prob', ...
         'Shock Prob', 'Skilled Share', 'Technology Share', 'Skilled Curvature', ...
-        'Unskilled Curvature', 'DRS Param', 'Bottom Rung', 'P(fall | shock, exposed)'};
+        'Unskilled Curvature', 'DRS Param', 'Bottom Rung', 'P(fall | shock, exposed)',...
+        'kappa','Xi shock size (annualized)','Xi mean','Xi std dev','Human capital loss'};
 
-    all_params = [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0 p_z]';
+    all_params = [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0 p_z, ...
+                  kappa,kappa*agg_scale_factor, xi_star, sqrt(xi_var), hc_loss]';
 
     disp(table(names', all_params))
 end 
