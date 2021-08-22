@@ -79,7 +79,8 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        bottom_five = bottom_five + 1;
    end
    
-   bottom_five_wages = wages_by_bin(bottom_five - 1);
+   % max operator is in case of mass points
+   bottom_five_wages = wages_by_bin(max(bottom_five - 1,1));
    
    top_five = size(steady_state,1);
    cumulative_density = 0;
@@ -89,7 +90,8 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        top_five = top_five - 1;
    end
    
-   top_five_wages = wages_by_bin(top_five + 1);
+   % min operator is in case of mass points
+   top_five_wages = wages_by_bin(min(top_five + 1,end));
    
    if calc_irfs > 0
    
