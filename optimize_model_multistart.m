@@ -54,8 +54,10 @@ startvals = sim_with_constraints(nstarts, upper, lower, A, b);
     end
 save('model-output/starting-values.mat', 'startvals')
 
+parse_fcn_name = 'parse_model_params_v1'
+
 % evaluate objective at one, just as a sanity check;
-lrtmodel(startvals(1,:), 0, 1, n_gridpoints)
+lrtmodel(startvals(4,:), 0, 1, n_gridpoints,parse_fcn_name)
 
 sol = zeros(nstarts, length(lower));
 loss = zeros(nstarts, 1);

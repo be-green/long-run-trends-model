@@ -1,4 +1,4 @@
-function loss = lrtmodel(paramvec, H_inside, make_plots, n_gridpoints)
+function loss = lrtmodel(paramvec, H_inside, make_plots, n_gridpoints,parse_fcn_name)
 
 % transpose for particleswarm
 if nargin < 5
@@ -92,7 +92,10 @@ if nargin < 5
         growth_rate = exp((log(theta0)) / n_gridpoints) - 1;
         theta_grid = 1 - (1.*((1 + growth_rate).^(1:(n_gridpoints))));
     end
-
+else
+    eval(['[phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,kappa,theta_grid,theta0] = ', ...
+            parse_fcn_name,'(paramvec,H_inside,n_gridpoints);']);
+    
 end
 
 
@@ -418,7 +421,7 @@ if make_plots > 0
         'Unskilled Curvature', 'DRS Param', 'Bottom Rung', 'P(fall | shock, exposed)',...
         'kappa','Xi shock size (annualized)','Xi mean','Xi std dev','Human capital loss'};
 
-    all_params = [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0 p_z, ...
+    all_params = [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0, p_z, ...
                   kappa,kappa*agg_scale_factor, xi_star, sqrt(xi_var), hc_loss]';
 
     disp(table(names', all_params))
