@@ -236,35 +236,34 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        quantile_targets = [0.25,0.5,0.75,0.95,1];
        
        % calculate wage growth and abs wage growth bins
-       index = 1;
-       next_start_index = 1;
-       cumulative_density = 0;
-       
-       %TODO: we could "split the mass" to have exactly x% in each one of
-       %the bins. This would have the advantage of never blowing up even if
-       %there are mass points in the density. All that would be required is
-       %to do weighted averages in place of raw averages
+       % indexing requires the vector of CDF levels
+       ss_cdf = [cumsum(steady_state)];
        
        for i = 1:length(quantile_targets)
-
-           while(cumulative_density < quantile_targets(i))
-               cumulative_density = cumulative_density + steady_state(index);
-               index = index + 1;
-           end
-
-           % correct last bit of loop (since that corresponds with
-           % something that exceeds the target probability)
-           index = index - 1;
-
-           % compute probability weights that appear in weighted averages
-           bin_indices = next_start_index:index;
-           
-           % compute the mass associated with each one of the grid points
-           % we can make this a weighted sum instead
-           agg_prob(i, 1) = sum(steady_state(bin_indices));
-           
-           pweights = steady_state(bin_indices) ./  agg_prob(i, 1);
-           
+            if i == 1
+                ss_cdf_lb = 0;
+                ql = 0;
+                agg_prob(i,1) = quantile_targets(i);
+            else
+                ss_cdf_lb = max(ss_cdf(ss_cdf <= quantile_targets(i-1)));
+                ql = quantile_targets(i-1);
+                agg_prob(i,1) = quantile_targets(i)-ql;
+            end    
+            ss_cdf_ub = min(ss_cdf(ss_cdf >= quantile_targets(i)));
+            bin_indices = (sum(ss_cdf <= ss_cdf_lb)+1):sum(ss_cdf <= ss_cdf_ub);
+            
+            % next assign weights associated with each of the intervals.
+            % This will be robust to the presence of mass points in the
+            % distributions
+            if length(bin_indices) == 1
+                pweights = 1;
+            else
+                pweights = steady_state(bin_indices);
+                pweights(1) = ss_cdf(bin_indices(1))- ql;
+                pweights(end) = quantile_targets(i)-ss_cdf(bin_indices(end-1));
+                pweights = pweights / sum(pweights);
+            end
+        
            % compute average wage growth 
            agg_shock_exposed_wg(i,1) = exposed_shockwg(bin_indices, 1)' * pweights;
            agg_noshock_exposed_wg(i,1) = exposed_cfwg(bin_indices, 1)' * pweights;      
@@ -283,9 +282,6 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
            agg_shock_unexposed_pctile(i,1) = unexposed_shock_lt_pctile_probs(bin_indices, 1)' * pweights;
            agg_noshock_unexposed_pctile(i,1) = unexposed_cf_lt_pctile_probs(bin_indices, 1)' * pweights; 
 
-
-           index = index + 1;
-           next_start_index = index;
 
        end
       
