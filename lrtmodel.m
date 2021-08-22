@@ -82,7 +82,7 @@ if nargin < 5
     % top_grid = - normcdf(paramvec(7,:)) * 5;
     theta0 = 0.05;
 
-    p_z = exp(paramvec(8,:) + log(alpha)) / (1 + exp(paramvec(8,:) + log(alpha)));
+    p_z = exp(paramvec(7,:) + log(alpha)) / (1 + exp(paramvec(7,:) + log(alpha)));
     if theta_order == 0
         % growth_rate = paramvec(8,:);
         % n_gridpoints = floor(-log(theta0) / log(1 + growth_rate));
