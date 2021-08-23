@@ -1,4 +1,4 @@
-run_number = datestr(datetime);
+run_number = strrep(datestr(datetime), ':', '_');
 
 custom_iter = optimoptions(@fmincon,'MaxIterations',500, 'Display', ...
     'iter', 'FiniteDifferenceType', 'central', 'ScaleProblem', 'obj-and-constr', ...
@@ -8,7 +8,7 @@ n_gridpoints = 80;
 n_periods = 60;
 nstarts = 1000;
 
-parse_fcn_name = 'parse_model_params_v1';
+% parse_fcn_name = 'parse_model_params_v1';
 parse_fcn_name = 'parse_model_params_v2';
 
 if strcmp(parse_fcn_name,'parse_model_params_v1')
