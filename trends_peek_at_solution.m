@@ -22,7 +22,7 @@ for i = 1:1000
         % we want the second line, this gets it
         line = fgetl(fid);
         line = fgetl(fid);
-        fclose(fid)
+        fclose(fid);
         
         eval(line);
         loss = lrtmodel(this_solution, 0, 0, 80, 'parse_model_params_v2');
