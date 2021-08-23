@@ -1,4 +1,4 @@
-function loss = lrtmodel(paramvec, H_inside, make_plots, n_gridpoints)
+function loss = lrtmodel(paramvec, H_inside, make_plots, n_gridpoints,parse_fcn_name)
 
 % transpose for particleswarm
 if nargin < 5
@@ -92,7 +92,11 @@ if nargin < 5
         growth_rate = exp((log(theta0)) / n_gridpoints) - 1;
         theta_grid = 1 - (1.*((1 + growth_rate).^(1:(n_gridpoints))));
     end
-
+    xi_constant = 0;
+else
+    eval(['[phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,kappa,theta_grid,theta0,xi_constant] = ', ...
+            parse_fcn_name,'(paramvec,H_inside,n_gridpoints);']);
+    
 end
 
 
@@ -262,8 +266,8 @@ A_1_no_delta_pz = A_1_no_delta_pz';
 A_0_tilde = A_0(1:(end-1),1:(end-1));
 A_1_tilde = A_1(1:(end-1),1:(end-1));
 
-c_0_tilde = [0; A_0(2:end-1,end)];
-c_1_tilde = [kappa; A_1(2:end-1,end)];
+c_0_tilde = [xi_constant; A_0(2:end-1,end)];
+c_1_tilde = [kappa+xi_constant; A_1(2:end-1,end)];
 
 A_0_tilde(2:end,2:end) = A_0_tilde(2:end,2:end)- repmat(c_0_tilde(2:end,1),1,size(c_0_tilde,1)-1);
 A_1_tilde(2:end,2:end) = A_1_tilde(2:end,2:end)- repmat(c_1_tilde(2:end,1),1,size(c_1_tilde,1)-1);
@@ -273,8 +277,8 @@ A_1_tilde(2:end,2:end) = A_1_tilde(2:end,2:end)- repmat(c_1_tilde(2:end,1),1,siz
 A_0_tilde_no_delta = A_0_no_delta(1:(end-1),1:(end-1));
 A_1_tilde_no_delta = A_1_no_delta(1:(end-1),1:(end-1));
 
-c_0_tilde_no_delta = [0; A_0_no_delta(2:end-1,end)];
-c_1_tilde_no_delta = [kappa; A_1_no_delta(2:end-1,end)];
+c_0_tilde_no_delta = [xi_constant; A_0_no_delta(2:end-1,end)];
+c_1_tilde_no_delta = [kappa+xi_constant; A_1_no_delta(2:end-1,end)];
 
 A_0_tilde_no_delta(2:end,2:end) = A_0_tilde_no_delta(2:end,2:end)- repmat(c_0_tilde_no_delta(2:end,1),1,...
     size(c_0_tilde_no_delta,1)-1);
@@ -286,8 +290,8 @@ A_1_tilde_no_delta(2:end,2:end) = A_1_tilde_no_delta(2:end,2:end)- repmat(c_1_ti
 A_0_tilde_no_delta_pz = A_0_no_delta_pz(1:(end-1),1:(end-1));
 A_1_tilde_no_delta_pz = A_1_no_delta_pz(1:(end-1),1:(end-1));
 
-c_0_tilde_no_delta_pz = [0; A_0_no_delta_pz(2:end-1,end)];
-c_1_tilde_no_delta_pz = [kappa; A_1_no_delta_pz(2:end-1,end)];
+c_0_tilde_no_delta_pz = [xi_constant; A_0_no_delta_pz(2:end-1,end)];
+c_1_tilde_no_delta_pz = [kappa+xi_constant; A_1_no_delta_pz(2:end-1,end)];
 
 A_0_tilde_no_delta_pz(2:end,2:end) = A_0_tilde_no_delta_pz(2:end,2:end)- ...
     repmat(c_0_tilde_no_delta_pz(2:end,1),1,size(c_0_tilde_no_delta_pz,1)-1);
@@ -416,10 +420,10 @@ if make_plots > 0
     names = {'HC Increase Prob', 'Conditional Fall Prob', ...
         'Shock Prob', 'Skilled Share', 'Technology Share', 'Skilled Curvature', ...
         'Unskilled Curvature', 'DRS Param', 'Bottom Rung', 'P(fall | shock, exposed)',...
-        'kappa','Xi shock size (annualized)','Xi mean','Xi std dev','Human capital loss'};
+        'kappa','Xi intercept','Xi shock size (annualized)','Xi mean','Xi std dev','Human capital loss'};
 
-    all_params = [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0 p_z, ...
-                  kappa,kappa*agg_scale_factor, xi_star, sqrt(xi_var), hc_loss]';
+    all_params = [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0, p_z, ...
+                  kappa,xi_constant,kappa*agg_scale_factor, xi_star, sqrt(xi_var), hc_loss]';
 
     disp(table(names', all_params))
 end 

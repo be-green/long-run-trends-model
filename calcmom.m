@@ -248,12 +248,17 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                 agg_prob(i,1) = quantile_targets(i);
             else
                 ss_cdf_lb = max(ss_cdf(ss_cdf <= quantile_targets(i-1)));
+                % need to handle possibility that first point has a ton of
+                % mass on it...
+                if isempty(ss_cdf_lb)
+                    ss_cdf_lb = 0;
+                end
                 ql = quantile_targets(i-1);
                 agg_prob(i,1) = quantile_targets(i)-ql;
             end    
             ss_cdf_ub = min(ss_cdf(ss_cdf >= quantile_targets(i)));
             bin_indices = (sum(ss_cdf <= ss_cdf_lb)+1):sum(ss_cdf <= ss_cdf_ub);
-            
+           
             % next assign weights associated with each of the intervals.
             % This will be robust to the presence of mass points in the
             % distributions
