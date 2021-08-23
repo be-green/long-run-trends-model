@@ -32,14 +32,14 @@ bineq = [bineq;dlogtheta_ub];
 Aineq = [Aineq; growth_rate, 0, -1, 0, 0, 0, 0, 0, 0, 0];
 
 % d = paramvec(3) / (alpha * omega). So if we want d >= min_d, that is isomorphic to
-% having alpha * omega * min_d >= paramvec(3), so paramvec(3) -alpha * omega * min_d <= 0
+% having alpha * omega * min_d <= paramvec(3), so -paramvec(3) +alpha * omega * min_d <= 0
 bineq = [bineq;0];
-Aineq = [Aineq; 0, -min_d * omega, 1, 0, 0, 0, 0, 0, 0, 0];
+Aineq = [Aineq; 0, min_d * omega, -1, 0, 0, 0, 0, 0, 0, 0];
 
-% d = paramvec(3) / alpha. So if we want d <= max_d, that is isomorphic to
-% having alpha * max_d <= paramvec(3), so alpha * min_d - paramvec(3) >= 0
+% d = paramvec(3) / (alpha * omega). So if we want d <= max_d, that is isomorphic to
+% having (alpha * omega) * max_d >= paramvec(3), so -(alpha * omega) * min_d + paramvec(3) <= 0
 bineq = [bineq;0];
-Aineq = [Aineq; 0, max_d * omega, -1, 0, 0, 0, 0, 0, 0, 0];
+Aineq = [Aineq; 0, -max_d * omega, 1, 0, 0, 0, 0, 0, 0, 0];
 
 
 % set bounds on kappa to restrict that the mean of xi isn't insanely high...
@@ -48,12 +48,12 @@ xi_mean_lb = 0.2;
 xi_mean_ub = 5;
 
 % only do upper bound for now?
-bineq = [bineq;xi_mean_ub];
-Aineq = [Aineq; 0, 0, 0, 0, 0, 1/g, 0, 0, 0, 1/g];
+bineq = [bineq;xi_mean_ub*g];
+Aineq = [Aineq; 0, 0, 0, 0, 0, omega, 0, 0, 0, 1];
 
 % Adding the lower bound. Only do upper bound for now?
-bineq = [bineq;-xi_mean_lb];
-Aineq = [Aineq; 0, 0, 0, 0, 0, -1/g, 0, 0, 0, -1/g];
+bineq = [bineq;-xi_mean_lb*g];
+Aineq = [Aineq; 0, 0, 0, 0, 0, -omega, 0, 0, 0, -1];
 
 % standard deviation is also linear in kappa. Can impose that it's not huge
 % relative to the mean of xi. But won't do this for now...
@@ -61,20 +61,21 @@ Aineq = [Aineq; 0, 0, 0, 0, 0, -1/g, 0, 0, 0, -1/g];
 
 lower = [0.001, ... phi
     0.005, ... alpha
-    1/360, ... d * omega * alpha (omega = 1 per year)
+    1/12*0.005*min_d, ... d * omega * alpha (omega = 1 per year)
     0.25, ... H diff from L (curvature exponent)
     0,   ... L curvature exponent
-    xi_mean_lb * omega * g, ... size of xi jump kappa
+    xi_mean_lb / omega * g, ... size of xi jump kappa
     0.1, ... a (for p_z log odds)
     0.001, ... lambda
     0.001,... % mu
     0]; % xi intercept
-upper = [0.3, ... % phi
+
+upper = [0.4, ... % phi
          0.7,  ... % alpha
-         1/12, ...    % d * omega * alpha (omega = 1 per year)
+         1/12*0.7*max_d/4, ...    % d * omega * alpha (omega = 1 per year)
          3, ...H diff from L (curvature exponent)
-         0.75,    ...L curvature exponent
-         xi_mean_ub * omega * g, ... size of xi jump
+         0.85,    ...L curvature exponent
+         (xi_mean_ub -0.1) / omega * g, ... size of xi jump
          5, ... a (for p_z log odds)
          0.999, ... lamba
          0.999,....% mu

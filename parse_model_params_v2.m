@@ -77,7 +77,7 @@ alpha = (paramvec(2,:));
 % of state 1 happening in period t + 1
 % these shocks are IID so this is true for both
 % initial states
-omega = 5/n_periods; %fixing this ex ante in this round
+omega = 5/n_periods; %fixing this ex ante in this round (1x / year)
 
 d_x_omega_x_alpha = (paramvec(3,:));
 d = d_x_omega_x_alpha / (alpha * omega);
@@ -106,6 +106,9 @@ mu = paramvec(8,:); % outer nest
 
 % DRS parameter. Fixed at the start
 v = 1;
+
+% intercept on xi in the VAR;
+xi_constant = paramvec(10,:);
 
 % setting up theta grid
 theta0 = 0.05;
