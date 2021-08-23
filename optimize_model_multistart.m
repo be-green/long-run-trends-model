@@ -4,60 +4,29 @@ custom_iter = optimoptions(@fmincon,'MaxIterations',500, 'Display', ...
 
 n_gridpoints = 80;
 n_periods = 60;
+nstarts = 1000;
 
-g = exp(log(0.02 + 1) / (n_periods / 5)) - 1;
-% death rate
-% corresponds to an average 40 year working life
-delta =  exp(log(0.025 + 0.02 + 1) / (n_periods / 5)) - 1;
-delta = delta + g;
-top_density_rho_const = 0.02^(1/n_gridpoints);
+parse_fcn_name = 'parse_model_params_v1';
+parse_fcn_name = 'parse_model_params_v2';
 
-% 0 >= omega * alpha - alpha
-b = 0;
-A = [0, -1, 1, 0, 0, 0, 0, 0, 0];
-
-% top gridpoint has < 2% of the total mass
-% implies top density rho constraint 
-b = [b; -top_density_rho_const * delta];
-A = [A; [(top_density_rho_const - 1), 0, top_density_rho_const, 0, 0, 0, 0, 0, 0]];
-
-% bottom gridpoint has < 10% of the total mass
-% implies botom density constraint , where
-% -0.9 delta >= 0.9 alpha * omega - 0.1 * phi
-b = [b; -0.9 * delta];
-A = [A; [-0.1, 0, 0.9, 0, 0, 0, 0, 0, 0]];
-
-lower = [0.001, ... phi
-    0.005, ... alpha
-    1/360, ... omega * alpha
-    0.25, ... H diff from L (curvature exponent)
-    0,   ... L curvature exponent
-    0.01, ... percent human capital loss
-    0.1, ... a (for p_z log odds)
-    0.001, ... lambda
-    0.001]; % mu
-upper = [0.3, ... % phi
-         0.7,  ... % alpha
-         1/12, ...    % omega
-         3, ...H diff from L (curvature exponent)
-         0.75,    ...L curvature exponent
-         0.99, ... percent human capital loss
-         5, ... a (for p_z log odds)
-         0.999, ... lamba
-         0.999]; % mu
-
-nstarts = 10;
+if strcmp(parse_fcn_name,'parse_model_params_v1')
+    [ upper, lower, Aineq, bineq] = build_constraints_v1(n_periods,n_gridpoints);
+elseif strcmp(parse_fcn_name,'parse_model_params_v2')
+    [ upper, lower, Aineq, bineq] = build_constraints_v2(n_periods,n_gridpoints);
+else
+    error('Parse function not coded yet!')
+end     
+     
 % TODO: could check that objective function doesn't error at starting vals
-startvals = sim_with_constraints(nstarts, upper, lower, A, b);
+startvals = sim_with_constraints(nstarts, upper, lower, Aineq, bineq, parse_fcn_name);
     if ~exist('./model-output', 'dir')
        mkdir('./model-output')
     end
 save('model-output/starting-values.mat', 'startvals')
 
-parse_fcn_name = 'parse_model_params_v1'
 
 % evaluate objective at one, just as a sanity check;
-lrtmodel(startvals(4,:), 0, 1, n_gridpoints,parse_fcn_name)
+lrtmodel(startvals(1,:), 0, 1, n_gridpoints,parse_fcn_name)
 
 sol = zeros(nstarts, length(lower));
 loss = zeros(nstarts, 1);
@@ -66,7 +35,7 @@ exitflg = zeros(nstarts, 1);
 parfor i = 1:nstarts
    [this_solution, this_loss, this_exit] = fmincon(@(x) lrtmodel(x, 0, 0, n_gridpoints), ...
                                     startvals(i,:), ...
-                                    A, b, [], [], ...
+                                    Aineq, bineq, [], [], ...
                                     lower, ...
                                     upper,...
                                     [],custom_iter);

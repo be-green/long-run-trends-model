@@ -1,5 +1,5 @@
 function [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,kappa,theta_grid,theta0,xi_constant] = ...
-          parse_model_params_v1(paramvec,H_inside,n_gridpoints)
+          parse_model_params_v2(paramvec,H_inside,n_gridpoints)
 % [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,kappa,theta_grid,theta0] = ...
 %  parse_model_params_v1(paramvec,H_inside,n_gridpoints)
 % INPUTS:
@@ -7,14 +7,15 @@ function [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,ka
 %        (1): phi, the rate at which skilled workers move up the grid
 %        (2): alpha, the probability of being displaced, given an
 %             innovation arrives
-%        (3): omegatalpha, alpha x omega (arrival rate of new innovations)
+%        (3): expected_hc_loss, d * alpha x omega (arrival rate of new innovations)
 %        (4): CES parameter on L - CES parameter on H
 %        (5): CES parameter on L 
-%        (6): hc_loss, workers lose hc_loss*theta if displaced
+%        (6): kappa, size of jump in xi
 %        (7): a, log odds ratio capturing higher probability of exposed
 %             workers being displaced
 %        (8): mu, parameter on labor in outer nest
 %        (9): lambda, parameter on labor in inner nest
+%       (10): xi_constant
 %   - H_inside: dummy to indicate whether H is in the inner nest
 %   - n_gridpoints: number of gridpoints to use for theta grid 
 %
@@ -76,8 +77,11 @@ alpha = (paramvec(2,:));
 % of state 1 happening in period t + 1
 % these shocks are IID so this is true for both
 % initial states
-omegatalpha = (paramvec(3,:));
-omega = omegatalpha / alpha;
+omega = 5/n_periods; %fixing this ex ante in this round
+
+d_x_omega_x_alpha = (paramvec(3,:));
+d = d_x_omega_x_alpha / (alpha * omega);
+hc_loss = exp(-d);
 % omega = paramvec(3,:);
 
 % sigma is outer nest exponent
@@ -91,7 +95,7 @@ else
 end
 
 % loss in human capital. Right now this is exp(-d) times prior theta level
-hc_loss = paramvec(6,:);
+kappa = paramvec(6,:);
 
 % should this be paramvec(7:,)? ;
 p_z = exp(paramvec(7,:) + log(alpha)) / (1 + exp(paramvec(7,:) + log(alpha)));
@@ -100,14 +104,8 @@ p_z = exp(paramvec(7,:) + log(alpha)) / (1 + exp(paramvec(7,:) + log(alpha)));
 lambda = paramvec(9,:); % inner nest
 mu = paramvec(8,:); % outer nest
 
-
-
 % DRS parameter. Fixed at the start
 v = 1;
-
-% TODO: BREAK THIS LINK !!
-kappa = g / omega;
-
 
 % setting up theta grid
 theta0 = 0.05;
@@ -121,5 +119,3 @@ else
     growth_rate = exp((log(theta0)) / n_gridpoints) - 1;
     theta_grid = 1 - (1.*((1 + growth_rate).^(1:(n_gridpoints))));
 end
-
-xi_constant = 0; % pinned to zero for now
