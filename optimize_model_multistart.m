@@ -35,7 +35,7 @@ loss = zeros(nstarts, 1);
 exitflg = zeros(nstarts, 1);
 
 parfor i = 1:nstarts
-   [this_solution, this_loss, this_exit] = fmincon(@(x) lrtmodel(x, 0, 0, n_gridpoints), ...
+   [this_solution, this_loss, this_exit] = fmincon(@(x) lrtmodel(x, 0, 0, n_gridpoints, parse_fcn_name), ...
                                     startvals(i,:), ...
                                     Aineq, bineq, [], [], ...
                                     lower, ...
@@ -56,13 +56,14 @@ parfor i = 1:nstarts
     
     
     fid = fopen([outdir, '/publishcode.m'], 'wt');
+    fprintf(fid, ['parse_fcn_name = [',num2str(parse_fcn_name),'];\n' ]);
     fprintf(fid, ['this_solution = [',num2str(this_solution),'];\n' ]);
     fprintf(fid, ['n_gridpoints = [',num2str(n_gridpoints),'];\n' ]);
-    fprintf(fid, 'lrtmodel(this_solution, 0, 1, n_gridpoints);');
+    fprintf(fid, 'lrtmodel(this_solution, 0, 1, n_gridpoints, parse_fcn_name);');
     fclose(fid);
     
     addpath(outdir);
-    publish([outdir, '/publishcode.m'], theseoptions)
+    % publish([outdir, '/publishcode.m'], theseoptions)
 
     parsave(['./model-output/model-run-number',num2str(i),'/runfeedback.mat'],...
         this_solution, this_exit,this_loss);
