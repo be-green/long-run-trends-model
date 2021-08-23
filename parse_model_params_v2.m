@@ -81,7 +81,7 @@ omega = 5/n_periods; %fixing this ex ante in this round (1x / year)
 
 d_x_omega_x_alpha = (paramvec(3,:));
 d = d_x_omega_x_alpha / (alpha * omega);
-hc_loss = exp(-d);
+hc_loss = 1-exp(-d);
 % omega = paramvec(3,:);
 
 % sigma is outer nest exponent
