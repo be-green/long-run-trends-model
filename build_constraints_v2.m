@@ -16,7 +16,7 @@ growth_rate = exp((-log(theta0)) / n_gridpoints) - 1;
 dlogtheta_lb = 0.1 * delta; % expected level of HC at end of career is 0.1;
 
 % set lower bound on expected human capital growth
-dlogtheta_ub = 0.6 * delta; % expected level of HC at end of career is 0.6;
+dlogtheta_ub = 2 * delta; % expected level of HC at end of career is 0.6;
 
 % set upper/lower bound on the implied human capital loss
 min_d = 0.05;
