@@ -1,3 +1,5 @@
+run_number = datestr(datetime);
+
 custom_iter = optimoptions(@fmincon,'MaxIterations',500, 'Display', ...
     'iter', 'FiniteDifferenceType', 'central', 'ScaleProblem', 'obj-and-constr', ...
     'HessianApproximation', 'lbfgs');
@@ -19,8 +21,8 @@ end
      
 % TODO: could check that objective function doesn't error at starting vals
 startvals = sim_with_constraints(nstarts, upper, lower, Aineq, bineq, parse_fcn_name);
-    if ~exist('./model-output', 'dir')
-       mkdir('./model-output')
+    if ~exist(['./model-output_',run_number], 'dir')
+       mkdir(['./model-output_',run_number])
     end
 save('model-output/starting-values.mat', 'startvals')
 
@@ -43,7 +45,7 @@ parfor i = 1:nstarts
     loss(i,:) = this_loss;
     exitflg(i,:) = this_exit;
     
-    outdir = ['./model-output/model-run-number',num2str(i)];
+    outdir = [['./model-output_',run_number],'/model-run-number',num2str(i)];
     
     if ~exist(outdir, 'dir')
        mkdir(outdir)
