@@ -460,6 +460,124 @@ labels = categorical(1:36, 1:36, {'Labor Share', 'Wage Ratio','Output IRF','LSha
 figure(4)
 bar(labels', loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
 title('Weighted Percent Loss Contribution')
+
+   H_star = theta_grid * steady_state;
+   L_star = 1 - H_star;
+   
+   % TODO: should we incorporate the constants for kappa more explicitly? 
+   shock_vars = A_1 * [xi_star; steady_state];
+   
+   xi_shock = shock_vars(1) + c_1_tilde(1);
+   shock_state = shock_vars(2:end);
+
+   % steady state production values
+   X_star = calc_X(xi_star, H_star, L_star, lambda, rho, H_inside);
+   Y_star = calc_Y(H_star, L_star, X_star, mu, sigma, v, H_inside);
+
+   % high and low wages at steady state
+   high_wage = w_h(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
+   low_wage = w_l(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
+   H = zeros(n_periods + 1, 1);
+   L = zeros(n_periods + 1, 1);
+   xi = zeros(n_periods + 1, 1);
+   
+   wh = zeros(n_periods + 1, 1);
+   wl = zeros(n_periods + 1, 1);
+   
+   X = zeros(n_periods + 1, 1);
+   Y = zeros(n_periods + 1, 1);
+   
+   
+   lshare = zeros(n_periods + 1, 1);
+   
+   H(1) = H_star;
+   L(1) = L_star;
+   xi(1) = xi_star;
+   wh(1) = high_wage;
+   wl(1) = low_wage;
+   lshare(1) = (H(1) * wh(1) + L(1) * wl(1)) / Y_star;
+   
+   H(2) = theta_grid * shock_state;
+   L(2) = 1 - H(2);
+   xi(2) = xi_shock;
+   wh(2) = w_h(H(2), L(2), xi(2), rho, sigma, mu, lambda, v, H_inside);
+   wl(2) = w_l(H(2), L(2), xi(2), rho, sigma, mu, lambda, v, H_inside);
+   X_shock = calc_X(xi(2), H(2), L(2), lambda, rho, H_inside);
+   Y_shock = calc_Y(H(2), L(2), X_shock, mu, sigma, v, H_inside);
+   lshare(2) = (H(2) * wh(2) + L(2) * wl(2)) / Y_shock;
+   
+   X(1) = X_star;
+   Y(1) = Y_star;
+   
+   X(2) = X_shock;
+   Y(2) = Y_shock;
+   
+   
+   shock_vec = [xi_shock; shock_state(1:(end - 1))];
+   for i=1:(n_periods - 1)
+       shock_vec = (1 - omega) * (A_0_tilde * shock_vec + c_0_tilde) + ...
+           omega  * (A_1_tilde * shock_vec + c_1_tilde);
+          
+       xi(i + 2) = shock_vec(1,:);
+       shock_state = shock_vec(2:end,:);
+
+       shock_vec_for_calcs = [shock_state; 1 - sum(shock_state)];
+
+       H(i + 2) = theta_grid * shock_vec_for_calcs;
+       L(i + 2) = 1 - H(i + 2);
+
+       % shock state production values
+       X(i + 2) = calc_X(xi(i + 2),H(i + 2), L(i + 2), lambda, rho, H_inside);
+       Y(i + 2) = calc_Y(H(i + 2), L(i + 2), X(i + 2), mu, sigma, v, H_inside);
+
+
+       % high and low wages at shock state
+       wh(i + 2) = w_h(H(i + 2), L(i + 2), xi(i + 2), rho, sigma, mu, lambda, v, H_inside);
+       wl(i + 2) = w_l(H(i + 2), L(i + 2), xi(i + 2), rho, sigma, mu, lambda, v, H_inside);
+       lshare(i + 2) = (H(i + 2) * wh(i + 2) + L(i + 2) * wl(i + 2)) / Y(i + 2);
+
+   end
+   
+figure(5)
+subplot(3,3,1);
+plot([0, (1:n_periods)./4]', (wh(1:end)./wh(1) - 1)/irf_scale_factor, '.-')
+title("High Wage")
+
+subplot(3,3,2); 
+plot([0, (1:n_periods)./4]', (wl(1:end)./wl(1) - 1)/irf_scale_factor, '.-')
+title("Low Wage")
+
+subplot(3,3,3);
+plot([0, (1:n_periods)./4]', (L(1:end)./L(1) - 1)/irf_scale_factor, '.-')
+title("L Skill Level")
+
+subplot(3,3,4); 
+plot([0, (1:n_periods)./4]', (H(1:end)./H(1) - 1)/irf_scale_factor, '.-')
+title("H Skill Level")
+
+subplot(3,3,5); 
+plot([0, (1:n_periods)./4]', (xi(1:end)./xi(1) - 1)/irf_scale_factor, '.-')
+title("Technology Level")
+
+wage_diff = wh - wl;
+subplot(3,3,6); 
+plot([0, (1:n_periods)./4]', (wage_diff(1:end)./wage_diff(1) - 1)/irf_scale_factor, '.-')
+title("High Wage - Low Wage")
+
+subplot(3,3,7);
+plot([0, (1:n_periods)./4]', (lshare(1:end)./lshare(1) - 1)/irf_scale_factor, '.-')
+title("Labor Share")
+
+subplot(3,3,8); 
+plot([0, (1:n_periods)./4]', (X(1:end)./X(1) - 1)/irf_scale_factor, '.-')
+title("Composite Good")
+
+subplot(3,3,9); 
+plot([0, (1:n_periods)./4]', (Y(1:end)./Y(1) - 1)/irf_scale_factor, '.-')
+title("Output Level")
+
+
+
 end
 if any(isnan(loss_vec) | ~isreal(loss_vec))
     loss = 1e16;
