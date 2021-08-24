@@ -1,10 +1,10 @@
-timestamp = '23-Aug-2021 11_14_09';
+timestamp = '23-Aug-2021 21_56_44';
 function_vals = [];
 sols = [];
+exit_flags = [];
 
-for i = 1:1000
+for i = 1:1500
    try
-       i
        % this should have worked but there was a bug
        % this wil be a lot faster after we fix it
 %       load(['./model-output/model-run-number',num2str(i),'/runfeedback.mat']) 
@@ -14,20 +14,23 @@ for i = 1:1000
        close all     
        % so we can hack it by running publish code
         outdir = ['./model-output_',timestamp, '/model-run-number',num2str(i)];
-        addpath(outdir);
+%         addpath(outdir);
         
-        fid = fopen([outdir, '/publishcode.m']);
-        % we want the second line, this gets it
-        line = fgetl(fid);
-        line = fgetl(fid);
-        fclose(fid);
-        
-        eval(line);
-        loss = lrtmodel(this_solution, 0, 0, 80, 'parse_model_params_v2');
+        load([outdir,'/runfeedback.mat'])
+%         fid = fopen([outdir, '/publishcode.m']);
+%         % we want the second line, this gets it
+%         line = fgetl(fid);
+%         line = fgetl(fid);
+%         fclose(fid);
+%         
+%         eval(line);
+%         loss = lrtmodel(this_solution, 0, 0, 80, 'parse_model_params_v2');
         
         function_vals = [function_vals; i, loss];
-        sols = [sols; this_solution];
+        sols = [sols; sol];
+        exit_flags = [exit_flags;exit];
         rmpath(outdir);
+        clear loss sol exit
    catch    
    end 
 end    
@@ -75,7 +78,8 @@ for j = 1:5
     if exist([publishpath, '/publishcode.pdf'])
         delete [publishpath, '/publishcode.pdf'];
     end
-    theseoptions = struct('showCode', false, 'format','pdf','outputDir',publishpath);
+    theseoptions = struct('showCode', false, 'format','pdf','outputDir',publishpath,...
+                           'codeToEvaluate','parse_model_params_v2 = ''parse_model_params_v2'';');
 
     publish([publishpath, '/publishcode.m'], theseoptions);
     rmpath(publishpath);
@@ -88,8 +92,19 @@ for j = 1:5
 
 end    
 
+close all
+hist(function_vals(function_vals(:,2) < 1000,2),50)
+
+% looking at dispersion in alpha across the solutions
+scatter(function_vals(function_vals(:,2) < 500,2),sols(function_vals(:,2) < 500,2))
+
+scatter(function_vals(function_vals(:,2) < 500,2),sols(function_vals(:,2) < 500,3))
+
 
 close all
 
 % regenerate output for best solution
-lrtmodel(top_sols(1,:), 0, 1, n_gridpoints);
+n_gridpoints=80;
+trial = top_sols(1,:);
+trial(6) = trial(6)*10;
+lrtmodel(trial, 0, 1, n_gridpoints, 'parse_model_params_v2');
