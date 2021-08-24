@@ -56,7 +56,7 @@ parfor i = 1:nstarts
     
     
     fid = fopen([outdir, '/publishcode.m'], 'wt');
-    fprintf(fid, ['parse_fcn_name = [',num2str(parse_fcn_name),'];\n' ]);
+    fprintf(fid, ["parse_fcn_name = ['",num2str(parse_fcn_name),"'];\n" ]);
     fprintf(fid, ['this_solution = [',num2str(this_solution),'];\n' ]);
     fprintf(fid, ['n_gridpoints = [',num2str(n_gridpoints),'];\n' ]);
     fprintf(fid, 'lrtmodel(this_solution, 0, 1, n_gridpoints, parse_fcn_name);');
@@ -65,7 +65,7 @@ parfor i = 1:nstarts
     addpath(outdir);
     % publish([outdir, '/publishcode.m'], theseoptions)
 
-    parsave(['./model-output/model-run-number',num2str(i),'/runfeedback.mat'],...
+    parsave(['./model-output_',run_number, '/model-run-number' ,num2str(i),'/runfeedback.mat'],...
         this_solution, this_exit,this_loss);
     close all
 end
