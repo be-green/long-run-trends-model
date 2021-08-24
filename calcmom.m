@@ -378,7 +378,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        
    if make_plots > 0
        
-      figure(6)
+      figure
       
       
       subplot(2, 1, 1);
@@ -395,7 +395,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
           'Orientation', 'horizontal');
       title("Diff Coefs")
       
-      figure(7)
+      figure
       subplot(2, 1, 1);
       bar([agg_shock_exposed_wg - agg_noshock_exposed_wg - ...
           (agg_shock_unexposed_wg - agg_noshock_unexposed_wg)]);
@@ -424,7 +424,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    
    if make_plots > 0
        
-      figure(5)
+      figure
       theta_plot_x_axis = (high_wage * theta_grid + (low_wage) * (1 - theta_grid) ) ./ ...
           ((low_wage * (1 - min(theta_grid))) + high_wage * min(theta_grid));
       plot(cumsum(steady_state), theta_plot_x_axis, "-o");
