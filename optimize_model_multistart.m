@@ -1,12 +1,13 @@
 run_number = strrep(datestr(datetime), ':', '_');
-
+addpath('/home/software/knitro/12.0.0')
+addpath('/home/software/knitro/12.0.0/knitromatlab')
 custom_iter = optimoptions(@fmincon,'MaxIterations',500, 'Display', ...
     'iter', 'FiniteDifferenceType', 'central', 'ScaleProblem', 'obj-and-constr', ...
     'HessianApproximation', 'lbfgs');
 
 n_gridpoints = 80;
 n_periods = 60;
-nstarts = 1000;
+nstarts = 100;
 
 parse_fcn_name = 'parse_model_params_v3';
 
@@ -36,12 +37,12 @@ loss = zeros(nstarts, 1);
 exitflg = zeros(nstarts, 1);
 
 parfor i = 1:nstarts
-   [this_solution, this_loss, this_exit] = fmincon(@(x) lrtmodel(x, 0, 0, n_gridpoints, parse_fcn_name), ...
+   [this_solution, this_loss, this_exit] = knitromatlab(@(x) lrtmodel(x, 0, 0, n_gridpoints, parse_fcn_name), ...
                                     startvals(i,:), ...
                                     Aineq, bineq, [], [], ...
                                     lower, ...
                                     upper,...
-                                    [],custom_iter);
+                                    []);
     sol(i,:) = this_solution;
     loss(i,:) = this_loss;
     exitflg(i,:) = this_exit;
