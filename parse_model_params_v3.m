@@ -104,6 +104,7 @@ lambda = paramvec(9,:); % inner nest
 mu = paramvec(8,:); % outer nest
 
 g = paramvec(11, :);
+g = exp(log(g + 1) / (n_periods / 5)) - 1;
 
 % DRS parameter. Fixed at the start
 v = 1;

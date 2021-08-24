@@ -323,7 +323,7 @@ wtilde = [w, zeros((n_coefs-1),2)];
 qtilde = [q; piVec];
 
 steady_state = [mu_ss(2:(n_coefs-1)); 1 - sum(mu_ss(2:end))];
-figure(1)
+figure
 plot(theta_grid,steady_state)
 % steady state values
 H_star = theta_grid * steady_state;
@@ -403,7 +403,7 @@ loss_vec = (theor_mom - emp_mom) ./ (0.01 + abs(emp_mom)) .* weight_vec;
 % [emp_mom, theor_mom]
 
 if make_plots > 0
-   figure(2)
+   figure
    momlabels = categorical(1:31, 1:31, {'Labor Share', 'Wage Ratios', 'Output IRF','LShare IRF',...
           'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
            'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]',...
@@ -415,11 +415,11 @@ if make_plots > 0
       bar(momlabels(3:14)', [theor_mom([3:4, 8:(17)]), emp_mom([3:4, 8:(17)])])
      title('Moment Matching (excluding signs & levels)')
      
-     figure(1)
+     figure
      bar(momlabels(1:2)', [theor_mom(1:2), emp_mom(1:2)])
      title('Labor Share & Wage Ratio')
      
-     figure(3)
+     figure
      bar(momlabels(1:end)', weight_vec([1:4, 8:end]).^2)
      title('Weights)')
      
@@ -457,7 +457,7 @@ labels = categorical(1:36, 1:36, {'Labor Share', 'Wage Ratio','Output IRF','LSha
      'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]',...
      'Bottom Density Penalty', 'Top Density Penalty'}, 'Ordinal',true);
 
-figure(4)
+figure
 bar(labels', loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
 title('Weighted Percent Loss Contribution')
 
@@ -538,7 +538,7 @@ title('Weighted Percent Loss Contribution')
 
    end
    
-figure(5)
+figure
 subplot(3,3,1);
 plot([0, (1:n_periods)./4]', (wh(1:end)./wh(1) - 1)*agg_scale_factor, '.-')
 title("High Wage")
