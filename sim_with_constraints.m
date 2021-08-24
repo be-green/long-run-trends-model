@@ -100,7 +100,7 @@ elseif strcmp(parse_fcn_name,'parse_model_params_v2')
            % xi_constant_u = min(abs(bineq(5)) - sims(i,6)*abs(Aineq(5,6)),upper(10));
            % sims(i, 10) = unifrnd(xi_constant_l, xi_constant_u);
            
-           if max(isnan(sims(i,:))) == 0 && xi_constant_l <= xi_constant_u && ...
+           if max(isnan(sims(i,:))) == 0 && ...
               phi_l <= phi_u && alpha_l <= alpha_u
                 solution_found = 1;
            end
