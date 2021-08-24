@@ -1,6 +1,6 @@
 run_number = strrep(datestr(datetime), ':', '_');
 
-custom_iter = optimoptions(@fmincon,'MaxIterations',500, 'Display', ...
+custom_iter = optimoptions(@fmincon,'MaxIterations',5, 'Display', ...
     'iter', 'FiniteDifferenceType', 'central', 'ScaleProblem', 'obj-and-constr', ...
     'HessianApproximation', 'lbfgs');
 
@@ -26,7 +26,7 @@ startvals = sim_with_constraints(nstarts, upper, lower, Aineq, bineq, parse_fcn_
     if ~exist(['./model-output_',run_number], 'dir')
        mkdir(['./model-output_',run_number])
     end
-save('model-output_',run_number,'/starting-values.mat', 'startvals')
+save(['model-output_',run_number,'/starting-values.mat'], 'startvals')
 
 
 % evaluate objective at one, just as a sanity check;
@@ -58,7 +58,7 @@ parfor i = 1:nstarts
     
     
     fid = fopen([outdir, '/publishcode.m'], 'wt');
-    fprintf(fid, ["parse_fcn_name = ['",num2str(parse_fcn_name),"'];\n" ]);
+    fprintf(fid, ['parse_fcn_name = [', 'parse_model_params_v3','];\n' ]);
     fprintf(fid, ['this_solution = [',num2str(this_solution),'];\n' ]);
     fprintf(fid, ['n_gridpoints = [',num2str(n_gridpoints),'];\n' ]);
     fprintf(fid, 'lrtmodel(this_solution, 0, 1, n_gridpoints, parse_fcn_name);');
