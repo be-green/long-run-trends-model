@@ -1,4 +1,4 @@
-timestamp = '23-Aug-2021 21_56_44';
+timestamp = '24-Aug-2021 12_58_35';
 function_vals = [];
 sols = [];
 exit_flags = [];
@@ -78,8 +78,7 @@ for j = 1:5
     if exist([publishpath, '/publishcode.pdf'])
         delete [publishpath, '/publishcode.pdf'];
     end
-    theseoptions = struct('showCode', false, 'format','pdf','outputDir',publishpath,...
-                           'codeToEvaluate','parse_model_params_v2 = ''parse_model_params_v2'';');
+    theseoptions = struct('showCode', false, 'format','pdf','outputDir',publishpath);
 
     publish([publishpath, '/publishcode.m'], theseoptions);
     rmpath(publishpath);

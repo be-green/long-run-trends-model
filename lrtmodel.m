@@ -32,7 +32,7 @@ if nargin < 5
     % 4 iterations of the VAR a year
     n_periods = 60;
 
-    g = exp(log(0.02 + 1) / (n_periods / 5)) - 1;
+    g = paramvec(11,:);
 
     % death rate
     % corresponds to an average 40 year working life
@@ -432,10 +432,10 @@ if make_plots > 0
     names = {'HC Increase Prob', 'Conditional Fall Prob', ...
         'Shock Prob', 'Skilled Share', 'Technology Share', 'Skilled Curvature', ...
         'Unskilled Curvature', 'DRS Param', 'Bottom Rung', 'P(fall | shock, exposed)',...
-        'kappa','Xi intercept','Xi shock size (annualized)','Xi mean','Xi std dev','Human capital loss'};
+        'kappa','Xi intercept','Xi shock size (annualized)','Xi mean','Xi std dev','Human capital loss', 'g'};
 
     all_params = [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0, p_z, ...
-                  kappa,xi_constant,kappa*agg_scale_factor, xi_star, sqrt(xi_var), hc_loss]';
+                  kappa,xi_constant,kappa*agg_scale_factor, xi_star, sqrt(xi_var), hc_loss, g]';
 
     disp(table(names', all_params))
 end 
