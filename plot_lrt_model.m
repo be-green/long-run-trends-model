@@ -322,7 +322,7 @@ displaymat = [theor_mom, emp_mom];
    % high and low wages at steady state
    high_wage = w_h(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
    low_wage = w_l(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
- H = zeros(n_periods + 1, 1);
+   H = zeros(n_periods + 1, 1);
    L = zeros(n_periods + 1, 1);
    xi = zeros(n_periods + 1, 1);
    

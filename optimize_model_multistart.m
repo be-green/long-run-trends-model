@@ -9,22 +9,24 @@ n_periods = 60;
 nstarts = 1000;
 
 % parse_fcn_name = 'parse_model_params_v1';
-parse_fcn_name = 'parse_model_params_v2';
+parse_fcn_name = 'parse_model_params_v3';
 
 if strcmp(parse_fcn_name,'parse_model_params_v1')
     [ upper, lower, Aineq, bineq] = build_constraints_v1(n_periods,n_gridpoints);
 elseif strcmp(parse_fcn_name,'parse_model_params_v2')
     [ upper, lower, Aineq, bineq] = build_constraints_v2(n_periods,n_gridpoints);
+elseif strcmp(parse_fcn_name,'parse_model_params_v3')
+    [ upper, lower, Aineq, bineq] = build_constraints_v3(n_periods,n_gridpoints);
 else
     error('Parse function not coded yet!')
 end     
-     
+
 % TODO: could check that objective function doesn't error at starting vals
 startvals = sim_with_constraints(nstarts, upper, lower, Aineq, bineq, parse_fcn_name);
     if ~exist(['./model-output_',run_number], 'dir')
        mkdir(['./model-output_',run_number])
     end
-save('model-output/starting-values.mat', 'startvals')
+save('model-output_',run_number,'/starting-values.mat', 'startvals')
 
 
 % evaluate objective at one, just as a sanity check;
