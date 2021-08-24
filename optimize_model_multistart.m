@@ -8,7 +8,6 @@ n_gridpoints = 80;
 n_periods = 60;
 nstarts = 1000;
 
-% parse_fcn_name = 'parse_model_params_v1';
 parse_fcn_name = 'parse_model_params_v3';
 
 if strcmp(parse_fcn_name,'parse_model_params_v1')
