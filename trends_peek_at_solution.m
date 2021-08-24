@@ -15,8 +15,6 @@ for i = 1:1000
        % so we can hack it by running publish code
         outdir = ['./model-output_',timestamp, '/model-run-number',num2str(i)];
         addpath(outdir);
-
-        theseoptions = struct('showCode', false, 'format','pdf','outputDir',outdir);
         
         fid = fopen([outdir, '/publishcode.m']);
         % we want the second line, this gets it
@@ -47,7 +45,7 @@ top_sols = [];
 top_fvals = [];
 
 % create a folder to store the best outputs
-outdir = ['./model-output/best-solutions'];
+outdir = ['./model-output_', timestamp, '/best-solutions'];
 addpath(outdir);
 
 if ~exist(outdir, 'dir')
@@ -72,9 +70,15 @@ for j = 1:5
     
     publishpath = ['./model-output_', timestamp, '/model-run-number',num2str(best_i)];
     
+        
     addpath(publishpath)
-    publish([publishpath, '/publishcode.m'], theseoptions)
-    rmpath(publishpath)
+    if exist([publishpath, '/publishcode.pdf'])
+        delete [publishpath, '/publishcode.pdf'];
+    end
+    theseoptions = struct('showCode', false, 'format','pdf','outputDir',publishpath);
+
+    publish([publishpath, '/publishcode.m'], theseoptions);
+    rmpath(publishpath);
     
     % now, copy over the output file
      inputfile = [publishpath,'/publishcode.pdf'];
