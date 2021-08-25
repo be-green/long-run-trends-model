@@ -264,6 +264,9 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                 agg_prob(i,1) = quantile_targets(i)-ql;
             end    
             ss_cdf_ub = min(ss_cdf(ss_cdf >= quantile_targets(i)));
+            if length(ss_cdf_ub) == 0
+               ss_cdf_ub = length(ss_cdf); 
+            end
             bin_indices = (sum(ss_cdf <= ss_cdf_lb)+1):sum(ss_cdf <= ss_cdf_ub);
            
             % next assign weights associated with each of the intervals.
