@@ -242,19 +242,19 @@ for i = 1:length(new_theta)
    % TODO: this seems to only address the diagonal. What about one above
    % the diagonal (since people learn too)?
    A_1(3:end,upper_fall_index(i,:) + 2) = A_1(3:end,upper_fall_index(i,:) + 2)...
-       + alpha * upper_fall_weight(i,:)*A_0(3:end,i+1);
+       + alpha * upper_fall_weight(i,:)*A_0(3:end,i+2);
    A_1(3:end,lower_fall_index(i,:) + 2) = A_1(3:end,lower_fall_index(i,:) + 2)...
-       + alpha * lower_fall_weight(i,:)*A_0(3:end,i+1);
+       + alpha * lower_fall_weight(i,:)*A_0(3:end,i+2);
    
    A_1_no_delta(3:end,upper_fall_index(i,:) + 2) = A_1_no_delta(3:end,upper_fall_index(i,:) + 2)...
-       + alpha * upper_fall_weight(i,:)*A_0_no_delta(3:end,i+1);
+       + alpha * upper_fall_weight(i,:)*A_0_no_delta(3:end,i+2);
    A_1_no_delta(3:end,lower_fall_index(i,:) + 2) = A_1_no_delta(3:end,lower_fall_index(i,:) + 2)...
-       + alpha * lower_fall_weight(i,:)*A_0_no_delta(3:end,i+1);
+       + alpha * lower_fall_weight(i,:)*A_0_no_delta(3:end,i+2);
    
   A_1_no_delta_pz(3:end,upper_fall_index(i,:) + 2) = A_1_no_delta_pz(3:end,upper_fall_index(i,:) + 2)...
-       + p_z * upper_fall_weight(i,:)*A_0_no_delta_pz(3:end,i+1);
+       + p_z * upper_fall_weight(i,:)*A_0_no_delta_pz(3:end,i+2);
   A_1_no_delta_pz(3:end,lower_fall_index(i,:) + 2) = A_1_no_delta_pz(3:end,lower_fall_index(i,:) + 2)...
-       + p_z * lower_fall_weight(i,:)*A_0_no_delta_pz(3:end,i+1);
+       + p_z * lower_fall_weight(i,:)*A_0_no_delta_pz(3:end,i+2);
 end
 
 % transpose for use w/ Bianchi formulas
