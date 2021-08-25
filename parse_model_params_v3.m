@@ -118,7 +118,7 @@ theta0 = 0.05;
 
     
 % share of people who never ladder climb
-p0_share = 0.1;
+p0_share = paramvec(12,:);
 
 
 if theta_order == 0
