@@ -9,7 +9,7 @@ delta =  exp(log(0.025 + 1) / (n_periods / 5)) - 1;
 omega = 5/n_periods; %fixing this ex ante in this round
 
 % setting up theta grid
-theta0 = 0.05;
+theta0 = 0.02;
 growth_rate = exp((-log(theta0)) / n_gridpoints) - 1;
 
 % set lower bound on expected human capital growth
