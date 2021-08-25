@@ -1,4 +1,5 @@
-function [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,kappa,theta_grid,theta0,xi_constant] = ...
+function [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,...
+    v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share] = ...
           parse_model_params_v3(paramvec,H_inside,n_gridpoints)
 % [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,kappa,theta_grid,theta0] = ...
 %  parse_model_params_v1(paramvec,H_inside,n_gridpoints)
@@ -114,6 +115,11 @@ xi_constant = paramvec(10,:);
 
 % setting up theta grid
 theta0 = 0.05;
+
+    
+% share of people who never ladder climb
+p0_share = 0.1;
+
 
 if theta_order == 0
     % growth_rate = paramvec(8,:);

@@ -94,14 +94,14 @@ if nargin < 5
     end
     xi_constant = 0;
 else
-    eval(['[phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,kappa,theta_grid,theta0,xi_constant] = ', ...
+    eval(['[phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share] = ', ...
             parse_fcn_name,'(paramvec,H_inside,n_gridpoints);']);
     
 end
 
 
 % need that single obs for xi
-n_coefs = 1 + n_gridpoints;
+n_coefs = 2 + n_gridpoints;
 
 % VAR Intercept Term
 % first term corresponds to xi
@@ -109,9 +109,10 @@ A_0 = zeros(n_coefs, n_coefs);
 
 % xi depreciation
 A_0(1,1) = 1 - g;
+A_0(2, 2) = 1;
 
 % fill in theta section
-for i = 2:n_coefs 
+for i = 3:n_coefs 
    A_0(i, i) = (1 - phi);
    if i < n_coefs 
        A_0(i, i + 1) = phi;
@@ -121,9 +122,8 @@ for i = 2:n_coefs
    end
 end
 
-A_0(2:end, 2:end) = A_0(2:end, 2:end) * (1 - delta);
-A_0(2:end,2) = A_0(2:end,2) + delta;
-
+A_0(3:end, 3:end) = A_0(3:end, 3:end) * (1 - delta);
+A_0(3:end,3) = A_0(3:end,3) + delta;
 
 
 % VAR Intercept Term
@@ -133,10 +133,12 @@ A_1 = zeros(n_coefs, n_coefs);
 % xi depreciation
 A_1(1,1) = 1 - g;
 
+% folks who don't move
+A_1(2,2) = 1;
 
 % Displacement shock happens last. Below, we will redistribute mass from
 % alpha * A_0 across different columns, incorporating the hc loss
-A_1(2:end, 2:end) = A_0(2:end, 2:end) * (1 - alpha);
+A_1(3:end, 3:end) = A_0(3:end, 3:end) * (1 - alpha);
 
 
 
@@ -147,8 +149,11 @@ A_0_no_delta = zeros(n_coefs, n_coefs);
 % xi depreciation
 A_0_no_delta(1,1) = 1 - g;
 
+% p0 doesn't move
+A_0_no_delta(2, 2) = 1;
+
 % fill in theta section
-for i = 2:n_coefs 
+for i = 3:n_coefs 
    A_0_no_delta(i, i) = (1 - phi);
    if i < n_coefs 
        A_0_no_delta(i, i + 1) = phi;
@@ -166,7 +171,10 @@ A_1_no_delta = zeros(n_coefs, n_coefs);
 % xi depreciation
 A_1_no_delta(1,1) = 1 - g;
 
-A_1_no_delta(2:end, 2:end) = A_0_no_delta(2:end, 2:end) * (1 - alpha);
+% folks who never move
+A_1_no_delta(2,2) = 1;
+
+A_1_no_delta(3:end, 3:end) = A_0_no_delta(3:end, 3:end) * (1 - alpha);
 
 
 % VAR Intercept Term
@@ -176,8 +184,11 @@ A_0_no_delta_pz = zeros(n_coefs, n_coefs);
 % xi depreciation
 A_0_no_delta_pz(1,1) = 1 - g;
 
+% folks who don't move
+A_0_no_delta_pz(2,2) = 1;
+
 % fill in theta section
-for i = 2:n_coefs 
+for i = 3:n_coefs 
    A_0_no_delta_pz(i, i) = (1 - phi);
    if i < n_coefs 
        A_0_no_delta_pz(i, i + 1) = phi;
@@ -194,8 +205,11 @@ A_1_no_delta_pz = zeros(n_coefs, n_coefs);
 
 % xi depreciation
 A_1_no_delta_pz(1,1) = 1 - g;
+ 
+% folks who don't move
+A_1_no_delta_pz(2, 2) = 1;
 
-A_1_no_delta_pz(2:end, 2:end) = A_0_no_delta(2:end, 2:end) * (1 - p_z);
+A_1_no_delta_pz(3:end, 3:end) = A_0_no_delta(3:end, 3:end) * (1 - p_z);
 
 % transpose for use w/ Bianchi formulas
 % VAR format
@@ -227,20 +241,20 @@ for i = 1:length(new_theta)
    
    % TODO: this seems to only address the diagonal. What about one above
    % the diagonal (since people learn too)?
-   A_1(2:end,upper_fall_index(i,:) + 1) = A_1(2:end,upper_fall_index(i,:) + 1)...
-       + alpha * upper_fall_weight(i,:)*A_0(2:end,i+1);
-   A_1(2:end,lower_fall_index(i,:) + 1) = A_1(2:end,lower_fall_index(i,:) + 1)...
-       + alpha * lower_fall_weight(i,:)*A_0(2:end,i+1);
+   A_1(3:end,upper_fall_index(i,:) + 2) = A_1(3:end,upper_fall_index(i,:) + 2)...
+       + alpha * upper_fall_weight(i,:)*A_0(3:end,i+1);
+   A_1(3:end,lower_fall_index(i,:) + 2) = A_1(3:end,lower_fall_index(i,:) + 2)...
+       + alpha * lower_fall_weight(i,:)*A_0(3:end,i+1);
    
-   A_1_no_delta(2:end,upper_fall_index(i,:) + 1) = A_1_no_delta(2:end,upper_fall_index(i,:) + 1)...
-       + alpha * upper_fall_weight(i,:)*A_0_no_delta(2:end,i+1);
-   A_1_no_delta(2:end,lower_fall_index(i,:) + 1) = A_1_no_delta(2:end,lower_fall_index(i,:) + 1)...
-       + alpha * lower_fall_weight(i,:)*A_0_no_delta(2:end,i+1);
+   A_1_no_delta(3:end,upper_fall_index(i,:) + 2) = A_1_no_delta(3:end,upper_fall_index(i,:) + 2)...
+       + alpha * upper_fall_weight(i,:)*A_0_no_delta(3:end,i+1);
+   A_1_no_delta(3:end,lower_fall_index(i,:) + 2) = A_1_no_delta(3:end,lower_fall_index(i,:) + 2)...
+       + alpha * lower_fall_weight(i,:)*A_0_no_delta(3:end,i+1);
    
-  A_1_no_delta_pz(2:end,upper_fall_index(i,:) + 1) = A_1_no_delta_pz(2:end,upper_fall_index(i,:) + 1)...
-       + p_z * upper_fall_weight(i,:)*A_0_no_delta_pz(2:end,i+1);
-   A_1_no_delta_pz(2:end,lower_fall_index(i,:) + 1) = A_1_no_delta_pz(2:end,lower_fall_index(i,:) + 1)...
-       + p_z * lower_fall_weight(i,:)*A_0_no_delta_pz(2:end,i+1);
+  A_1_no_delta_pz(3:end,upper_fall_index(i,:) + 2) = A_1_no_delta_pz(3:end,upper_fall_index(i,:) + 2)...
+       + p_z * upper_fall_weight(i,:)*A_0_no_delta_pz(3:end,i+1);
+  A_1_no_delta_pz(3:end,lower_fall_index(i,:) + 2) = A_1_no_delta_pz(3:end,lower_fall_index(i,:) + 2)...
+       + p_z * lower_fall_weight(i,:)*A_0_no_delta_pz(3:end,i+1);
 end
 
 % transpose for use w/ Bianchi formulas
@@ -249,13 +263,8 @@ end
 A_0 = A_0';
 A_1 = A_1';
 
-% transpose for use w/ Bianchi formulas
-% VAR format
-
 A_0_no_delta = A_0_no_delta';
 A_1_no_delta = A_1_no_delta';
-
-
 
 A_0_no_delta_pz = A_0_no_delta_pz';
 A_1_no_delta_pz = A_1_no_delta_pz';
@@ -321,10 +330,14 @@ mu_ss = w * q;
 
 wtilde = [w, zeros((n_coefs-1),2)];
 qtilde = [q; piVec];
+steady_state = [p0_share; [mu_ss(3:(n_coefs-1)); 1 - sum(mu_ss(3:end))] * (1 - p0_share)];
 
-steady_state = [mu_ss(2:(n_coefs-1)); 1 - sum(mu_ss(2:end))];
-figure
-plot(theta_grid,steady_state)
+theta_grid = [theta0, theta_grid];
+
+if make_plots > 0
+    figure
+    plot(theta_grid,steady_state)
+end
 % steady state values
 H_star = theta_grid * steady_state;
 L_star = 1 - H_star;
@@ -347,6 +360,7 @@ xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
 %     A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
 %     c_1_tilde_no_delta_pz, p_z), [0; 0], options); 
 % normcdf(lambdamu)
+
 
 theor_mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
     kappa, rho, sigma, alpha, phi, xi_var, ...
