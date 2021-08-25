@@ -2,7 +2,7 @@ run_number = strrep(datestr(datetime), ':', '_');
 
 custom_iter = optimoptions(@fmincon,'MaxIterations',500, 'Display', ...
     'iter', 'FiniteDifferenceType', 'central', 'ScaleProblem', 'obj-and-constr', ...
-    'HessianApproximation', 'lbfgs');
+    'HessianApproximation', 'lbfgs', 'StepTolerance', 1e-12);
 
 n_gridpoints = 80;
 n_periods = 60;
