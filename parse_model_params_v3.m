@@ -113,7 +113,7 @@ v = 1;
 xi_constant = paramvec(10,:);
 
 % setting up theta grid
-theta0 = 0.05;
+theta0 = 0.02;
 
 if theta_order == 0
     % growth_rate = paramvec(8,:);

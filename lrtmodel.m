@@ -381,7 +381,7 @@ bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 1
 expected_wage_growth_by_income = [0.006216; -0.08353; -0.08933; -0.09111; -0.1197];
 expected_abs_wage_growth_by_income = [0.4466; 0.2961; 0.2559; 0.2437; 0.2792];
 
-emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
+emp_mom = [0.66; 11.21; 0.0281; -0.0125; 0; 0; 0; ...
              emp_abs_wage_growth; ...
              emp_wage_growth; ...
              expected_wage_growth_by_income; ...
@@ -389,9 +389,9 @@ emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
              -0.06313; 0.3171; ... expected wage growth, expected abs wage growth
              tenth_pctile_probs];
          
-weight_vec = [30; 15; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
+weight_vec = [30; 20; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
          6; 5; 5; 5; 6; ... abs wage moments
-         4; 6; 6; 6; 15; ... wage moments
+         10; 6; 6; 6; 15; ... wage moments
          0; 0; 0; 0; 0; ... E(awg | income)
          0; 0; 0; 0; 0; ... E(wg | income)
          0; 0; ... E(awg), E(wg)
