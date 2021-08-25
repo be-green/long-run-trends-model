@@ -25,21 +25,21 @@ max_d = 0.6;
 % phi -  d* omega * alpha >= dlogtheta_lb
 % ie -dlogtheta_lb <= d*omega*alpha - phi * growth_rate
 bineq = -dlogtheta_lb;
-Aineq = [-growth_rate, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0];
+Aineq = [-growth_rate, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 % phi*growth_rate -  d* omega * alpha <= dlogtheta_ub
 bineq = [bineq;dlogtheta_ub];
-Aineq = [Aineq; growth_rate, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0];
+Aineq = [Aineq; growth_rate, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 % d = paramvec(3) / (alpha * omega). So if we want d >= min_d, that is isomorphic to
 % having alpha * omega * min_d <= paramvec(3), so -paramvec(3) +alpha * omega * min_d <= 0
 bineq = [bineq;0];
-Aineq = [Aineq; 0, min_d * omega, -1, 0, 0, 0, 0, 0, 0, 0, 0];
+Aineq = [Aineq; 0, min_d * omega, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 % d = paramvec(3) / (alpha * omega). So if we want d <= max_d, that is isomorphic to
 % having (alpha * omega) * max_d >= paramvec(3), so -(alpha * omega) * min_d + paramvec(3) <= 0
 bineq = [bineq;0];
-Aineq = [Aineq; 0, -max_d * omega, 1, 0, 0, 0, 0, 0, 0, 0, 0];
+Aineq = [Aineq; 0, -max_d * omega, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 
 % set bounds on kappa to restrict that the mean of xi isn't insanely high...
@@ -72,7 +72,8 @@ lower = [0.001, ... phi
     0.001, ... lambda
     0.001,... % mu
     0, ...% xi intercept
-    g_lower]; % g
+    g_lower, ... % g
+    0]; % p0 share
 
 upper = [0.4, ... % phi
          0.7,  ... % alpha
@@ -84,5 +85,6 @@ upper = [0.4, ... % phi
          0.999, ... lamba
          0.999,....% mu
          xi_mean_ub*g_upper / 2, ... % xi intercept
-         g_upper]; % g
+         g_upper, ... g
+         0.25]; % p0 share
      

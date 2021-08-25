@@ -3,7 +3,7 @@ addpath('/home/software/knitro/12.0.0')
 addpath('/home/software/knitro/12.0.0/knitromatlab')
 custom_iter = optimoptions(@fmincon,'MaxIterations',500, 'Display', ...
     'iter', 'FiniteDifferenceType', 'central', 'ScaleProblem', 'obj-and-constr', ...
-    'HessianApproximation', 'lbfgs');
+    'HessianApproximation', 'lbfgs', 'StepTolerance', 1e-12);
 
 n_gridpoints = 80;
 n_periods = 60;
