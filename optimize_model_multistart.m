@@ -7,7 +7,7 @@ custom_iter = optimoptions(@fmincon,'MaxIterations',500, 'Display', ...
 
 n_gridpoints = 80;
 n_periods = 60;
-nstarts = 100;
+nstarts = 1000;
 
 parse_fcn_name = 'parse_model_params_v3';
 
