@@ -419,7 +419,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    lshare = (H_star * high_wage + L_star * low_wage) / Y_star;
    lshare_shock = (H_shock * high_wage_tp1 + L_shock * low_wage_tp1) / Y_shock;
       
-   lshare_irf_sign = ((log(lshare_shock) - log(lshare)) > 0) * abs(log(lshare_shock) - log(lshare)) * 10;
+   lshare_irf_sign = ((log(lshare_shock) - log(lshare)) > 0) * abs(log(lshare_shock) - log(lshare)) * 100;
    
    lshare_irf = (log(lshare_shock) - log(lshare)) * agg_scale_factor;
    

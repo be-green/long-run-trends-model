@@ -403,9 +403,9 @@ emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
              -0.06313; 0.3171; ... expected wage growth, expected abs wage growth
              tenth_pctile_probs];
          
-weight_vec = [30; 15; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
+weight_vec = [30; 20; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
          6; 5; 5; 5; 6; ... abs wage moments
-         4; 6; 6; 6; 15; ... wage moments
+         15; 12; 12; 12; 15; ... wage moments
          0; 0; 0; 0; 0; ... E(awg | income)
          0; 0; 0; 0; 0; ... E(wg | income)
          0; 0; ... E(awg), E(wg)
