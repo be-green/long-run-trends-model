@@ -74,7 +74,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    bottom_five = 1;
    cumulative_density = 0;
    
-   while(cumulative_density < 0.05)
+   while(cumulative_density < 0.25)
        cumulative_density = cumulative_density + steady_state(bottom_five);
        bottom_five = bottom_five + 1;
    end
@@ -85,7 +85,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    top_five = size(steady_state,1);
    cumulative_density = 0;
    
-   while(cumulative_density < 0.05)
+   while(cumulative_density < 0.25)
        cumulative_density = cumulative_density + steady_state(top_five);
        top_five = top_five - 1;
    end
