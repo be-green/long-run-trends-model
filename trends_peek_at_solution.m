@@ -1,4 +1,4 @@
-timestamp = '24-Aug-2021 13_57_47';
+timestamp = '25-Aug-2021 15_28_00';
 function_vals = [];
 sols = [];
 exit_flags = [];
@@ -105,5 +105,4 @@ close all
 % regenerate output for best solution
 n_gridpoints=80;
 trial = top_sols(1,:);
-trial(6) = trial(6)*10;
-lrtmodel(trial, 0, 1, n_gridpoints, 'parse_model_params_v2');
+lrtmodel(trial, 0, 1, n_gridpoints, 'parse_model_params_v3');

@@ -332,7 +332,7 @@ wtilde = [w, zeros((n_coefs-1),2)];
 qtilde = [q; piVec];
 steady_state = [p0_share; [mu_ss(3:(n_coefs-1)); 1 - sum(mu_ss(3:end))] * (1 - p0_share)];
 
-theta_grid = [theta0, theta_grid];
+theta_grid = [0, theta_grid];
 
 if make_plots > 0
     figure
@@ -388,7 +388,7 @@ emp_wage_growth = [-0.01486; -0.01008; -0.01178; -0.01167; -0.02467];
 tenth_pctile_probs = [0.00286; 0.002619; 0.003889; 0.003941; 0.01255];
 
 top_density_loss = (steady_state(end) > 0.01) * abs((steady_state(end) - 0.01)) * 100;
-bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 100;
+bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 00;
 % half_income_from_low_skill = low_wage *(1-theta_0) / (low_wage * (1-theta_0) +  theta_0 * high_wage) >= 0.5;
 
 
