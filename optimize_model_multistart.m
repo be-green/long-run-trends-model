@@ -1,10 +1,7 @@
 run_number = strrep(datestr(datetime), ':', '_');
 addpath('/home/software/knitro/12.0.0');
 addpath('/home/software/knitro/12.0.0/knitromatlab');
-options = knitro_options('KN_PARAM_FEASTOL',1e-10,'KN_PARAM_FEASTOLABS',1e-10, ...
-    'KN_PARAM_OPTTOL', 1e-10, 'KN_PARAM_XTOL_ITERS', 20, 'KN_PARAM_GRADOPT', 3,...
-    'KN_PARAM_HESSOPT', 6);
-
+optionsfile = 'knitro_options.opt';
 n_gridpoints = 80;
 n_periods = 60;
 nstarts = 1000;
