@@ -114,7 +114,7 @@ v = 1;
 xi_constant = paramvec(10,:);
 
 % setting up theta grid
-theta0 = 0.02;
+theta0 = 0.001;
 
     
 % share of people who never ladder climb
