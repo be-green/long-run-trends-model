@@ -405,11 +405,11 @@ emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
          
 weight_vec = [30; 10; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
          0; 0; 0; 0; 0; ... abs wage moments
-         15; 12; 12; 12; 15; ... wage moments
+         8; 8; 8; 8; 15; ... wage moments
          0; 0; 0; 0; 0; ... E(awg | income)
          0; 0; 0; 0; 0; ... E(wg | income)
          0; 0; ... E(awg), E(wg)
-         6; 5; 5; 5; 6];
+         3; 3; 3; 3; 6];
 
 loss_vec = (theor_mom - emp_mom) ./ (0.01 + abs(emp_mom)) .* weight_vec;
 %  bars(labels, loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
@@ -426,7 +426,7 @@ if make_plots > 0
            'E(WG)', 'E(AWG)', ...
            'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]'},...
            'Ordinal',true);
-      bar(momlabels(3:14)', [theor_mom([3:4, 8:(17)]), emp_mom([3:4, 8:(17)])])
+      bar(momlabels([3:14, (end - 4):end])', [theor_mom([3:4, 8:(17), (end - 4):end]), emp_mom([3:4, 8:(17), (end - 4):end])])
      title('Moment Matching (excluding signs & levels)')
      
      figure
