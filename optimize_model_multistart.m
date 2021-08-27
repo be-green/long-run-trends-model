@@ -1,10 +1,9 @@
 run_number = strrep(datestr(datetime), ':', '_');
-addpath('/home/software/knitro/12.0.0')
-addpath('/home/software/knitro/12.0.0/knitromatlab')
-custom_iter = optimoptions(@fmincon,'MaxIterations',500, 'Display', ...
-    'iter', 'FiniteDifferenceType', 'central', 'ScaleProblem', 'obj-and-constr', ...
-    'HessianApproximation', 'lbfgs', 'StepTolerance', 1e-12, ...
-    'MaxFunctionEvaluations', 10000);
+addpath('/home/software/knitro/12.1.0');
+addpath('/home/software/knitro/12.1.0/knitromatlab');
+options = knitro_options('KN_PARAM_FEASTOL',1e-10,'KN_PARAM_FEASTOLABS',1e-10, ...
+    'KN_PARAM_OPTTOL', 1e-10, 'KN_PARAM_XTOL_ITERS', 20, 'KN_PARAM_GRADOPT', 3,...
+    'KN_PARAM_HESSOPT', 6);
 
 n_gridpoints = 80;
 n_periods = 60;
@@ -38,12 +37,13 @@ loss = zeros(nstarts, 1);
 exitflg = zeros(nstarts, 1);
 
 parfor i = 1:nstarts
-   [this_solution, this_loss, this_exit] = knitromatlab(@(x) lrtmodel(x, 0, 0, n_gridpoints, parse_fcn_name), ...
+   [this_solution, this_loss, this_exit] = knitro_nlp(@(x) lrtmodel(x, 0, 0, n_gridpoints, parse_fcn_name), ...
                                     startvals(i,:), ...
                                     Aineq, bineq, [], [], ...
                                     lower, ...
                                     upper,...
-                                    []);
+                                    [], [], ...
+                                    options);
     sol(i,:) = this_solution;
     loss(i,:) = this_loss;
     exitflg(i,:) = this_exit;
@@ -59,7 +59,7 @@ parfor i = 1:nstarts
     
     
     fid = fopen([outdir, '/publishcode.m'], 'wt');
-    fprintf(fid, ['parse_fcn_name = [', 'parse_model_params_v3','];\n' ]);
+    fprintf(fid, ['parse_fcn_name = [''', 'parse_model_params_v3','''];\n' ]);
     fprintf(fid, ['this_solution = [',num2str(this_solution),'];\n' ]);
     fprintf(fid, ['n_gridpoints = [',num2str(n_gridpoints),'];\n' ]);
     fprintf(fid, 'lrtmodel(this_solution, 0, 1, n_gridpoints, parse_fcn_name);');
