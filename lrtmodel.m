@@ -405,7 +405,7 @@ emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
          
 weight_vec = [30; 10; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
          0; 0; 0; 0; 0; ... abs wage moments
-         15; 12; 12; 12; 15; ... wage moments
+         10; 8; 8; 8; 20; ... wage moments
          0; 0; 0; 0; 0; ... E(awg | income)
          0; 0; 0; 0; 0; ... E(wg | income)
          0; 0; ... E(awg), E(wg)
