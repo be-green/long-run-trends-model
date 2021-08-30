@@ -58,7 +58,7 @@ parfor i = 1:nstarts
     
     
     fid = fopen([outdir, '/publishcode.m'], 'wt');
-    fprintf(fid, ['parse_fcn_name = [', 'parse_model_params_v3','];\n' ]);
+    fprintf(fid, ['parse_fcn_name = [''', 'parse_model_params_v3','''];\n' ]);
     fprintf(fid, ['this_solution = [',num2str(this_solution),'];\n' ]);
     fprintf(fid, ['n_gridpoints = [',num2str(n_gridpoints),'];\n' ]);
     fprintf(fid, 'lrtmodel(this_solution, 0, 1, n_gridpoints, parse_fcn_name);');

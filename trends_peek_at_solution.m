@@ -1,10 +1,10 @@
-timestamp = '26-Aug-2021 22_10_17';
+timestamp = '27-Aug-2021 11_35_48';
 
 function_vals = [];
 sols = [];
 exit_flags = [];
 
-for i = 1:1500
+for i = 1:1000
    try
        % this should have worked but there was a bug
        % this wil be a lot faster after we fix it
