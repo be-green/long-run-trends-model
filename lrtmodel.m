@@ -401,7 +401,8 @@ emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
              expected_wage_growth_by_income; ...
              expected_abs_wage_growth_by_income; ...
              -0.06313; 0.3171; ... expected wage growth, expected abs wage growth
-             tenth_pctile_probs];
+             tenth_pctile_probs; ...
+             3.3881]; % percent higher high income p10 vs. lowest income p10
          
 weight_vec = [30; 10; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
          0; 0; 0; 0; 0; ... abs wage moments
@@ -409,7 +410,7 @@ weight_vec = [30; 10; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share I
          0; 0; 0; 0; 0; ... E(awg | income)
          0; 0; 0; 0; 0; ... E(wg | income)
          0; 0; ... E(awg), E(wg)
-         5; 5; 5; 5; 5];
+         5; 5; 5; 5; 5; 10];
 
 loss_vec = (theor_mom - emp_mom) ./ (0.01 + abs(emp_mom)) .* weight_vec;
 %  bars(labels, loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
@@ -426,7 +427,7 @@ if make_plots > 0
            'E(WG)', 'E(AWG)', ...
            'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]'},...
            'Ordinal',true);
-      bar(momlabels(3:14)', [theor_mom([3:4, 8:(17)]), emp_mom([3:4, 8:(17)])])
+      bar(momlabels([3:14, (end - 4):end])', [theor_mom([3:4, 8:(17), (end - 4):end]), emp_mom([3:4, 8:(17), (end - 4):end])])
      title('Moment Matching (excluding signs & levels)')
      
      figure
@@ -555,40 +556,40 @@ title('Weighted Percent Loss Contribution')
    
 figure
 subplot(3,3,1);
-plot([0, (1:n_periods)./4]', (wh(1:end)./wh(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:n_periods)./12]', (log(wh(1:end)) - log(wh(1)))*agg_scale_factor, '.-')
 title("High Wage")
 
 subplot(3,3,2); 
-plot([0, (1:n_periods)./4]', (wl(1:end)./wl(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:n_periods)./12]', (log(wl(1:end)) - log(wl(1)))*agg_scale_factor, '.-')
 title("Low Wage")
 
 subplot(3,3,3);
-plot([0, (1:n_periods)./4]', (L(1:end)./L(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:n_periods)./12]', (log(L(1:end)) - log(L(1)))*agg_scale_factor, '.-')
 title("L Skill Level")
 
 subplot(3,3,4); 
-plot([0, (1:n_periods)./4]', (H(1:end)./H(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:n_periods)./12]', (log(H(1:end)) - log(H(1)))*agg_scale_factor, '.-')
 title("H Skill Level")
 
 subplot(3,3,5); 
-plot([0, (1:n_periods)./4]', (xi(1:end)./xi(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:n_periods)./12]', (log(xi(1:end)) - log(xi(1)))*agg_scale_factor, '.-')
 title("Technology Level")
 
 wage_diff = wh - wl;
 subplot(3,3,6); 
-plot([0, (1:n_periods)./4]', (wage_diff(1:end)./wage_diff(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:n_periods)./12]', (log(wage_diff(1:end)) - log(wage_diff(1)))*agg_scale_factor, '.-')
 title("High Wage - Low Wage")
 
 subplot(3,3,7);
-plot([0, (1:n_periods)./4]', (lshare(1:end)./lshare(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:n_periods)./12]', (log(lshare(1:end)) - log(lshare(1)))*agg_scale_factor, '.-')
 title("Labor Share")
 
 subplot(3,3,8); 
-plot([0, (1:n_periods)./4]', (X(1:end)./X(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:n_periods)./12]', (log(X(1:end)) - log(X(1)))*agg_scale_factor, '.-')
 title("Composite Good")
 
 subplot(3,3,9); 
-plot([0, (1:n_periods)./4]', (Y(1:end)./Y(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:n_periods)./12]', (log(Y(1:end)) - log(Y(1)))*agg_scale_factor, '.-')
 title("Output Level")
 
 

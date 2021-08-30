@@ -425,6 +425,8 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    
    premium = top_five_wages / bottom_five_wages;
    
+   tenth_pctile_gradient = tenth_pctile_probs(5) / tenth_pctile_probs(1) - 1;
+   
    if make_plots > 0
        
       figure
@@ -442,5 +444,6 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        ss_awg_by_income; ...
        expected_wage_growth; ...
        expected_abs_wage_growth; ...
-       tenth_pctile_probs];
+       tenth_pctile_probs;
+       tenth_pctile_gradient];
 end
