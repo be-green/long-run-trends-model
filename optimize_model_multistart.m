@@ -6,17 +6,18 @@ custom_iter = optimoptions(@fmincon,'MaxIterations',1000, 'Display', ...
     'MaxFunctionEvaluations', 20000);
 
 n_gridpoints = 80;
-n_periods = 60;
-nstarts = 1000;
+scale_period = 12;
+n_periods = 1;
+nstarts = 5000;
 
 parse_fcn_name = 'parse_model_params_v3';
 
 if strcmp(parse_fcn_name,'parse_model_params_v1')
-    [ upper, lower, Aineq, bineq] = build_constraints_v1(n_periods,n_gridpoints);
+    [ upper, lower, Aineq, bineq] = build_constraints_v1(scale_period * 5,n_gridpoints);
 elseif strcmp(parse_fcn_name,'parse_model_params_v2')
-    [ upper, lower, Aineq, bineq] = build_constraints_v2(n_periods,n_gridpoints);
+    [ upper, lower, Aineq, bineq] = build_constraints_v2(scale_period * 5,n_gridpoints);
 elseif strcmp(parse_fcn_name,'parse_model_params_v3')
-    [ upper, lower, Aineq, bineq] = build_constraints_v3(n_periods,n_gridpoints);
+    [ upper, lower, Aineq, bineq] = build_constraints_v3(scale_period * 5,n_gridpoints);
 else
     error('Parse function not coded yet!')
 end     
@@ -30,14 +31,14 @@ save(['model-output_',run_number,'/starting-values.mat'], 'startvals')
 
 
 % evaluate objective at one, just as a sanity check;
-lrtmodel(startvals(1,:), 0, 1, n_gridpoints,parse_fcn_name)
+lrtmodel(startvals(1,:), 0, 1, n_gridpoints,parse_fcn_name, n_periods, scale_period)
 
 sol = zeros(nstarts, length(lower));
 loss = zeros(nstarts, 1);
 exitflg = zeros(nstarts, 1);
 
 parfor i = 1:nstarts
-   [this_solution, this_loss, this_exit] = fmincon(@(x) lrtmodel(x, 0, 0, n_gridpoints, parse_fcn_name), ...
+   [this_solution, this_loss, this_exit] = fmincon(@(x) lrtmodel(x, 0, 0, n_gridpoints, parse_fcn_name, n_periods, scale_period), ...
                                     startvals(i,:), ...
                                     Aineq, bineq, [], [], ...
                                     lower, ...

@@ -1,6 +1,6 @@
 function [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,...
     v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share] = ...
-          parse_model_params_v3(paramvec,H_inside,n_gridpoints)
+          parse_model_params_v3(paramvec,H_inside,n_gridpoints, scale_period, n_periods)
 % [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,kappa,theta_grid,theta0] = ...
 %  parse_model_params_v1(paramvec,H_inside,n_gridpoints)
 % INPUTS:
@@ -53,13 +53,12 @@ theta_order = 0;
 % number of iterations associated with a single shock
 % since a shock is 5 years, this corresponds to there being
 % 4 iterations of the VAR a year
-n_periods = 60;
 
 % death rate
 % corresponds to an average 40 year working life
 % also, newborn agents start at the bottom of the grid, so it's like
 % effective death rate is g% higher;
-delta =  exp(log(0.025 + 0.02 + 1) / (n_periods / 5)) - 1;
+delta =  exp(log(0.025 + 0.02 + 1) / (scale_period)) - 1;
 
 % set up variables in accordance w/ our model
 
@@ -77,7 +76,7 @@ alpha = (paramvec(2,:));
 % of state 1 happening in period t + 1
 % these shocks are IID so this is true for both
 % initial states
-omega = 5/n_periods; %fixing this ex ante in this round (1x / year)
+omega = 1/scale_period; %fixing this ex ante in this round (1x / year)
 
 d_x_omega_x_alpha = (paramvec(3,:));
 d = d_x_omega_x_alpha / (alpha * omega);
@@ -105,7 +104,7 @@ lambda = paramvec(9,:); % inner nest
 mu = paramvec(8,:); % outer nest
 
 g = paramvec(11, :);
-g = exp(log(g + 1) / (n_periods / 5)) - 1;
+g = exp(log(g + 1) / (scale_period)) - 1;
 
 % DRS parameter. Fixed at the start
 v = 1;

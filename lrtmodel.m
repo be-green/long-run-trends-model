@@ -1,4 +1,5 @@
-function loss = lrtmodel(paramvec, H_inside, make_plots, n_gridpoints,parse_fcn_name)
+function loss = lrtmodel(paramvec, H_inside, make_plots, ...
+    n_gridpoints,parse_fcn_name, n_periods,  scale_period)
 
 % transpose for particleswarm
 if nargin < 5
@@ -30,7 +31,6 @@ if nargin < 5
     % number of iterations associated with a single shock
     % since a shock is 5 years, this corresponds to there being
     % 4 iterations of the VAR a year
-    n_periods = 60;
 
     g = paramvec(11,:);
 
@@ -95,7 +95,7 @@ if nargin < 5
     xi_constant = 0;
 else
     eval(['[phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share] = ', ...
-            parse_fcn_name,'(paramvec,H_inside,n_gridpoints);']);
+            parse_fcn_name,'(paramvec,H_inside, n_gridpoints, scale_period, n_periods);']);
     
 end
 
@@ -427,7 +427,8 @@ if make_plots > 0
            'E(WG)', 'E(AWG)', ...
            'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]', 'P10 Gradient'},...
            'Ordinal',true);
-      bar(momlabels([3:14, (end - 5):end])', [theor_mom([3:4, 8:(17), (end - 5):end]), emp_mom([3:4, 8:(17), (end - 5):end])])
+      bar(momlabels([3:14, (end - 5):(end - 1)])', [theor_mom([3:4, 8:(17), (end - 5):(end - 1)]), ...
+          emp_mom([3:4, 8:(17), (end - 5):(end - 1)])])
      title('Moment Matching (excluding signs & levels)')
      
      figure
@@ -441,8 +442,8 @@ if make_plots > 0
      
      
    % scaling factors to convert from one shock units to 1 SD units
-   agg_scale_factor = sqrt(n_periods / 5) * sqrt(omega * (1 - omega));
-   irf_scale_factor = sqrt(n_periods / 5) * sqrt(omega * alpha / p_z * (1 - omega * alpha / p_z));
+   agg_scale_factor = sqrt(scale_period) * sqrt(omega * (1 - omega));
+   irf_scale_factor = sqrt(scale_period) * sqrt(omega * alpha / p_z * (1 - omega * alpha / p_z));
      
     names = {'HC Increase Prob', 'Conditional Fall Prob', ...
         'Shock Prob', 'Skilled Share', 'Technology Share', 'Skilled Curvature', ...
@@ -530,7 +531,7 @@ title('Weighted Percent Loss Contribution')
    
    
    shock_vec = [xi_shock; shock_state(1:(end - 1))];
-   for i=1:(n_periods - 1)
+   for i=1:(scale_period - 1)
        shock_vec = (1 - omega) * (A_0_tilde * shock_vec + c_0_tilde) + ...
            omega  * (A_1_tilde * shock_vec + c_1_tilde);
           
@@ -556,40 +557,40 @@ title('Weighted Percent Loss Contribution')
    
 figure
 subplot(3,3,1);
-plot([0, (1:n_periods)./(n_periods / 5)]', (wh(1:end)./wh(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:scale_period)]', (wh(1:end)./wh(1) - 1)*agg_scale_factor, '.-')
 title("High Wage")
 
 subplot(3,3,2); 
-plot([0, (1:n_periods)./(n_periods / 5)]', (wl(1:end)./wl(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:scale_period)]', (wl(1:end)./wl(1) - 1)*agg_scale_factor, '.-')
 title("Low Wage")
 
 subplot(3,3,3);
-plot([0, (1:n_periods)./(n_periods / 5)]', (L(1:end)./L(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:scale_period)]', (L(1:end)./L(1) - 1)*agg_scale_factor, '.-')
 title("L Skill Level")
 
 subplot(3,3,4); 
-plot([0, (1:n_periods)./(n_periods / 5)]', (H(1:end)./H(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:scale_period)]', (H(1:end)./H(1) - 1)*agg_scale_factor, '.-')
 title("H Skill Level")
 
 subplot(3,3,5); 
-plot([0, (1:n_periods)./(n_periods / 5)]', (xi(1:end)./xi(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:scale_period)]', (xi(1:end)./xi(1) - 1)*agg_scale_factor, '.-')
 title("Technology Level")
 
 wage_diff = wh - wl;
 subplot(3,3,6); 
-plot([0, (1:n_periods)./(n_periods / 5)]', (wage_diff(1:end)./wage_diff(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:scale_period)]', (wage_diff(1:end)./wage_diff(1) - 1)*agg_scale_factor, '.-')
 title("High Wage - Low Wage")
 
 subplot(3,3,7);
-plot([0, (1:n_periods)./(n_periods / 5)]', (lshare(1:end)./lshare(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:scale_period)]', (lshare(1:end)./lshare(1) - 1)*agg_scale_factor, '.-')
 title("Labor Share")
 
 subplot(3,3,8); 
-plot([0, (1:n_periods)./(n_periods / 5)]', (X(1:end)./X(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:scale_period)]', (X(1:end)./X(1) - 1)*agg_scale_factor, '.-')
 title("Composite Good")
 
 subplot(3,3,9); 
-plot([0, (1:n_periods)./(n_periods / 5)]', (Y(1:end)./Y(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:scale_period)]', (Y(1:end)./Y(1) - 1)*agg_scale_factor, '.-')
 title("Output Level")
 
 
