@@ -1,4 +1,4 @@
-function [ upper, lower, Aineq, bineq] = build_constraints_v3(n_periods,n_gridpoints)
+function [ upper, lower, Aineq, bineq] = build_constraints_v3(n_periods,n_gridpoints, hyperparams)
 
 % g = exp(log(0.02 + 1) / (n_periods / 5)) - 1;
 % death rate
@@ -9,7 +9,7 @@ delta =  exp(log(0.025 + 1) / (n_periods / 5)) - 1;
 omega = 5/n_periods; %fixing this ex ante in this round
 
 % setting up theta grid
-theta0 = 0.02;
+theta0 = hyperparams.theta0;
 growth_rate = exp((-log(theta0)) / n_gridpoints) - 1;
 
 % set lower bound on expected human capital growth
@@ -47,20 +47,21 @@ Aineq = [Aineq; 0, -max_d * omega, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 xi_mean_lb = 0.2;
 xi_mean_ub = 5;
 
+% upper and lower bounds on g
+g_upper = 0.2;
+g_lower = 0.02;
+
 % only do upper bound for now?
-% bineq = [bineq;xi_mean_ub*g];
-% Aineq = [Aineq; 0, 0, 0, 0, 0, omega, 0, 0, 0, 1, 0];
+bineq = [bineq;xi_mean_ub*g_upper];
+Aineq = [Aineq; 0, 0, 0, 0, 0, omega, 0, 0, 0, 1, 0, 0];
 
 % Adding the lower bound. Only do upper bound for now?
-% bineq = [bineq;-xi_mean_lb*g];
-% Aineq = [Aineq; 0, 0, 0, 0, 0, -omega, 0, 0, 0, -1, 0];
+bineq = [bineq;-xi_mean_lb*g_lower];
+Aineq = [Aineq; 0, 0, 0, 0, 0, -omega, 0, 0, 0, -1, 0, 0];
 
 % standard deviation is also linear in kappa. Can impose that it's not huge
 % relative to the mean of xi. But won't do this for now...
 % xi_std = sqrt(kappa^2 / (2 * g - g^2) * (1 - omega) * (omega));
-
-g_upper = 0.2;
-g_lower = 0.02;
 
 lower = [0.001, ... phi
     0.1, ... alpha

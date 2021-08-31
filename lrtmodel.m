@@ -1,5 +1,5 @@
 function loss = lrtmodel(paramvec, H_inside, make_plots, ...
-    n_gridpoints,parse_fcn_name, n_periods,  scale_period)
+    n_gridpoints,parse_fcn_name, n_periods,  scale_period, hyperparams)
 
 % transpose for particleswarm
 if nargin < 5
@@ -95,7 +95,7 @@ if nargin < 5
     xi_constant = 0;
 else
     eval(['[phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share] = ', ...
-            parse_fcn_name,'(paramvec,H_inside, n_gridpoints, scale_period, n_periods);']);
+            parse_fcn_name,'(paramvec,H_inside, n_gridpoints, scale_period, n_periods, hyperparams);']);
     
 end
 
@@ -410,7 +410,7 @@ weight_vec = [30; 10; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share I
          0; 0; 0; 0; 0; ... E(awg | income)
          0; 0; 0; 0; 0; ... E(wg | income)
          0; 0; ... E(awg), E(wg)
-         3; 3; 3; 3; 6; 10];
+         0; 0; 0; 0; 0; 0];
 
 loss_vec = (theor_mom - emp_mom) ./ (0.01 + abs(emp_mom)) .* weight_vec;
 %  bars(labels, loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
@@ -427,8 +427,8 @@ if make_plots > 0
            'E(WG)', 'E(AWG)', ...
            'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]', 'P10 Gradient'},...
            'Ordinal',true);
-      bar(momlabels([3:14, (end - 5):(end - 1)])', [theor_mom([3:4, 8:(17), (end - 5):(end - 1)]), ...
-          emp_mom([3:4, 8:(17), (end - 5):(end - 1)])])
+      bar(momlabels([3:14])', [theor_mom([3:4, 8:(17)]), ...
+          emp_mom([3:4, 8:(17)])])
      title('Moment Matching (excluding signs & levels)')
      
      figure

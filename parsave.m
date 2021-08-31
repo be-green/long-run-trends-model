@@ -1,3 +1,3 @@
-function parsave(fname, sol, exit, loss)
-  save(fname, 'sol', 'exit', 'loss')
+function parsave(fname, sol, exit, loss, hyperparams)
+  save(fname, 'sol', 'exit', 'loss', 'hyperparams')
 end

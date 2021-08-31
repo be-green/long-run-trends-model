@@ -8,16 +8,17 @@ custom_iter = optimoptions(@fmincon,'MaxIterations',1000, 'Display', ...
 n_gridpoints = 80;
 scale_period = 12;
 n_periods = 1;
-nstarts = 500;
+nstarts = 1000;
+hyperparams = struct('theta0', 0.003);
 
 parse_fcn_name = 'parse_model_params_v3';
 
 if strcmp(parse_fcn_name,'parse_model_params_v1')
-    [ upper, lower, Aineq, bineq] = build_constraints_v1(scale_period * 5,n_gridpoints);
+    [ upper, lower, Aineq, bineq] = build_constraints_v1(scale_period * 5,n_gridpoints, hyperparams);
 elseif strcmp(parse_fcn_name,'parse_model_params_v2')
-    [ upper, lower, Aineq, bineq] = build_constraints_v2(scale_period * 5,n_gridpoints);
+    [ upper, lower, Aineq, bineq] = build_constraints_v2(scale_period * 5,n_gridpoints, hyperparams);
 elseif strcmp(parse_fcn_name,'parse_model_params_v3')
-    [ upper, lower, Aineq, bineq] = build_constraints_v3(scale_period * 5,n_gridpoints);
+    [ upper, lower, Aineq, bineq] = build_constraints_v3(scale_period * 5,n_gridpoints, hyperparams);
 else
     error('Parse function not coded yet!')
 end     
@@ -31,14 +32,15 @@ save(['model-output_',run_number,'/starting-values.mat'], 'startvals')
 
 
 % evaluate objective at one, just as a sanity check;
-lrtmodel(startvals(1,:), 0, 1, n_gridpoints,parse_fcn_name, n_periods, scale_period)
+lrtmodel(startvals(1,:), 0, 1, n_gridpoints,parse_fcn_name, n_periods, scale_period, hyperparams)
 
 sol = zeros(nstarts, length(lower));
 loss = zeros(nstarts, 1);
 exitflg = zeros(nstarts, 1);
 
 parfor i = 1:nstarts
-   [this_solution, this_loss, this_exit] = fmincon(@(x) lrtmodel(x, 0, 0, n_gridpoints, parse_fcn_name, n_periods, scale_period), ...
+   [this_solution, this_loss, this_exit] = fmincon(@(x) lrtmodel(x, 0, 0, n_gridpoints, ...
+       parse_fcn_name, n_periods, scale_period, hyperparams), ...
                                     startvals(i,:), ...
                                     Aineq, bineq, [], [], ...
                                     lower, ...
@@ -60,18 +62,17 @@ parfor i = 1:nstarts
     
     fid = fopen([outdir, '/publishcode.m'], 'wt');
     fprintf(fid, ['parse_fcn_name = [''', 'parse_model_params_v3','''];\n' ]);
-    fprintf(fid, ['this_solution = [',num2str(this_solution),'];\n' ]);
+    fprintf(fid, ['load(','''./model-output_',run_number, '/model-run-number' ,num2str(i),'/runfeedback.mat'')\n']);
     fprintf(fid, ['n_gridpoints = [',num2str(n_gridpoints),'];\n' ]);
-    
     fprintf(fid, ['n_periods = [',num2str(n_periods),'];\n' ]);
     fprintf(fid, ['scale_factor = [',num2str(scale_period),'];\n' ]);
-    fprintf(fid, 'lrtmodel(this_solution, 0, 1, n_gridpoints, parse_fcn_name, n_periods, scale_period);');
+    fprintf(fid, 'lrtmodel(sol, 0, 1, n_gridpoints, parse_fcn_name, n_periods, scale_period, hyperparams);');
     fclose(fid);
     
     addpath(outdir);
     % publish([outdir, '/publishcode.m'], theseoptions)
 
     parsave(['./model-output_',run_number, '/model-run-number' ,num2str(i),'/runfeedback.mat'],...
-        this_solution, this_exit,this_loss);
+        this_solution, this_exit,this_loss, hyperparams);
     close all
 end

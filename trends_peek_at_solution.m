@@ -1,4 +1,4 @@
-timestamp = '31-Aug-2021 09_21_57';
+timestamp = '31-Aug-2021 15_37_02';
 
 function_vals = [];
 sols = [];
@@ -107,4 +107,4 @@ close all
 n_gridpoints=80;
 trial = top_sols(1,:);
 
-lrtmodel(trial, 0, 1, n_gridpoints, 'parse_model_params_v3');
+lrtmodel(trial, 0, 1, n_gridpoints, 'parse_model_params_v3', 1, 12, hyperparams);
