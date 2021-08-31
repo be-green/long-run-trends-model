@@ -22,24 +22,33 @@ dlogtheta_ub = 2 * delta; % expected level of HC at end of career is 0.6;
 min_d = 0.05;
 max_d = 0.6;
 
-% phi -  d* omega * alpha >= dlogtheta_lb
+% growth_rate * phi * (2p_up - 1) -  d* omega * alpha >= dlogtheta_lb
 % ie -dlogtheta_lb <= d*omega*alpha - phi * growth_rate
 bineq = -dlogtheta_lb;
-Aineq = [-growth_rate, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+Aineq = [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, -log(1 + growth_rate)];
 
-% phi*growth_rate -  d* omega * alpha <= dlogtheta_ub
+% growth_rate * phi * (2p_up - 1) -  d* omega * alpha <= dlogtheta_ub
 bineq = [bineq;dlogtheta_ub];
-Aineq = [Aineq; growth_rate, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+Aineq = [Aineq; 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, log(1 + growth_rate)];
 
 % d = paramvec(3) / (alpha * omega). So if we want d >= min_d, that is isomorphic to
 % having alpha * omega * min_d <= paramvec(3), so -paramvec(3) +alpha * omega * min_d <= 0
 bineq = [bineq;0];
-Aineq = [Aineq; 0, min_d * omega, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+Aineq = [Aineq; 0, min_d * omega, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 % d = paramvec(3) / (alpha * omega). So if we want d <= max_d, that is isomorphic to
 % having (alpha * omega) * max_d >= paramvec(3), so -(alpha * omega) * min_d + paramvec(3) <= 0
 bineq = [bineq;0];
-Aineq = [Aineq; 0, -max_d * omega, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+Aineq = [Aineq; 0, -max_d * omega, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+% gamma = phi * (2 p_up - 1);
+% we want 2 * p_up - 1 < 1, which means 
+% gamma - phi < 0
+% the other constraint (2 * p_up - 1) > 0 is given by gamma > 0, so 
+% this is just a bound constraint
+bineq = [bineq;0];
+Aineq = [Aineq; 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+
 
 lower = [0.001, ... phi
     0.1, ... alpha
@@ -53,7 +62,7 @@ lower = [0.001, ... phi
     0.5, ...% fraction of xi mean coming from kappa shocks vs intercept
     0.02/12, ... % g
     0 ... % p0 share
-    0.51]; % p_up, conditional prob direction on ladder is up given move
+    0]; % p_up, conditional prob direction on ladder is up given move
 
 upper = [0.4, ... % phi
          0.7,  ... % alpha

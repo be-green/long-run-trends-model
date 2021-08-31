@@ -11,7 +11,7 @@ n_periods = 1;
 nstarts = 1000;
 hyperparams = struct('theta0', 0.003);
 
-parse_fcn_name = 'parse_model_params_v3';
+parse_fcn_name = 'parse_model_params_v4';
 % scale_period * 5 is because within build_constraints the scale factor is
 % divided by 5
 if strcmp(parse_fcn_name,'parse_model_params_v1')

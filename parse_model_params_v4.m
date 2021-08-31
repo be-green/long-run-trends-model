@@ -133,7 +133,8 @@ p0_share = paramvec(12,:);
 
 % probability, conditional on moving, that the direction is up
 % down probability is 1 - p_up
-p_up = paramvec(13,:);
+gamma = paramvec(13, :);
+p_up = (gamma / phi + 1) / 2;
 p_down = 1 - p_up;
 
 if theta_order == 0

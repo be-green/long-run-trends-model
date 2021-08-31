@@ -1,7 +1,7 @@
 function loss = lrtmodel(paramvec, H_inside, make_plots, ...
     n_gridpoints,parse_fcn_name, n_periods,  scale_period, hyperparams)
 
-eval(['[phi,alpha_param,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share, p_up, p_down] = ', ...
+eval(['[phi,alpha_param,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma_param,rho,v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share, p_up, p_down] = ', ...
         parse_fcn_name,'(paramvec,H_inside, n_gridpoints, scale_period, n_periods, hyperparams);']);
  
 
@@ -284,7 +284,7 @@ xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
 % and ratio of high/low wages
 % options = optimset('Display','off', 'Algorithm', 'levenberg-marquardt');
 % lambdamu = fsolve(@(x) calcloss(x, theta_grid, steady_state, xi_star, ...
-%     kappa, rho, sigma, alpha_param, phi, xi_var, ...
+%     kappa, rho, sigma_param, alpha_param, phi, xi_var, ...
 %     A_0_tilde, A_1_tilde, ...
 %     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
 %     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
@@ -295,7 +295,7 @@ xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
 
 
 theor_mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
-    kappa, rho, sigma, alpha_param, phi, xi_var, ...
+    kappa, rho, sigma_param, alpha_param, phi, xi_var, ...
     A_0_tilde, A_1_tilde, ...
     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
@@ -383,7 +383,7 @@ if make_plots > 0
         'kappa','Xi intercept','Xi shock size (annualized)','Xi mean','Xi std dev',...
         'Human capital loss', 'g', 'Bottom Rung Share'};
 
-    all_params = [phi, alpha_param, omega, mu, lambda, sigma, rho, v, theta0, p_z, ...
+    all_params = [phi, alpha_param, omega, mu, lambda, sigma_param, rho, v, theta0, p_z, ...
                   kappa,xi_constant,kappa*agg_scale_factor, xi_star, sqrt(xi_var), hc_loss, g, p0_share]';
 
     disp(table(names', all_params))
@@ -421,11 +421,11 @@ title('Weighted Percent Loss Contribution')
 
    % steady state production values
    X_star = calc_X(xi_star, H_star, L_star, lambda, rho, H_inside);
-   Y_star = calc_Y(H_star, L_star, X_star, mu, sigma, v, H_inside);
+   Y_star = calc_Y(H_star, L_star, X_star, mu, sigma_param, v, H_inside);
 
    % high and low wages at steady state
-   high_wage = w_h(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
-   low_wage = w_l(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
+   high_wage = w_h(H_star, L_star, xi_star, rho, sigma_param, mu, lambda, v, H_inside);
+   low_wage = w_l(H_star, L_star, xi_star, rho, sigma_param, mu, lambda, v, H_inside);
    H = zeros(n_periods + 1, 1);
    L = zeros(n_periods + 1, 1);
    xi = zeros(n_periods + 1, 1);
@@ -449,10 +449,10 @@ title('Weighted Percent Loss Contribution')
    H(2) = theta_grid * shock_state;
    L(2) = 1 - H(2);
    xi(2) = xi_shock;
-   wh(2) = w_h(H(2), L(2), xi(2), rho, sigma, mu, lambda, v, H_inside);
-   wl(2) = w_l(H(2), L(2), xi(2), rho, sigma, mu, lambda, v, H_inside);
+   wh(2) = w_h(H(2), L(2), xi(2), rho, sigma_param, mu, lambda, v, H_inside);
+   wl(2) = w_l(H(2), L(2), xi(2), rho, sigma_param, mu, lambda, v, H_inside);
    X_shock = calc_X(xi(2), H(2), L(2), lambda, rho, H_inside);
-   Y_shock = calc_Y(H(2), L(2), X_shock, mu, sigma, v, H_inside);
+   Y_shock = calc_Y(H(2), L(2), X_shock, mu, sigma_param, v, H_inside);
    lshare(2) = (H(2) * wh(2) + L(2) * wl(2)) / Y_shock;
    
    X(1) = X_star;
@@ -477,12 +477,12 @@ title('Weighted Percent Loss Contribution')
 
        % shock state production values
        X(i + 2) = calc_X(xi(i + 2),H(i + 2), L(i + 2), lambda, rho, H_inside);
-       Y(i + 2) = calc_Y(H(i + 2), L(i + 2), X(i + 2), mu, sigma, v, H_inside);
+       Y(i + 2) = calc_Y(H(i + 2), L(i + 2), X(i + 2), mu, sigma_param, v, H_inside);
 
 
        % high and low wages at shock state
-       wh(i + 2) = w_h(H(i + 2), L(i + 2), xi(i + 2), rho, sigma, mu, lambda, v, H_inside);
-       wl(i + 2) = w_l(H(i + 2), L(i + 2), xi(i + 2), rho, sigma, mu, lambda, v, H_inside);
+       wh(i + 2) = w_h(H(i + 2), L(i + 2), xi(i + 2), rho, sigma_param, mu, lambda, v, H_inside);
+       wl(i + 2) = w_l(H(i + 2), L(i + 2), xi(i + 2), rho, sigma_param, mu, lambda, v, H_inside);
        lshare(i + 2) = (H(i + 2) * wh(i + 2) + L(i + 2) * wl(i + 2)) / Y(i + 2);
 
    end
