@@ -8,7 +8,7 @@ custom_iter = optimoptions(@fmincon,'MaxIterations',1000, 'Display', ...
 n_gridpoints = 80;
 scale_period = 12;
 n_periods = 1;
-nstarts = 5000;
+nstarts = 500;
 
 parse_fcn_name = 'parse_model_params_v3';
 
@@ -62,7 +62,10 @@ parfor i = 1:nstarts
     fprintf(fid, ['parse_fcn_name = [''', 'parse_model_params_v3','''];\n' ]);
     fprintf(fid, ['this_solution = [',num2str(this_solution),'];\n' ]);
     fprintf(fid, ['n_gridpoints = [',num2str(n_gridpoints),'];\n' ]);
-    fprintf(fid, 'lrtmodel(this_solution, 0, 1, n_gridpoints, parse_fcn_name);');
+    
+    fprintf(fid, ['n_periods = [',num2str(n_periods),'];\n' ]);
+    fprintf(fid, ['scale_factor = [',num2str(scale_period),'];\n' ]);
+    fprintf(fid, 'lrtmodel(this_solution, 0, 1, n_gridpoints, parse_fcn_name, n_periods, scale_period);');
     fclose(fid);
     
     addpath(outdir);
