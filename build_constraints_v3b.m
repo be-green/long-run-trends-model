@@ -46,7 +46,7 @@ lower = [0.001, ... phi
     1/12*0.005*min_d, ... d * omega * alpha (omega = 1 per year)
     0.25, ... H diff from L (curvature exponent)
     0,   ... L curvature exponent
-    0.2 , ... size of xi jump kappa
+    0.2 , ... Mean of xi
     0.1, ... a (for p_z log odds)
     0.001, ... lambda
     0.001,... % mu
@@ -59,7 +59,7 @@ upper = [0.4, ... % phi
          1/12*0.7*max_d/4, ...    % d * omega * alpha (omega = 1 per year)
          3, ...H diff from L (curvature exponent)
          0.85,    ...L curvature exponent
-         5, ... size of xi jump
+         5, ... Mean of xi
          5, ... a (for p_z log odds)
          0.999, ... lamba
          0.999,....% mu

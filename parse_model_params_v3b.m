@@ -19,7 +19,6 @@ function [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,...
 %        (9): lambda, parameter on labor in inner nest
 %       (10): kappa_share_of_xi_mean, defined as
 %               kappa * omega / (kappa * omega + xi_constant)
-%       xi_constant)
 %       (11): g, the depreciation rate of xi (NOT annualized)
 %   - H_inside: dummy to indicate whether H is in the inner nest
 %   - n_gridpoints: number of gridpoints to use for theta grid 
