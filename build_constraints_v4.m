@@ -1,4 +1,4 @@
-function [ upper, lower, Aineq, bineq] = build_constraints_v3b(n_periods,n_gridpoints, hyperparams)
+function [ upper, lower, Aineq, bineq] = build_constraints_v4(n_periods,n_gridpoints, hyperparams)
 
 % g = exp(log(0.02 + 1) / (n_periods / 5)) - 1;
 % death rate
