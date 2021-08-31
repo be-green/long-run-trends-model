@@ -1,104 +1,9 @@
 function loss = lrtmodel(paramvec, H_inside, make_plots, ...
     n_gridpoints,parse_fcn_name, n_periods,  scale_period, hyperparams)
 
-% transpose for particleswarm
-if nargin < 5
-    paramvec = paramvec';
-
-    % 0 is geometric increasing from theta
-    % 1 is geometric decreasing from 1
-    theta_order = 0;
-
-    % set up variables in accordance w/ our model
-
-    % param vec = [phi; alpha; omega; rho; sigma;]
-
-    % rate of moving up the ladder
-    phi = (paramvec(1,:));
-    % phi = paramvec(1,:);
-
-    % conditional fall probability
-    alpha = (paramvec(2,:));
-    % alpha = paramvec(2,:);
-
-    lambda = paramvec(9,:);
-    mu = paramvec(8,:);
-
-    hc_loss = paramvec(6,:);
-
-    % unconditional growth
-
-    % number of iterations associated with a single shock
-    % since a shock is 5 years, this corresponds to there being
-    % 4 iterations of the VAR a year
-
-    g = paramvec(11,:);
-
-    % death rate
-    % corresponds to an average 40 year working life
-    delta =  exp(log(0.025 + 0.02 + 1) / (n_periods / 5)) - 1;
-
-    % arrival rate of technology
-    % in this case this is also the probability
-    % at period t
-    % of state 1 happening in period t + 1
-    % these shocks are IID so this is true for both
-    % initial states
-    omegatalpha = (paramvec(3,:));
-    omega = omegatalpha / alpha;
-    % omega = paramvec(3,:);
-
-    % sigma is outer nest exponent
-    % rho is inner nest exponent
-    if H_inside == 1
-        sigma = (paramvec(5,:));
-        rho = sigma - (paramvec(4,:));
-    else
-        rho = (paramvec(5,:));
-        sigma = rho - (paramvec(4,:));
-    end
-
-    v = 1;
-
-    % rho = 0.25;
-    % sigma = paramvec(5,:);
-    % rho = paramvec(4,:);
-
-    % size of technology shock
-    % this implies an asymptotic
-    % mean of 1 for the xi process
-
-    % TODO: BREAK THIS LINK !!
-    kappa = g / omega;
-
-
-    % kappa = 0.01;
-    % kappa = 0.01;
-
-    % number of theta states
-    % used to approximate continuous density
-
-    % reversed exponential growth per Dimitris
-    % top_grid = - normcdf(paramvec(7,:)) * 5;
-    theta0 = 0.05;
-
-    p_z = exp(paramvec(7,:) + log(alpha)) / (1 + exp(paramvec(7,:) + log(alpha)));
-    if theta_order == 0
-        % growth_rate = paramvec(8,:);
-        % n_gridpoints = floor(-log(theta0) / log(1 + growth_rate));
-        growth_rate = exp((-log(theta0)) / n_gridpoints) - 1;
-        theta_grid = (theta0).*((1 + growth_rate).^(1:(n_gridpoints))); 
-    else 
-        growth_rate = exp((log(theta0)) / n_gridpoints) - 1;
-        theta_grid = 1 - (1.*((1 + growth_rate).^(1:(n_gridpoints))));
-    end
-    xi_constant = 0;
-else
-    eval(['[phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share] = ', ...
-            parse_fcn_name,'(paramvec,H_inside, n_gridpoints, scale_period, n_periods, hyperparams);']);
-    
-end
-
+eval(['[phi,alpha_param,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share, p_up, p_down] = ', ...
+        parse_fcn_name,'(paramvec,H_inside, n_gridpoints, scale_period, n_periods, hyperparams);']);
+ 
 
 % need that single obs for xi
 n_coefs = 2 + n_gridpoints;
@@ -112,13 +17,22 @@ A_0(1,1) = 1 - g;
 A_0(2, 2) = 1;
 
 % fill in theta section
+% phi is probability of moving
+% p_up is probability that the move is upwards
+% p_down is probability that the move is downwards
 for i = 3:n_coefs 
    A_0(i, i) = (1 - phi);
-   if i < n_coefs 
-       A_0(i, i + 1) = phi;
+   if i == 1
+     A_0(i, i) = 1 - phi;
+     A_0(i, i + 1) = phi;
+
+   elseif i < n_coefs 
+     A_0(i, i + 1) = phi * p_up;
+     A_0(i, i - 1) = phi * p_down;
    else
        % can't go past 1
-       A_0(i, i) = 1;
+     A_0(i, i - 1) = phi;
+     A_0(i, i) = 1 - phi;
    end
 end
 
@@ -137,8 +51,8 @@ A_1(1,1) = 1 - g;
 A_1(2,2) = 1;
 
 % Displacement shock happens last. Below, we will redistribute mass from
-% alpha * A_0 across different columns, incorporating the hc loss
-A_1(3:end, 3:end) = A_0(3:end, 3:end) * (1 - alpha);
+% alpha_param * A_0 across different columns, incorporating the hc loss
+A_1(3:end, 3:end) = A_0(3:end, 3:end) * (1 - alpha_param);
 
 
 
@@ -152,17 +66,26 @@ A_0_no_delta(1,1) = 1 - g;
 % p0 doesn't move
 A_0_no_delta(2, 2) = 1;
 
+
 % fill in theta section
+% phi is probability of moving
+% p_up is probability that the move is upwards
+% p_down is probability that the move is downwards
 for i = 3:n_coefs 
    A_0_no_delta(i, i) = (1 - phi);
-   if i < n_coefs 
-       A_0_no_delta(i, i + 1) = phi;
+   if i == 1
+     A_0_no_delta(i, i) = 1 - phi * p_up;
+     A_0_no_delta(i, i + 1) = phi * p_up;
+
+   elseif i < n_coefs 
+     A_0_no_delta(i, i + 1) = phi * p_up;
+     A_0_no_delta(i, i - 1) = phi * p_down;
    else
        % can't go past 1
-       A_0_no_delta(i, i) = 1;
+     A_0_no_delta(i, i - 1) = phi * p_down;
+     A_0_no_delta(i, i) = 1 - phi * p_down;
    end
 end
-
 
 % VAR Intercept Term
 % first term corresponds to xi
@@ -174,7 +97,7 @@ A_1_no_delta(1,1) = 1 - g;
 % folks who never move
 A_1_no_delta(2,2) = 1;
 
-A_1_no_delta(3:end, 3:end) = A_0_no_delta(3:end, 3:end) * (1 - alpha);
+A_1_no_delta(3:end, 3:end) = A_0_no_delta(3:end, 3:end) * (1 - alpha_param);
 
 
 % VAR Intercept Term
@@ -188,13 +111,22 @@ A_0_no_delta_pz(1,1) = 1 - g;
 A_0_no_delta_pz(2,2) = 1;
 
 % fill in theta section
+% phi is probability of moving
+% p_up is probability that the move is upwards
+% p_down is probability that the move is downwards
 for i = 3:n_coefs 
-   A_0_no_delta_pz(i, i) = (1 - phi);
-   if i < n_coefs 
-       A_0_no_delta_pz(i, i + 1) = phi;
+   A_0_no_delta(i, i) = (1 - phi);
+   if i == 1
+     A_0_no_delta(i, i) = 1 - phi * p_up;
+     A_0_no_delta(i, i + 1) = phi * p_up;
+
+   elseif i < n_coefs 
+     A_0_no_delta(i, i + 1) = phi * p_up;
+     A_0_no_delta(i, i - 1) = phi * p_down;
    else
        % can't go past 1
-       A_0_no_delta_pz(i, i) = 1;
+     A_0_no_delta(i, i - 1) = phi * p_down;
+     A_0_no_delta(i, i) = 1 - phi * p_down;
    end
 end
 
@@ -242,14 +174,14 @@ for i = 1:length(new_theta)
    % TODO: this seems to only address the diagonal. What about one above
    % the diagonal (since people learn too)?
    A_1(3:end,upper_fall_index(i,:) + 2) = A_1(3:end,upper_fall_index(i,:) + 2)...
-       + alpha * upper_fall_weight(i,:)*A_0(3:end,i+2);
+       + alpha_param * upper_fall_weight(i,:)*A_0(3:end,i+2);
    A_1(3:end,lower_fall_index(i,:) + 2) = A_1(3:end,lower_fall_index(i,:) + 2)...
-       + alpha * lower_fall_weight(i,:)*A_0(3:end,i+2);
+       + alpha_param * lower_fall_weight(i,:)*A_0(3:end,i+2);
    
    A_1_no_delta(3:end,upper_fall_index(i,:) + 2) = A_1_no_delta(3:end,upper_fall_index(i,:) + 2)...
-       + alpha * upper_fall_weight(i,:)*A_0_no_delta(3:end,i+2);
+       + alpha_param * upper_fall_weight(i,:)*A_0_no_delta(3:end,i+2);
    A_1_no_delta(3:end,lower_fall_index(i,:) + 2) = A_1_no_delta(3:end,lower_fall_index(i,:) + 2)...
-       + alpha * lower_fall_weight(i,:)*A_0_no_delta(3:end,i+2);
+       + alpha_param * lower_fall_weight(i,:)*A_0_no_delta(3:end,i+2);
    
   A_1_no_delta_pz(3:end,upper_fall_index(i,:) + 2) = A_1_no_delta_pz(3:end,upper_fall_index(i,:) + 2)...
        + p_z * upper_fall_weight(i,:)*A_0_no_delta_pz(3:end,i+2);
@@ -352,7 +284,7 @@ xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
 % and ratio of high/low wages
 % options = optimset('Display','off', 'Algorithm', 'levenberg-marquardt');
 % lambdamu = fsolve(@(x) calcloss(x, theta_grid, steady_state, xi_star, ...
-%     kappa, rho, sigma, alpha, phi, xi_var, ...
+%     kappa, rho, sigma, alpha_param, phi, xi_var, ...
 %     A_0_tilde, A_1_tilde, ...
 %     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
 %     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
@@ -363,7 +295,7 @@ xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
 
 
 theor_mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
-    kappa, rho, sigma, alpha, phi, xi_var, ...
+    kappa, rho, sigma, alpha_param, phi, xi_var, ...
     A_0_tilde, A_1_tilde, ...
     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
@@ -443,7 +375,7 @@ if make_plots > 0
      
    % scaling factors to convert from one shock units to 1 SD units
    agg_scale_factor = sqrt(scale_period) * sqrt(omega * (1 - omega));
-   irf_scale_factor = sqrt(scale_period) * sqrt(omega * alpha / p_z * (1 - omega * alpha / p_z));
+   irf_scale_factor = sqrt(scale_period) * sqrt(omega * alpha_param / p_z * (1 - omega * alpha_param / p_z));
      
     names = {'HC Increase Prob', 'Conditional Fall Prob', ...
         'Shock Prob', 'Skilled Share', 'Technology Share', 'Skilled Curvature', ...
@@ -451,7 +383,7 @@ if make_plots > 0
         'kappa','Xi intercept','Xi shock size (annualized)','Xi mean','Xi std dev',...
         'Human capital loss', 'g', 'Bottom Rung Share'};
 
-    all_params = [phi, alpha, omega, mu, lambda, sigma, rho, v, theta0, p_z, ...
+    all_params = [phi, alpha_param, omega, mu, lambda, sigma, rho, v, theta0, p_z, ...
                   kappa,xi_constant,kappa*agg_scale_factor, xi_star, sqrt(xi_var), hc_loss, g, p0_share]';
 
     disp(table(names', all_params))
