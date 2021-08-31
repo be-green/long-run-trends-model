@@ -12,13 +12,16 @@ nstarts = 1000;
 hyperparams = struct('theta0', 0.003);
 
 parse_fcn_name = 'parse_model_params_v3';
-
+% scale_period * 5 is because within build_constraints the scale factor is
+% divided by 5
 if strcmp(parse_fcn_name,'parse_model_params_v1')
     [ upper, lower, Aineq, bineq] = build_constraints_v1(scale_period * 5,n_gridpoints, hyperparams);
 elseif strcmp(parse_fcn_name,'parse_model_params_v2')
     [ upper, lower, Aineq, bineq] = build_constraints_v2(scale_period * 5,n_gridpoints, hyperparams);
 elseif strcmp(parse_fcn_name,'parse_model_params_v3')
     [ upper, lower, Aineq, bineq] = build_constraints_v3(scale_period * 5,n_gridpoints, hyperparams);
+elseif strcmp(parse_fcn_name,'parse_model_params_v4')
+    [ upper, lower, Aineq, bineq] = build_constraints_v4(scale_period * 5,n_gridpoints, hyperparams);
 else
     error('Parse function not coded yet!')
 end     
