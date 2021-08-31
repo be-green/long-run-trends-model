@@ -248,6 +248,10 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        % indexing requires the vector of CDF levels
        ss_cdf = [cumsum(steady_state)];
        
+       if make_plots > 0
+          plot(ss_cdf); 
+       end
+       
        for i = 1:length(quantile_targets)
             if i == 1
                 ss_cdf_lb = 0;

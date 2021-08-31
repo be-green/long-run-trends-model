@@ -64,7 +64,7 @@ lower = [0.001, ... phi
     0 ... % p0 share
     0]; % p_up, conditional prob direction on ladder is up given move
 
-upper = [0.4, ... % phi
+upper = [0.3, ... % phi
          0.7,  ... % alpha
          1/12*0.7*max_d/4, ...    % d * omega * alpha (omega = 1 per year)
          3, ...H diff from L (curvature exponent)

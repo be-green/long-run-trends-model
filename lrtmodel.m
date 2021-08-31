@@ -22,17 +22,17 @@ A_0(2, 2) = 1;
 % p_down is probability that the move is downwards
 for i = 3:n_coefs 
    A_0(i, i) = (1 - phi);
-   if i == 1
-     A_0(i, i) = 1 - phi;
-     A_0(i, i + 1) = phi;
+   if i == 3
+     A_0(i, i) = 1 - phi * p_up;
+     A_0(i, i + 1) = phi * p_up;
 
    elseif i < n_coefs 
      A_0(i, i + 1) = phi * p_up;
      A_0(i, i - 1) = phi * p_down;
    else
        % can't go past 1
-     A_0(i, i - 1) = phi;
-     A_0(i, i) = 1 - phi;
+     A_0(i, i - 1) = phi * p_down;
+     A_0(i, i) = 1 - phi * p_down;
    end
 end
 
@@ -337,7 +337,7 @@ emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
              3.3881]; % percent higher high income p10 vs. lowest income p10
          
 weight_vec = [30; 10; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
-         0; 0; 0; 0; 0; ... abs wage moments
+         6; 5; 5; 5; 6; ... abs wage moments
          10; 8; 8; 8; 15; ... wage moments
          0; 0; 0; 0; 0; ... E(awg | income)
          0; 0; 0; 0; 0; ... E(wg | income)

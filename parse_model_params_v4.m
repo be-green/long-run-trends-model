@@ -20,6 +20,10 @@ function [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,...
 %       (10): kappa_share_of_xi_mean, defined as
 %               kappa * omega / (kappa * omega + xi_constant)
 %       (11): g, the depreciation rate of xi (NOT annualized)
+%       (12): p0_share, share of people who never move up the ladder, stuck
+%       at H = 0.
+%       (13): gamma, which is (2p - 1) * phi, where p is the probability
+%       that a move on the ladder is in the upward direction
 %   - H_inside: dummy to indicate whether H is in the inner nest
 %   - n_gridpoints: number of gridpoints to use for theta grid 
 %   - scale_period: discretization interval, number of subperiods in a year 
