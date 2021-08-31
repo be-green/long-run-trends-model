@@ -1,6 +1,6 @@
 function [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,...
     v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share] = ...
-          parse_model_params_v3b(paramvec,H_inside,n_gridpoints, scale_period, n_periods)
+          parse_model_params_v3b(paramvec,H_inside,n_gridpoints, scale_period, n_periods, hyperparams)
 % [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,...
 %     v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share] = ...
 %           parse_model_params_v3b(paramvec,H_inside,n_gridpoints, scale_period, n_periods)
@@ -127,7 +127,7 @@ mu = paramvec(8,:); % outer nest
 v = 1;
 
 % setting up theta grid
-theta0 = 0.003;
+theta0 = hyperparams.theta0;
 
 % share of people who never ladder climb
 p0_share = paramvec(12,:);

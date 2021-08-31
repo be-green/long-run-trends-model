@@ -1,4 +1,4 @@
-function [ upper, lower, Aineq, bineq] = build_constraints_v3b(n_periods,n_gridpoints)
+function [ upper, lower, Aineq, bineq] = build_constraints_v3b(n_periods,n_gridpoints, hyperparams)
 
 % g = exp(log(0.02 + 1) / (n_periods / 5)) - 1;
 % death rate
@@ -9,7 +9,7 @@ delta =  exp(log(0.025 + 1) / (n_periods / 5)) - 1;
 omega = 5/n_periods; %fixing this ex ante in this round
 
 % setting up theta grid
-theta0 = 0.003; % NEEDS to match hardcoded value in parse_model_params_v3b script
+theta0 = hyperparams.theta0;
 growth_rate = exp((-log(theta0)) / n_gridpoints) - 1;
 
 % set lower bound on expected human capital growth
@@ -50,7 +50,7 @@ lower = [0.001, ... phi
     0.1, ... a (for p_z log odds)
     0.001, ... lambda
     0.001,... % mu
-    0, ...% fraction of xi mean coming from kappa shocks vs intercept
+    0.5, ...% fraction of xi mean coming from kappa shocks vs intercept
     0.02/12, ... % g
     0]; % p0 share
 
