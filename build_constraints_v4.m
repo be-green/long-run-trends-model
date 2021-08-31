@@ -47,7 +47,7 @@ Aineq = [Aineq; 0, -max_d * omega, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 % the other constraint (2 * p_up - 1) > 0 is given by gamma > 0, so 
 % this is just a bound constraint
 bineq = [bineq;0];
-Aineq = [Aineq; 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+Aineq = [Aineq; -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
 
 
 lower = [0.001, ... phi

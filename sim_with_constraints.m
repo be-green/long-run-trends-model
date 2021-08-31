@@ -125,10 +125,15 @@ elseif strcmp(parse_fcn_name,'parse_model_params_v2')
            sims(i, 3) = unifrnd(lower(3), upper(3));
 
            % first, we have bounds on phi to consider
-           phi_l = max((abs(bineq(1)) + sims(i, 3))/ abs(Aineq(1,1)),lower(1));
-           phi_u = min((abs(bineq(2)) + sims(i, 3))/ abs(Aineq(1,1)),upper(1));
-           sims(i, 1) = unifrnd(phi_l, phi_u);
+           gamma_l = max((abs(bineq(1)) + sims(i, 3))/ abs(Aineq(1,13)),lower(1));
+           gamma_u = min((abs(bineq(2)) + sims(i, 3))/ abs(Aineq(1,13)),upper(1));
+           sims(i, 13) = unifrnd(gamma_l, gamma_u);
 
+           phi_l = max(lower(1), sims(i, 13));
+           phi_u = upper(1);
+           
+           sims(i, 1) = unifrnd(phi_l, phi_u);
+           
            % next, we need to pick levels of alpha which ensure that d
            % satisfies the bounds
            % constr 3 gives lower bound for d, so upper bound on alpha
@@ -144,7 +149,7 @@ elseif strcmp(parse_fcn_name,'parse_model_params_v2')
            % sims(i, 10) = unifrnd(xi_constant_l, xi_constant_u);
            
            if max(isnan(sims(i,:))) == 0 && ...
-              phi_l <= phi_u && alpha_l <= alpha_u
+              gamma_l <= gamma_u && alpha_l <= alpha_u && phi_l <= phi_u
                 solution_found = 1;
            end
        end
