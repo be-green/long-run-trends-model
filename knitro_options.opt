@@ -1,0 +1,6 @@
+feastol 1e-10
+feastolabs 1e-10
+opttol 1e-10
+xtol_iters 20
+gradopt 3
+hessopt 6
