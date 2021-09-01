@@ -353,12 +353,12 @@ emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
              tenth_pctile_probs(5)-tenth_pctile_probs(1)]; % Difference higher high income p10 vs. lowest income p10
          
 weight_vec = [30; 10; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
-         6; 5; 5; 5; 6; ... abs wage moments
+         0; 0; 0; 0; 0; ... abs wage moments
          10; 8; 8; 8; 15; ... wage moments
          0; 0; 0; 0; 0; ... E(awg | income)
          0; 0; 0; 0; 0; ... E(wg | income)
          0; 0; ... E(awg), E(wg)
-         0; 0; 0; 0; 0; 0];
+         3; 3; 3; 3; 3; 6];
 
 loss_vec = (theor_mom - emp_mom) ./ (0.01 + abs(emp_mom)) .* weight_vec;
 %  bars(labels, loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
@@ -375,8 +375,8 @@ if make_plots > 0
            'E(WG)', 'E(AWG)', ...
            'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]', 'P10 Gradient'},...
            'Ordinal',true);
-      bar(momlabels([3:14])', [theor_mom([3:4, 8:(17)]), ...
-          emp_mom([3:4, 8:(17)])])
+      bar(momlabels([3:14, end:(end - 4)])', [theor_mom([3:4, 8:(17), end:(end - 4)]), ...
+          emp_mom([3:4, 8:(17), end:(end - 4)])])
      title('Moment Matching (excluding signs & levels)')
      
      figure

@@ -4,6 +4,11 @@ custom_iter = optimoptions(@fmincon,'MaxIterations',1000, 'Display', ...
     'iter', 'FiniteDifferenceType', 'central', 'ScaleProblem', 'obj-and-constr', ...
     'HessianApproximation', 'bfgs', 'StepTolerance', 1e-13, ...
     'MaxFunctionEvaluations', 20000);
+addpath('C:/Program Files/Artelys/');
+addpath('C:/Program Files/Artelys/Knitro 12.4.0/');
+addpath('C:/Program Files/Artelys/Knitro 12.4.0/knitromatlab/');
+
+koptions = 'knitro_options.opt';
 
 % n_gripoints is number of gridopints used on the 0-1 interval
 % scale_period is used to represent scaling of "rfsim5" measure in
@@ -13,11 +18,11 @@ custom_iter = optimoptions(@fmincon,'MaxIterations',1000, 'Display', ...
 % nstarts is # of starts given to multistart
 % hyperparams is misc hyperparameters:
 % (1) theta0: level of H at bottom rung of ladder
-n_gridpoints = 80;
+n_gridpoints = 120;
 scale_period = 12;
 n_periods = 1;
-nstarts = 1000;
-hyperparams = struct('theta0', 0.01);
+nstarts = 100;
+hyperparams = struct('theta0', 0.05);
 
 parse_fcn_name = 'parse_model_params_v4';
 % scale_period * 5 is because within build_constraints the scale factor is
@@ -50,13 +55,14 @@ loss = zeros(nstarts, 1);
 exitflg = zeros(nstarts, 1);
 
 parfor i = 1:nstarts
-   [this_solution, this_loss, this_exit] = fmincon(@(x) lrtmodel(x, 0, 0, n_gridpoints, ...
+   [this_solution, this_loss, this_exit] = knitro_nlp(@(x) lrtmodel(x, 0, 0, n_gridpoints, ...
        parse_fcn_name, n_periods, scale_period, hyperparams), ...
                                     startvals(i,:), ...
                                     Aineq, bineq, [], [], ...
                                     lower, ...
                                     upper,...
-                                    [], custom_iter);
+                                    [], [], [], ... nonlinear constraint, extendedFeatures, options
+                                    koptions); % set knitro options
     sol(i,:) = this_solution;
     loss(i,:) = this_loss;
     exitflg(i,:) = this_exit;
