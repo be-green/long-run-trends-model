@@ -5,11 +5,19 @@ custom_iter = optimoptions(@fmincon,'MaxIterations',1000, 'Display', ...
     'HessianApproximation', 'bfgs', 'StepTolerance', 1e-13, ...
     'MaxFunctionEvaluations', 20000);
 
+% n_gripoints is number of gridopints used on the 0-1 interval
+% scale_period is used to represent scaling of "rfsim5" measure in
+% regressions
+% n_periods is the number of periods used w/ IRFs
+% so 1 indicates "impact responses"
+% nstarts is # of starts given to multistart
+% hyperparams is misc hyperparameters:
+% (1) theta0: level of H at bottom rung of ladder
 n_gridpoints = 80;
 scale_period = 12;
 n_periods = 1;
 nstarts = 1000;
-hyperparams = struct('theta0', 0.003);
+hyperparams = struct('theta0', 0.01);
 
 parse_fcn_name = 'parse_model_params_v4';
 % scale_period * 5 is because within build_constraints the scale factor is
