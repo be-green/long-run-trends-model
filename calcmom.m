@@ -438,7 +438,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
       title("Density by Wage / W_l")
    end
    
-  tenth_pctile_gradient = tenth_pctile_probs(5) / tenth_pctile_probs(1) - 1;
+  tenth_pctile_gradient = tenth_pctile_probs(5) - tenth_pctile_probs(1); % changed this from ratio to difference
 
    
    mom = [lshare; premium; y_irf; lshare_irf; y_irf_sign; lw_irf_sign; ...

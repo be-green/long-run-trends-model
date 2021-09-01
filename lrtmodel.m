@@ -1,9 +1,13 @@
 function loss = lrtmodel(paramvec, H_inside, make_plots, ...
     n_gridpoints,parse_fcn_name, n_periods,  scale_period, hyperparams)
 
+if isempty(parse_fcn_name)
+   [phi,alpha_param,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma_param,rho,v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share, p_up, p_down] = ...
+        parse_model_params_v4(paramvec,H_inside, n_gridpoints, scale_period, n_periods, hyperparams);
+else    
 eval(['[phi,alpha_param,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma_param,rho,v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share, p_up, p_down] = ', ...
         parse_fcn_name,'(paramvec,H_inside, n_gridpoints, scale_period, n_periods, hyperparams);']);
- 
+end 
 
 % need that single obs for xi
 n_coefs = 2 + n_gridpoints;
@@ -250,25 +254,37 @@ piVec = piVec ./ sum(piVec);
 
 H = T';
 
-C = blkdiag(c_0_tilde, c_1_tilde);
+% Note: because of the presence of the absorbing state in the first entry
+% of the state vector, the solution for the steady state is indeterminate.
+% So, we need to make some additional restrictions (drop first elemnt of probability vector)
+c_0_tilde2 = c_0_tilde([1, 3:end]);
+c_1_tilde2 = c_1_tilde([1, 3:end]);
+% need to change the intercepts to scale down by mass in the absorbing
+% state, since modeled probabilities need to sum to 1-p0_share, not 1
+c_0_tilde2(2:end) = c_0_tilde2(2:end)*(1-p0_share);
+c_1_tilde2(2:end) = c_1_tilde2(2:end)*(1-p0_share);
+
+A_0_tilde2 = A_0_tilde([1, 3:end],[1, 3:end]);
+A_1_tilde2 = A_1_tilde([1, 3:end],[1, 3:end]);
+
+C = blkdiag(c_0_tilde2, c_1_tilde2);
 %C = blkdiag([0, 0, repelem(0, n_gridpoints - 1)]', [kappa, 0, repelem(0, n_gridpoints - 1)]');
 
-bianchi_omega = blkdiag(A_0_tilde, A_1_tilde) * kron(H,eye(n_coefs-1));
-q = (eye((n_coefs-1)*2) - bianchi_omega) \ (C * piVec);         % eq. (3)
-bianchi_omegatilde = [bianchi_omega, C*H; zeros(2, (n_coefs-1)*2), H];  % eq. (5)
+bianchi_omega = blkdiag(A_0_tilde2, A_1_tilde2) * kron(H,eye(n_coefs-2));
+q = (eye((n_coefs-2)*2) - bianchi_omega) \ (C * piVec);         % eq. (3)
+bianchi_omegatilde = [bianchi_omega, C*H; zeros(2, (n_coefs-2)*2), H];  % eq. (5)
 
-w = repmat(eye((n_coefs-1)),1,2);
+w = repmat(eye((n_coefs-2)),1,2);
 mu_ss = w * q;
 
-wtilde = [w, zeros((n_coefs-1),2)];
-qtilde = [q; piVec];
-steady_state = [p0_share; [mu_ss(3:(n_coefs-1)); 1 - sum(mu_ss(3:end))] * (1 - p0_share)];
+steady_state = [p0_share; [mu_ss(2:end); (1 - p0_share) - sum(mu_ss(2:end))] ];
 
 theta_grid = [0, theta_grid];
 
 if make_plots > 0
     figure
     plot(theta_grid,steady_state)
+    title('Steady state theta density')
 end
 % steady state values
 H_star = theta_grid * steady_state;
@@ -334,7 +350,7 @@ emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
              expected_abs_wage_growth_by_income; ...
              -0.06313; 0.3171; ... expected wage growth, expected abs wage growth
              tenth_pctile_probs; ...
-             3.3881]; % percent higher high income p10 vs. lowest income p10
+             tenth_pctile_probs(5)-tenth_pctile_probs(1)]; % Difference higher high income p10 vs. lowest income p10
          
 weight_vec = [30; 10; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
          6; 5; 5; 5; 6; ... abs wage moments
