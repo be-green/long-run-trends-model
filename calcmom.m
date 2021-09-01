@@ -4,7 +4,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
     c_1_tilde_no_delta, A_0_tilde_no_delta_pz, ...
     A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
-    c_1_tilde_no_delta_pz, p_z, calc_irfs, make_plots, A_1)
+    c_1_tilde_no_delta_pz, p_z, calc_irfs, make_plots, A_1, scale_period)
 
    % so I don't get a billion "singular" warnings 
    warning('off','all')
@@ -18,8 +18,8 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    H_inside = 0;
    
    % scaling factors to convert from one shock units to 1 SD units
-   agg_scale_factor = sqrt(n_periods / 5) * sqrt(omega * (1 - omega));
-   irf_scale_factor = sqrt(n_periods / 5) * sqrt(omega * alpha / p_z * (1 - omega * alpha / p_z));
+   agg_scale_factor = sqrt(scale_period) * sqrt(omega * (1 - omega));
+   irf_scale_factor = sqrt(scale_period) * sqrt(omega * alpha / p_z * (1 - omega * alpha / p_z));
    
    H_star = theta_grid * steady_state;
    L_star = 1 - H_star;
@@ -248,6 +248,10 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        % indexing requires the vector of CDF levels
        ss_cdf = [cumsum(steady_state)];
        
+       if make_plots > 0
+          plot(ss_cdf); 
+       end
+       
        for i = 1:length(quantile_targets)
             if i == 1
                 ss_cdf_lb = 0;
@@ -419,7 +423,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    lshare = (H_star * high_wage + L_star * low_wage) / Y_star;
    lshare_shock = (H_shock * high_wage_tp1 + L_shock * low_wage_tp1) / Y_shock;
       
-   lshare_irf_sign = ((log(lshare_shock) - log(lshare)) > 0) * abs(log(lshare_shock) - log(lshare)) * 10;
+   lshare_irf_sign = ((log(lshare_shock) - log(lshare)) > 0) * abs(log(lshare_shock) - log(lshare)) * 100;
    
    lshare_irf = (log(lshare_shock) - log(lshare)) * agg_scale_factor;
    
@@ -434,6 +438,9 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
       title("Density by Wage / W_l")
    end
    
+  tenth_pctile_gradient = tenth_pctile_probs(5) - tenth_pctile_probs(1); % changed this from ratio to difference
+
+   
    mom = [lshare; premium; y_irf; lshare_irf; y_irf_sign; lw_irf_sign; ...
        lshare_irf_sign; ...
        abs_wage_growth; ...
@@ -442,5 +449,6 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        ss_awg_by_income; ...
        expected_wage_growth; ...
        expected_abs_wage_growth; ...
-       tenth_pctile_probs];
+       tenth_pctile_probs;
+       tenth_pctile_gradient];
 end

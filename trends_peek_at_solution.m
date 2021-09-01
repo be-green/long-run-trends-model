@@ -1,9 +1,10 @@
-timestamp = '24-Aug-2021 17_14_30';
+timestamp = '31-Aug-2021 20_00_15';
+
 function_vals = [];
 sols = [];
 exit_flags = [];
 
-for i = 1:1500
+for i = 1:1000
    try
        % this should have worked but there was a bug
        % this wil be a lot faster after we fix it
@@ -105,5 +106,5 @@ close all
 % regenerate output for best solution
 n_gridpoints=80;
 trial = top_sols(1,:);
-trial(6) = trial(6)*10;
-lrtmodel(trial, 0, 1, n_gridpoints, 'parse_model_params_v2');
+
+lrtmodel(trial, 0, 1, n_gridpoints, 'parse_model_params_v3', 1, 12, hyperparams);
