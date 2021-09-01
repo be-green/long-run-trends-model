@@ -62,7 +62,7 @@ lower = [0.001, ... phi
     0.5, ...% fraction of xi mean coming from kappa shocks vs intercept
     0.02/12, ... % g
     0 ... % p0 share
-    0]; % p_up, conditional prob direction on ladder is up given move
+    0]; % phi * (2*p_up - 1), expected net increase from learning
 
 upper = [0.3, ... % phi
          0.7,  ... % alpha
@@ -75,6 +75,6 @@ upper = [0.3, ... % phi
          0.999,....% mu
          1, ... % fraction of xi mean coming from kappa shocks vs intercept
          0.2/12, ... g
-         0.25 ...  % p0 share
-         1]; % p_up, conditional prob direction on ladder is up given move
+         0.375 ...  % p0 share
+         0.3]; % phi * (2*p_up - 1), expected net increase from learning
      

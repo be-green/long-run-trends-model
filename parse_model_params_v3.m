@@ -1,5 +1,5 @@
 function [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,...
-    v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share] = ...
+    v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share,p_up,p_down] = ...
           parse_model_params_v3(paramvec, H_inside,n_gridpoints, scale_period, n_periods, hyperparams)
 % [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,v,p_z,kappa,theta_grid,theta0] = ...
 %  parse_model_params_v1(paramvec,H_inside,n_gridpoints)
@@ -128,3 +128,6 @@ else
     growth_rate = exp((log(theta0)) / n_gridpoints) - 1;
     theta_grid = 1 - (1.*((1 + growth_rate).^(1:(n_gridpoints))));
 end
+
+p_up = 1;
+p_down = 0;
