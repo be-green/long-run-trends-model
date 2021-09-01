@@ -119,6 +119,7 @@ theta0 =  hyperparams.theta0;
 p0_share = paramvec(12,:);
 
 
+
 if theta_order == 0
     % growth_rate = paramvec(8,:);
     % n_gridpoints = floor(-log(theta0) / log(1 + growth_rate));

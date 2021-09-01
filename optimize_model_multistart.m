@@ -79,6 +79,7 @@ parfor i = 1:nstarts
     fid = fopen([outdir, '/publishcode.m'], 'wt');
     fprintf(fid, ['parse_fcn_name = [''', parse_fcn_name,'''];\n' ]);
     fprintf(fid, ['load(','''./model-output_',run_number, '/model-run-number' ,num2str(i),'/runfeedback.mat'')\n']);
+
     fprintf(fid, ['n_gridpoints = [',num2str(n_gridpoints),'];\n' ]);
     fprintf(fid, ['n_periods = [',num2str(n_periods),'];\n' ]);
     fprintf(fid, ['scale_factor = [',num2str(scale_period),'];\n' ]);

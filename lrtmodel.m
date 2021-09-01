@@ -375,8 +375,8 @@ if make_plots > 0
            'E(WG)', 'E(AWG)', ...
            'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]', 'P10 Gradient'},...
            'Ordinal',true);
-      bar(momlabels([3:14, end:(end - 4)])', [theor_mom([3:4, 8:(17), end:(end - 4)]), ...
-          emp_mom([3:4, 8:(17), end:(end - 4)])])
+
+      bar(momlabels(3:14)', [theor_mom([3:4, 8:(17), (end - 4):end]), emp_mom([3:4, 8:(17), (end - 4):end])])
      title('Moment Matching (excluding signs & levels)')
      
      figure
