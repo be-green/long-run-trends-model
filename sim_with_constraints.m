@@ -136,8 +136,8 @@ elseif strcmp(parse_fcn_name,'parse_model_params_v2')
            % next, we need to pick levels of alpha_x_omega which ensure that d
           % constr 3 gives lower bound for d, so upper bound on
           % alpha_x_omega
-           alpha_x_omega_u =  min(sims(i,3) / abs(Aineq(3,15)), upper(3));
-           alpha_x_omega_l =  max(sims(i,3) / abs(Aineq(4,15)), lower(3));
+           alpha_x_omega_u =  min(sims(i,3) / abs(Aineq(3,15)), upper(15));
+           alpha_x_omega_l =  max(sims(i,3) / abs(Aineq(4,15)), lower(15));
            
            sims(i, 15) = unifrnd(alpha_x_omega_l, alpha_x_omega_u);
            
