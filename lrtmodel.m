@@ -119,18 +119,18 @@ A_0_no_delta_pz(2,2) = 1;
 % p_up is probability that the move is upwards
 % p_down is probability that the move is downwards
 for i = 3:n_coefs 
-   A_0_no_delta(i, i) = (1 - phi);
+   A_0_no_delta_pz(i, i) = (1 - phi);
    if i == 1
-     A_0_no_delta(i, i) = 1 - phi * p_up;
-     A_0_no_delta(i, i + 1) = phi * p_up;
+     A_0_no_delta_pz(i, i) = 1 - phi * p_up;
+     A_0_no_delta_pz(i, i + 1) = phi * p_up;
 
    elseif i < n_coefs 
-     A_0_no_delta(i, i + 1) = phi * p_up;
-     A_0_no_delta(i, i - 1) = phi * p_down;
+     A_0_no_delta_pz(i, i + 1) = phi * p_up;
+     A_0_no_delta_pz(i, i - 1) = phi * p_down;
    else
        % can't go past 1
-     A_0_no_delta(i, i - 1) = phi * p_down;
-     A_0_no_delta(i, i) = 1 - phi * p_down;
+     A_0_no_delta_pz(i, i - 1) = phi * p_down;
+     A_0_no_delta_pz(i, i) = 1 - phi * p_down;
    end
 end
 
@@ -145,7 +145,7 @@ A_1_no_delta_pz(1,1) = 1 - g;
 % folks who don't move
 A_1_no_delta_pz(2, 2) = 1;
 
-A_1_no_delta_pz(3:end, 3:end) = A_0_no_delta(3:end, 3:end) * (1 - p_z);
+A_1_no_delta_pz(3:end, 3:end) = A_0_no_delta_pz(3:end, 3:end) * (1 - p_z);
 
 % transpose for use w/ Bianchi formulas
 % VAR format
@@ -214,8 +214,8 @@ A_1_tilde = A_1(1:(end-1),1:(end-1));
 c_0_tilde = [xi_constant; A_0(2:end-1,end)];
 c_1_tilde = [kappa+xi_constant; A_1(2:end-1,end)];
 
-A_0_tilde(2:end,2:end) = A_0_tilde(2:end,2:end)- repmat(c_0_tilde(2:end,1),1,size(c_0_tilde,1)-1);
-A_1_tilde(2:end,2:end) = A_1_tilde(2:end,2:end)- repmat(c_1_tilde(2:end,1),1,size(c_1_tilde,1)-1);
+A_0_tilde(3:end,3:end) = A_0_tilde(3:end,3:end)- repmat(c_0_tilde(3:end,1),1,size(c_0_tilde,1)-2);
+A_1_tilde(3:end,3:end) = A_1_tilde(3:end,3:end)- repmat(c_1_tilde(3:end,1),1,size(c_1_tilde,1)-2);
 
 % next, we will define subsetted matrices which omit the final column (this
 % imposes the restriction that probabilities sum to 1)
@@ -225,10 +225,10 @@ A_1_tilde_no_delta = A_1_no_delta(1:(end-1),1:(end-1));
 c_0_tilde_no_delta = [xi_constant; A_0_no_delta(2:end-1,end)];
 c_1_tilde_no_delta = [kappa+xi_constant; A_1_no_delta(2:end-1,end)];
 
-A_0_tilde_no_delta(2:end,2:end) = A_0_tilde_no_delta(2:end,2:end)- repmat(c_0_tilde_no_delta(2:end,1),1,...
-    size(c_0_tilde_no_delta,1)-1);
-A_1_tilde_no_delta(2:end,2:end) = A_1_tilde_no_delta(2:end,2:end)- repmat(c_1_tilde_no_delta(2:end,1),1,...
-    size(c_1_tilde_no_delta,1)-1);
+A_0_tilde_no_delta(3:end,3:end) = A_0_tilde_no_delta(3:end,3:end)- repmat(c_0_tilde_no_delta(3:end,1),1,...
+    size(c_0_tilde_no_delta,1)-2);
+A_1_tilde_no_delta(3:end,3:end) = A_1_tilde_no_delta(3:end,3:end)- repmat(c_1_tilde_no_delta(3:end,1),1,...
+    size(c_1_tilde_no_delta,1)-2);
 
 % next, we will define subsetted matrices which omit the final column (this
 % imposes the restriction that probabilities sum to 1)
@@ -238,10 +238,10 @@ A_1_tilde_no_delta_pz = A_1_no_delta_pz(1:(end-1),1:(end-1));
 c_0_tilde_no_delta_pz = [xi_constant; A_0_no_delta_pz(2:end-1,end)];
 c_1_tilde_no_delta_pz = [kappa+xi_constant; A_1_no_delta_pz(2:end-1,end)];
 
-A_0_tilde_no_delta_pz(2:end,2:end) = A_0_tilde_no_delta_pz(2:end,2:end)- ...
-    repmat(c_0_tilde_no_delta_pz(2:end,1),1,size(c_0_tilde_no_delta_pz,1)-1);
-A_1_tilde_no_delta_pz(2:end,2:end) = A_1_tilde_no_delta_pz(2:end,2:end)- ...
-    repmat(c_1_tilde_no_delta_pz(2:end,1),1,size(c_1_tilde_no_delta_pz,1)-1);
+A_0_tilde_no_delta_pz(3:end,3:end) = A_0_tilde_no_delta_pz(3:end,3:end)- ...
+    repmat(c_0_tilde_no_delta_pz(3:end,1),1,size(c_0_tilde_no_delta_pz,1)-2);
+A_1_tilde_no_delta_pz(3:end,3:end) = A_1_tilde_no_delta_pz(3:end,3:end)- ...
+    repmat(c_1_tilde_no_delta_pz(3:end,1),1,size(c_1_tilde_no_delta_pz,1)-2);
 
 % transition matrix
 T = [[1 - omega, omega]; [1 - omega, omega]];
@@ -317,7 +317,7 @@ theor_mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
     c_1_tilde_no_delta, A_0_tilde_no_delta_pz, ...
     A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
-    c_1_tilde_no_delta_pz, p_z, 1, make_plots, A_1, scale_period);
+    c_1_tilde_no_delta_pz, p_z, 1, make_plots, A_1, A_0, scale_period, H_inside);
 
 
 
@@ -375,8 +375,8 @@ if make_plots > 0
            'E(WG)', 'E(AWG)', ...
            'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]', 'P10 Gradient'},...
            'Ordinal',true);
-
-      bar(momlabels(3:14)', [theor_mom([3:4, 8:(17), (end - 4):end]), emp_mom([3:4, 8:(17), (end - 4):end])])
+      bar(momlabels([3:14, (end - 5):(end - 1)])', [theor_mom([3:4, 8:(17),(end - 5):(end - 1)]), ...
+          emp_mom([3:4, 8:(17), (end - 5):(end - 1)])])
      title('Moment Matching (excluding signs & levels)')
      
      figure
@@ -539,6 +539,46 @@ title("Composite Good")
 
 subplot(3,3,9); 
 plot([0, (1:scale_period)]', (Y(1:end)./Y(1) - 1)*agg_scale_factor, '.-')
+title("Output Level")
+
+
+
+figure
+subplot(3,3,1);
+plot([0, (1:scale_period)]', (wh(1:end)), '.-')
+title("High Wage")
+
+subplot(3,3,2); 
+plot([0, (1:scale_period)]', (wl(1:end)), '.-')
+title("Low Wage")
+
+subplot(3,3,3);
+plot([0, (1:scale_period)]', (L(1:end)), '.-')
+title("L Skill Level")
+
+subplot(3,3,4); 
+plot([0, (1:scale_period)]', (H(1:end)), '.-')
+title("H Skill Level")
+
+subplot(3,3,5); 
+plot([0, (1:scale_period)]', (xi(1:end)), '.-')
+title("Technology Level")
+
+wage_diff = wh - wl;
+subplot(3,3,6); 
+plot([0, (1:scale_period)]', (wage_diff(1:end)), '.-')
+title("High Wage - Low Wage")
+
+subplot(3,3,7);
+plot([0, (1:scale_period)]', (lshare(1:end)), '.-')
+title("Labor Share")
+
+subplot(3,3,8); 
+plot([0, (1:scale_period)]', (X(1:end)), '.-')
+title("Composite Good")
+
+subplot(3,3,9); 
+plot([0, (1:scale_period)]', (Y(1:end)), '.-')
 title("Output Level")
 
 
