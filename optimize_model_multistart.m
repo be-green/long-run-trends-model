@@ -2,8 +2,9 @@ run_number = strrep(datestr(datetime), ':', '_');
 
 custom_iter = optimoptions(@fmincon,'MaxIterations',1000, 'Display', ...
     'iter', 'FiniteDifferenceType', 'central', 'ScaleProblem', 'obj-and-constr', ...
-    'HessianApproximation', 'bfgs', 'StepTolerance', 1e-13, ...
-    'MaxFunctionEvaluations', 20000);
+    'HessianApproximation', 'bfgs', 'StepTolerance', 1e-10, ...
+    'MaxFunctionEvaluations', 20000, 'OptimalityTolerance', 1e-10, ...
+    'InitBarrierParam', 0.5);
 addpath('C:/Program Files/Artelys/');
 addpath('C:/Program Files/Artelys/Knitro 12.4.0/');
 addpath('C:/Program Files/Artelys/Knitro 12.4.0/knitromatlab/');
@@ -20,10 +21,10 @@ method = "fmincon";
 % nstarts is # of starts given to multistart
 % hyperparams is misc hyperparameters:
 % (1) theta0: level of H at bottom rung of ladder
-n_gridpoints = 120;
+n_gridpoints = 300;
 scale_period = 12;
 n_periods = 1;
-nstarts = 1000;
+nstarts = 50;
 hyperparams = struct('theta0', 0.05);
 
 parse_fcn_name = 'parse_model_params_v4';

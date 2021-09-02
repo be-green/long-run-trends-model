@@ -6,8 +6,6 @@ function [ upper, lower, Aineq, bineq] = build_constraints_v4(n_periods,n_gridpo
 delta =  exp(log(0.025 + 1) / (n_periods / 5)) - 1;
 %delta = delta + g; % is g being added twice here?, but maybe only used for the bounds
 
-omega = 5/n_periods; %fixing this ex ante in this round
-
 % setting up theta grid
 theta0 = hyperparams.theta0;
 growth_rate = exp((-log(theta0)) / n_gridpoints) - 1;

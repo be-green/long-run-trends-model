@@ -1,10 +1,10 @@
 function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
-    kappa, rho, sigma, alpha, phi, xi_var, A_0_tilde, A_1_tilde, ...
+    kappa, rho, sigma, alpha, phi, xi_var, A_0, A_1, ...
     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
-    A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
-    c_1_tilde_no_delta, A_0_tilde_no_delta_pz, ...
-    A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
-    c_1_tilde_no_delta_pz, p_z, calc_irfs, make_plots, A_1, A_0, ...
+    A_0_no_delta, A_1_no_delta, c_0_tilde_no_delta, ...
+    c_1_tilde_no_delta, A_0_no_delta_pz, ...
+    A_1_no_delta_pz, c_0_tilde_no_delta_pz, ...
+    c_1_tilde_no_delta_pz, p_z, calc_irfs, make_plots, ...
     scale_period, H_inside)
 
     
@@ -26,17 +26,23 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    high_wage_ss = w_h(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
    low_wage_ss = w_l(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
    
+   int_for_xi_0 = zeros(size(A_0, 1), 1);
+   int_for_xi_0(1) = c_0_tilde(1);
+   int_for_xi_1 = zeros(size(A_0, 1), 1);
+   int_for_xi_1(1) = c_1_tilde(1);
+   
    % get single shock distribution for wage calculations
-   shock_vars = A_1 * [xi_star; steady_state];
+   shock_vars = A_1 * [xi_star; steady_state] + int_for_xi_1;
    
    % need to add back xi's intercept
-   xi_shock = shock_vars(1) + c_1_tilde(1);
+   xi_shock = shock_vars(1);
    shock_state = shock_vars(2:end);
  
+   
    shock_vec = [xi_shock; shock_state(1:(end - 1))];
    for i=1:(n_periods - 1)
-       shock_vec = (1 - omega) * (A_0_tilde * shock_vec + c_0_tilde) + ...
-           omega  * (A_1_tilde * shock_vec + c_1_tilde);
+       shock_vec = (1 - omega) * (A_0 * shock_vec + int_for_xi_0) + ...
+           omega  * (A_1 * shock_vec + int_for_xi_1);
    end
    
    %Note: if we add a nonzero mass with zero skill, almost nothing would
@@ -81,8 +87,8 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    
    % iterate forward the rest of n_periods
    for i=1:(n_periods - 1)
-       no_shock_vec = (1 - omega) * (A_0_tilde * no_shock_vec + c_0_tilde) + ...
-           omega  * (A_1_tilde * no_shock_vec + c_1_tilde);
+       no_shock_vec = (1 - omega) * (A_0 * no_shock_vec + int_for_xi_0) + ...
+           omega  * (A_1 * no_shock_vec + int_for_xi_1);
    end
    no_shock_vec = [no_shock_vec; 1 - sum(no_shock_vec(2:end))];
 
@@ -145,15 +151,15 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    
    if calc_irfs > 0
    
-       s0_trans = A_0_tilde_no_delta(2:end, 2:end);
-       s1_trans = A_1_tilde_no_delta(2:end, 2:end);
-       s0_intercept = c_0_tilde_no_delta(2:end, :);
-       s1_intercept = c_1_tilde_no_delta(2:end, :);
+       s0_trans = A_0_no_delta(2:end, 2:end);
+       s1_trans = A_1_no_delta(2:end, 2:end);
+       s0_intercept = int_for_xi_0(2:end, :);
+       s1_intercept = int_for_xi_1(2:end, :);
        
-       s0_pz_trans = A_0_tilde_no_delta_pz(2:end, 2:end);
-       s1_pz_trans = A_1_tilde_no_delta_pz(2:end, 2:end);
-       s0_pz_intercept = c_0_tilde_no_delta_pz(2:end, :);
-       s1_pz_intercept = c_1_tilde_no_delta_pz(2:end, :);
+       s0_pz_trans = A_0_no_delta_pz(2:end, 2:end);
+       s1_pz_trans = A_1_no_delta_pz(2:end, 2:end);
+       s0_pz_intercept = int_for_xi_0(2:end, :);
+       s1_pz_intercept = int_for_xi_0(2:end, :);
 
        % calculate wage growth given 
        [sswg_shockwage, ss_dist_mat_shockwage, ss_wage_mat_shockwage] = calc_wage_growth(s0_trans, ...
@@ -162,7 +168,6 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                                theta_grid, n_periods, ...
                                high_wage_shock, low_wage_shock, ...
                                wages_by_bin');
-       
        
        [sswg_noshockwage, ss_dist_mat_noshockwage, ss_wage_mat_noshockwage] = calc_wage_growth(s0_trans, ...
                                s1_trans, s0_intercept, ...

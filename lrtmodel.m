@@ -312,12 +312,12 @@ xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
 
 theor_mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
     kappa, rho, sigma_param, alpha_param, phi, xi_var, ...
-    A_0_tilde, A_1_tilde, ...
+    A_0, A_1, ...
     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
-    A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
-    c_1_tilde_no_delta, A_0_tilde_no_delta_pz, ...
-    A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
-    c_1_tilde_no_delta_pz, p_z, 1, make_plots, A_1, A_0, scale_period, H_inside);
+    A_0_no_delta, A_1_no_delta, c_0_tilde_no_delta, ...
+    c_1_tilde_no_delta, A_0_no_delta_pz, ...
+    A_1_no_delta_pz, c_0_tilde_no_delta_pz, ...
+    c_1_tilde_no_delta_pz, p_z, 1, make_plots, scale_period, H_inside);
 
 
 
@@ -478,15 +478,23 @@ title('Weighted Percent Loss Contribution')
    Y(2) = Y_shock;
    
    
-   shock_vec = [xi_shock; shock_state(1:(end - 1))];
-   for i=1:(scale_period - 1)
-       shock_vec = (1 - omega) * (A_0_tilde * shock_vec + c_0_tilde) + ...
-           omega  * (A_1_tilde * shock_vec + c_1_tilde);
+   shock_vec = [xi_shock; shock_state(1:(end))];
+   
+   % this just adds kappa in times of trouble
+   % and the xi intercept term in good times
+   int_for_xi_0 = zeros(size(A_0, 1), 1);
+   int_for_xi_0(1) = c_0_tilde(1);
+   int_for_xi_1 = zeros(size(A_0, 1), 1);
+   int_for_xi_1(1) = c_1_tilde(1);
+   
+   for i=1:(100 - 1)
+       shock_vec = (1 - omega) * (A_0 * shock_vec + int_for_xi_0) + ...
+           omega  * (A_1 * shock_vec + int_for_xi_1);
           
        xi(i + 2) = shock_vec(1,:);
-       shock_state = shock_vec(2:end,:);
+       shock_state = shock_vec(3:end,:);
 
-       shock_vec_for_calcs = [shock_state; 1 - sum(shock_state)];
+       shock_vec_for_calcs = [p0_share; shock_state];
 
        H(i + 2) = theta_grid * shock_vec_for_calcs;
        L(i + 2) = 1 - H(i + 2);
@@ -505,80 +513,80 @@ title('Weighted Percent Loss Contribution')
    
 figure
 subplot(3,3,1);
-plot([0, (1:scale_period)]', (wh(1:end)./wh(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:(scale_period - 1))]', (wh(1:scale_period)./wh(1) - 1)*agg_scale_factor, '.-')
 title("High Wage")
 
 subplot(3,3,2); 
-plot([0, (1:scale_period)]', (wl(1:end)./wl(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:(scale_period - 1))]', (wl(1:scale_period)./wl(1) - 1)*agg_scale_factor, '.-')
 title("Low Wage")
 
 subplot(3,3,3);
-plot([0, (1:scale_period)]', (L(1:end)./L(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:(scale_period - 1))]', (L(1:scale_period)./L(1) - 1)*agg_scale_factor, '.-')
 title("L Skill Level")
 
 subplot(3,3,4); 
-plot([0, (1:scale_period)]', (H(1:end)./H(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:(scale_period - 1))]', (H(1:scale_period)./H(1) - 1)*agg_scale_factor, '.-')
 title("H Skill Level")
 
 subplot(3,3,5); 
-plot([0, (1:scale_period)]', (xi(1:end)./xi(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:(scale_period - 1))]', (xi(1:scale_period)./xi(1) - 1)*agg_scale_factor, '.-')
 title("Technology Level")
 
 wage_diff = wh - wl;
 subplot(3,3,6); 
-plot([0, (1:scale_period)]', (wage_diff(1:end)./wage_diff(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:(scale_period - 1))]', (wage_diff(1:scale_period)./wage_diff(1) - 1)*agg_scale_factor, '.-')
 title("High Wage - Low Wage")
 
 subplot(3,3,7);
-plot([0, (1:scale_period)]', (lshare(1:end)./lshare(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:(scale_period - 1))]', (lshare(1:scale_period)./lshare(1) - 1)*agg_scale_factor, '.-')
 title("Labor Share")
 
 subplot(3,3,8); 
-plot([0, (1:scale_period)]', (X(1:end)./X(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:(scale_period - 1))]', (X(1:scale_period)./X(1) - 1)*agg_scale_factor, '.-')
 title("Composite Good")
 
 subplot(3,3,9); 
-plot([0, (1:scale_period)]', (Y(1:end)./Y(1) - 1)*agg_scale_factor, '.-')
+plot([0, (1:(scale_period - 1))]', (Y(1:scale_period)./Y(1) - 1)*agg_scale_factor, '.-')
 title("Output Level")
 
 
 
 figure
 subplot(3,3,1);
-plot([0, (1:scale_period)]', (wh(1:end)), '.-')
+plot([0, (1:(length(wh) - 1))]', (wh(1:end)), '.-')
 title("High Wage")
 
 subplot(3,3,2); 
-plot([0, (1:scale_period)]', (wl(1:end)), '.-')
+plot([0, (1:(length(wh) - 1))]', (wl(1:end)), '.-')
 title("Low Wage")
 
 subplot(3,3,3);
-plot([0, (1:scale_period)]', (L(1:end)), '.-')
+plot([0, (1:(length(wh) - 1))]', (L(1:end)), '.-')
 title("L Skill Level")
 
 subplot(3,3,4); 
-plot([0, (1:scale_period)]', (H(1:end)), '.-')
+plot([0, (1:(length(wh) - 1))]', (H(1:end)), '.-')
 title("H Skill Level")
 
 subplot(3,3,5); 
-plot([0, (1:scale_period)]', (xi(1:end)), '.-')
+plot([0, (1:(length(wh) - 1))]', (xi(1:end)), '.-')
 title("Technology Level")
 
 wage_diff = wh - wl;
 subplot(3,3,6); 
-plot([0, (1:scale_period)]', (wage_diff(1:end)), '.-')
+plot([0, (1:(length(wh) - 1))]', (wage_diff(1:end)), '.-')
 title("High Wage - Low Wage")
 
 subplot(3,3,7);
-plot([0, (1:scale_period)]', (lshare(1:end)), '.-')
+plot([0, (1:(length(wh) - 1))]', (lshare(1:end)), '.-')
 title("Labor Share")
 
 subplot(3,3,8); 
-plot([0, (1:scale_period)]', (X(1:end)), '.-')
+plot([0, (1:(length(wh) - 1))]', (X(1:end)), '.-')
 title("Composite Good")
 
 subplot(3,3,9); 
-plot([0, (1:scale_period)]', (Y(1:end)), '.-')
+plot([0, (1:(length(wh) - 1))]', (Y(1:end)), '.-')
 title("Output Level")
 
 
