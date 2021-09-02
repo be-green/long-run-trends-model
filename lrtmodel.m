@@ -77,7 +77,7 @@ A_0_no_delta(2, 2) = 1;
 % p_down is probability that the move is downwards
 for i = 3:n_coefs 
    A_0_no_delta(i, i) = (1 - phi);
-   if i == 1
+   if i == 3
      A_0_no_delta(i, i) = 1 - phi * p_up;
      A_0_no_delta(i, i + 1) = phi * p_up;
 
@@ -120,7 +120,7 @@ A_0_no_delta_pz(2,2) = 1;
 % p_down is probability that the move is downwards
 for i = 3:n_coefs 
    A_0_no_delta_pz(i, i) = (1 - phi);
-   if i == 1
+   if i == 3
      A_0_no_delta_pz(i, i) = 1 - phi * p_up;
      A_0_no_delta_pz(i, i + 1) = phi * p_up;
 

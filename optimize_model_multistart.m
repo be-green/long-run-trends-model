@@ -24,8 +24,8 @@ method = "fmincon";
 n_gridpoints = 300;
 scale_period = 12;
 n_periods = 1;
-nstarts = 50;
-hyperparams = struct('theta0', 0.05);
+nstarts = 20;
+hyperparams = struct('theta0', 0.001);
 
 parse_fcn_name = 'parse_model_params_v4';
 % scale_period * 5 is because within build_constraints the scale factor is
