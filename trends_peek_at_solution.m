@@ -1,4 +1,4 @@
-timestamp = '02-Sep-2021 15_24_07';
+timestamp = '02-Sep-2021 16_42_14';
 
 function_vals = [];
 sols = [];
@@ -16,7 +16,7 @@ for i = 1:1000
        % so we can hack it by running publish code
         outdir = ['./model-output_',timestamp, '/model-run-number',num2str(i)];
 %         addpath(outdir);
-        
+        load([outdir, '/hyperparams.mat')
         load([outdir,'/runfeedback.mat'])
 %         fid = fopen([outdir, '/publishcode.m']);
 %         % we want the second line, this gets it

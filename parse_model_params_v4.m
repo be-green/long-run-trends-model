@@ -1,6 +1,6 @@
 function [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,...
     v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share, p_up, p_down] = ...
-          parse_model_params_v4(paramvec,H_inside,n_gridpoints, scale_period, n_periods, hyperparams)
+          parse_model_params_v4(paramvec, hyperparams)
 % [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,...
 %     v,p_z,kappa,theta_grid,theta0,xi_constant, p0_share] = ...
 %           parse_model_params_v3b(paramvec,H_inside,n_gridpoints, scale_period, n_periods)
@@ -53,6 +53,11 @@ function [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,...
       
 paramvec = paramvec';
 
+H_inside = hyperparams.H_inside;
+n_gridpoints = hyperparams.n_gridpoints; 
+scale_period = hyperparams.scale_period;
+n_periods = hyperparams.n_periods;
+
 % Ex-ante fixed parameters
 % 0 is geometric increasing from theta
 % 1 is geometric decreasing from 1
@@ -85,8 +90,12 @@ alpha = (paramvec(2,:));
 % of state 1 happening in period t + 1
 % these shocks are IID so this is true for both
 % initial states
-omega = 1/scale_period; %fixing this ex ante in this round (1x / year)
 
+% use alpha to get omega from alpha_x_omega
+alpha_x_omega = paramvec(15, :);
+omega = alpha_x_omega / alpha;
+
+% get d from d_omega_alpha / omega_alpha
 d_x_omega_x_alpha = (paramvec(3,:));
 d = d_x_omega_x_alpha / (alpha * omega);
 hc_loss = 1-exp(-d);
@@ -110,7 +119,6 @@ xi_mean = paramvec(6,:);
 kappa_share_of_xi_mean = paramvec(10,:);
 
 % notice that xi_mean = (omega kappa + xi_constant) / g
-
 g = paramvec(11, :); % the depreciation rate of xi (NOT annualized)
 
 kappa = kappa_share_of_xi_mean * xi_mean * g / omega; % shock size
@@ -130,8 +138,7 @@ mu = paramvec(8,:); % outer nest
 
 % DRS parameter. Fixed at the start
 v = paramvec(14,:);
-alpha_x_omega = paramvec(15, :);
-omega = alpha_x_omega / alpha;
+
 
 % setting up theta grid
 theta0 = hyperparams.theta0;

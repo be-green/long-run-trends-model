@@ -21,13 +21,15 @@ method = "fmincon";
 % nstarts is # of starts given to multistart
 % hyperparams is misc hyperparameters:
 % (1) theta0: level of H at bottom rung of ladder
-n_gridpoints = 300;
+n_gridpoints = 120;
 scale_period = 12;
 n_periods = 1;
 nstarts = 20;
-hyperparams = struct('theta0', 0.001);
-
 parse_fcn_name = 'parse_model_params_v4';
+hyperparams = struct('theta0', 0.001, 'scale_period', scale_period, ...
+    'n_gridpoints', n_gridpoints, 'n_periods', n_periods, 'H_inside', 0, ...
+    'parse_fcn_name', parse_fcn_name);
+
 % scale_period * 5 is because within build_constraints the scale factor is
 % divided by 5
 if strcmp(parse_fcn_name,'parse_model_params_v1')
@@ -37,7 +39,7 @@ elseif strcmp(parse_fcn_name,'parse_model_params_v2')
 elseif strcmp(parse_fcn_name,'parse_model_params_v3')
     [ upper, lower, Aineq, bineq] = build_constraints_v3(scale_period * 5,n_gridpoints, hyperparams);
 elseif strcmp(parse_fcn_name,'parse_model_params_v4')
-    [ upper, lower, Aineq, bineq] = build_constraints_v4(scale_period * 5,n_gridpoints, hyperparams);
+    [ upper, lower, Aineq, bineq] = build_constraints_v4(hyperparams);
 else
     error('Parse function not coded yet!')
 end     
@@ -48,10 +50,11 @@ startvals = sim_with_constraints(nstarts, upper, lower, Aineq, bineq, parse_fcn_
        mkdir(['./model-output_',run_number])
     end
 save(['model-output_',run_number,'/starting-values.mat'], 'startvals')
+save(['model-output_',run_number,'/hyperparams.mat'], 'hyperparams')
 
 
 % evaluate objective at one, just as a sanity check;
-lrtmodel(startvals(1,:), 0, 1, n_gridpoints,parse_fcn_name, n_periods, scale_period, hyperparams)
+lrtmodel(startvals(1,:), 1, hyperparams)
 
 sol = zeros(nstarts, length(lower));
 loss = zeros(nstarts, 1);
@@ -59,8 +62,7 @@ exitflg = zeros(nstarts, 1);
 
 parfor i = 1:nstarts
     if method == "knitro" 
-       [this_solution, this_loss, this_exit] = knitro_nlp(@(x) lrtmodel(x, 0, 0, n_gridpoints, ...
-           parse_fcn_name, n_periods, scale_period, hyperparams), ...
+       [this_solution, this_loss, this_exit] = knitro_nlp(@(x) lrtmodel(x, 0, hyperparams), ...
                                         startvals(i,:), ...
                                         Aineq, bineq, [], [], ...
                                         lower, ...
@@ -68,8 +70,7 @@ parfor i = 1:nstarts
                                         [], [], struct('par_numthreads', 0), ...
                                         koptions); % set knitro options
     else 
-        [this_solution, this_loss, this_exit] = fmincon(@(x) lrtmodel(x, 0, 0, n_gridpoints, ...
-           parse_fcn_name, n_periods, scale_period, hyperparams), ...
+        [this_solution, this_loss, this_exit] = fmincon(@(x) lrtmodel(x, 0, hyperparams), ...
                                         startvals(i,:), ...
                                         Aineq, bineq, [], [], ...
                                         lower, ...
