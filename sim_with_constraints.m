@@ -133,13 +133,26 @@ elseif strcmp(parse_fcn_name,'parse_model_params_v2')
            phi_u = upper(1);
            
            sims(i, 1) = unifrnd(phi_l, phi_u);
+           % next, we need to pick levels of alpha_x_omega which ensure that d
+          % constr 3 gives lower bound for d, so upper bound on
+          % alpha_x_omega
+           alpha_x_omega_u =  min(sims(i,3) / abs(Aineq(3,15)), upper(3));
+           alpha_x_omega_l =  max(sims(i,3) / abs(Aineq(4,15)), lower(3));
            
-           % next, we need to pick levels of alpha which ensure that d
+           sims(i, 15) = unifrnd(alpha_x_omega_l, alpha_x_omega_u);
+           
+           % to make alpha_x_omega a valid probability
+           % we require alpha > alpha_x_omega
            % satisfies the bounds
-           % constr 3 gives lower bound for d, so upper bound on alpha
-           alpha_u = min(sims(i,3) / abs(Aineq(3,2)),upper(2)); 
-           alpha_l = max(sims(i,3) / abs(Aineq(4,2)),lower(2));
+           alpha_u = upper(2); 
+           alpha_l = max(sims(i,15),lower(2));
            sims(i, 2) = unifrnd(alpha_l, alpha_u);
+           
+           % alpha < p_z < 1
+           p_z_l = max(lower(7), sims(i, 2));
+           p_z_u = upper(7);
+           
+           sims(i, 7) = unifrnd(p_z_l, p_z_u);
            
            % next, we draw a value of kappa
            sims(i,6) = unifrnd(lower(6), upper(6));
@@ -149,7 +162,7 @@ elseif strcmp(parse_fcn_name,'parse_model_params_v2')
            % sims(i, 10) = unifrnd(xi_constant_l, xi_constant_u);
            
            if max(isnan(sims(i,:))) == 0 && ...
-              gamma_l <= gamma_u && alpha_l <= alpha_u && phi_l <= phi_u
+              gamma_l <= gamma_u && alpha_l <= alpha_u && phi_l <= phi_u && p_z_l <= p_z_u
                 solution_found = 1;
            end
        end

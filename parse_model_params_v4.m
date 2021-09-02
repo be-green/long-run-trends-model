@@ -13,7 +13,7 @@ function [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,...
 %        (4): CES parameter on L - CES parameter on H
 %        (5): CES parameter on L 
 %        (6): Expectation of xi
-%        (7): a, log odds ratio capturing higher probability of exposed
+%        (7): p_z, capturing higher probability of exposed
 %             workers being displaced
 %        (8): mu, parameter on labor in outer nest
 %        (9): lambda, parameter on labor in inner nest
@@ -24,6 +24,8 @@ function [phi,alpha,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma,rho,...
 %       at H = 0.
 %       (13): gamma, which is (2p - 1) * phi, where p is the probability
 %       that a move on the ladder is in the upward direction
+%       (14): nu, (v), the DRS parameter
+%       (15): alpha * omega, the shock probability parameter
 %   - H_inside: dummy to indicate whether H is in the inner nest
 %   - n_gridpoints: number of gridpoints to use for theta grid 
 %   - scale_period: discretization interval, number of subperiods in a year 
@@ -117,7 +119,7 @@ kappa = kappa_share_of_xi_mean * xi_mean * g / omega; % shock size
 xi_constant = (1-kappa_share_of_xi_mean) * xi_mean * g;
 
 % probability of displacement | exposed;
-p_z = exp(paramvec(7,:) + log(alpha)) / (1 + exp(paramvec(7,:) + log(alpha)));
+p_z = paramvec(7,:);
 
 % CES share parameters
 lambda = paramvec(9,:); % inner nest
@@ -127,7 +129,9 @@ mu = paramvec(8,:); % outer nest
 % g = exp(log(g + 1) / (scale_period)) - 1;
 
 % DRS parameter. Fixed at the start
-v = 1;
+v = paramvec(14,:);
+alpha_x_omega = paramvec(15, :);
+omega = alpha_x_omega / alpha;
 
 % setting up theta grid
 theta0 = hyperparams.theta0;

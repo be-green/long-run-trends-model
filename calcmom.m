@@ -4,26 +4,35 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
     A_0_tilde_no_delta, A_1_tilde_no_delta, c_0_tilde_no_delta, ...
     c_1_tilde_no_delta, A_0_tilde_no_delta_pz, ...
     A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
-    c_1_tilde_no_delta_pz, p_z, calc_irfs, make_plots, A_1, scale_period)
+    c_1_tilde_no_delta_pz, p_z, calc_irfs, make_plots, A_1, A_0, ...
+    scale_period, H_inside)
 
-   % so I don't get a billion "singular" warnings 
-   warning('off','all')
-   
-   % TODO: should we incorporate the constants for kappa more explicitly? 
-   shock_vars = A_1 * [xi_star; steady_state];
-   
-   xi_shock = shock_vars(1) + c_1_tilde(1);
-   shock_state = shock_vars(2:end);
-
-   H_inside = 0;
-   
+    
    % scaling factors to convert from one shock units to 1 SD units
    agg_scale_factor = sqrt(scale_period) * sqrt(omega * (1 - omega));
    irf_scale_factor = sqrt(scale_period) * sqrt(omega * alpha / p_z * (1 - omega * alpha / p_z));
    
+   % steady state levels of H and L
    H_star = theta_grid * steady_state;
    L_star = 1 - H_star;
    
+   % calculate steady state aggregates & wages
+   
+   % steady state production values
+   X_star = calc_X(xi_star, H_star, L_star, lambda, rho, H_inside);
+   Y_star = calc_Y(H_star, L_star, X_star, mu, sigma, v, H_inside);
+   
+   % high and low wages at steady state
+   high_wage_ss = w_h(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
+   low_wage_ss = w_l(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
+   
+   % get single shock distribution for wage calculations
+   shock_vars = A_1 * [xi_star; steady_state];
+   
+   % need to add back xi's intercept
+   xi_shock = shock_vars(1) + c_1_tilde(1);
+   shock_state = shock_vars(2:end);
+ 
    shock_vec = [xi_shock; shock_state(1:(end - 1))];
    for i=1:(n_periods - 1)
        shock_vec = (1 - omega) * (A_0_tilde * shock_vec + c_0_tilde) + ...
@@ -37,61 +46,102 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    % We also might want to put the zero in on the grid somewhere, in which case we
    %need to tweak things to be the following
    % shock_vec = [shock_vec(1); p0; shock_vec(2:end); 1-p0 - sum(shock_vec(2:end))];
-   
    xi_shock = shock_vec(1,:);
    shock_state = shock_vec(2:end,:);
    
+   % H & L after a shock + n_periods - 1 iteration
    H_shock = theta_grid * shock_state; %if we add the zero to theta_grid, this doesn't change
    L_shock = 1 - H_shock;
-   
-   % steady state production values
-   X_star = calc_X(xi_star, H_star, L_star, lambda, rho, H_inside);
-   Y_star = calc_Y(H_star, L_star, X_star, mu, sigma, v, H_inside);
-   
-   % high and low wages at steady state
-   high_wage = w_h(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
-   low_wage = w_l(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
-   
+  
    % shock state production values
    X_shock = calc_X(xi_shock, H_shock, L_shock, lambda, rho, H_inside);
    Y_shock = calc_Y(H_shock, L_shock, X_shock, mu, sigma, v, H_inside);
    
    % high and low wages at shock state
-   high_wage_tp1 = w_h(H_shock, L_shock, xi_shock, rho, sigma, mu, lambda, v, H_inside);
-   low_wage_tp1 = w_l(H_shock, L_shock, xi_shock, rho, sigma, mu, lambda, v, H_inside);
+   high_wage_shock = w_h(H_shock, L_shock, xi_shock, rho, sigma, mu, lambda, v, H_inside);
+   low_wage_shock = w_l(H_shock, L_shock, xi_shock, rho, sigma, mu, lambda, v, H_inside);
    
    % signs of IRF for optimizer
    y_irf_sign = ((Y_shock - Y_star) < 0) * abs(Y_shock - Y_star) * 10;
-   lw_irf_sign = ((low_wage_tp1 - low_wage) > 0) * abs(low_wage_tp1 - low_wage) * 10;
+   lw_irf_sign = ((low_wage_shock - low_wage_ss) > 0) * abs(low_wage_shock - low_wage_ss) * 10;
    
    y_irf = (log(Y_shock) - log(Y_star)) *  agg_scale_factor;
    
-   % wages by each part of theta grid
-   % for steady state ratio
-   wages_by_bin = high_wage .* theta_grid + low_wage .* (1 - theta_grid);   
    
-   % calculate wage premium at steady state
-   bottom_five = 1;
-   cumulative_density = 0;
+   % Do the same thing as abovefor no shock 
+   % single no shock period
+   no_shock_vars = A_0 * [xi_star; steady_state];
    
-   while(cumulative_density < 0.25)
-       cumulative_density = cumulative_density + steady_state(bottom_five);
-       bottom_five = bottom_five + 1;
+   % add back intercept
+   xi_no_shock = no_shock_vars(1) + c_0_tilde(1);
+   no_shock_state = no_shock_vars(2:end);
+   
+   % remove top of grid for iteration
+   no_shock_vec = [xi_no_shock; no_shock_state(1:(end - 1))];
+   
+   % iterate forward the rest of n_periods
+   for i=1:(n_periods - 1)
+       no_shock_vec = (1 - omega) * (A_0_tilde * no_shock_vec + c_0_tilde) + ...
+           omega  * (A_1_tilde * no_shock_vec + c_1_tilde);
+   end
+   no_shock_vec = [no_shock_vec; 1 - sum(no_shock_vec(2:end))];
+
+   xi_no_shock = no_shock_vec(1,:);
+   no_shock_state = no_shock_vec(2:end,:);
+   
+   
+   % H & L after a shock + n_periods - 1 iteration
+   H_no_shock = theta_grid * no_shock_state; %if we add the zero to theta_grid, this doesn't change
+   L_no_shock = 1 - H_no_shock;
+   
+   % no shock state production values
+   % not used for now but you never know
+   X_no_shock = calc_X(xi_no_shock, H_no_shock, L_no_shock, lambda, rho, H_inside);
+   Y_no_shock = calc_Y(H_no_shock, L_no_shock, X_no_shock, mu, sigma, v, H_inside);
+   
+   % high and low wages at no shock state
+   high_wage_no_shock = w_h(H_no_shock, L_no_shock, xi_no_shock, rho, sigma, mu, lambda, v, H_inside);
+   low_wage_no_shock = w_l(H_no_shock, L_no_shock, xi_no_shock, rho, sigma, mu, lambda, v, H_inside);
+   
+   
+   if(make_plots>0)
+      disp(['High Wage Post Shock: ', num2str(high_wage_shock)])
+      disp(['Low Wage Post Shock: ', num2str(low_wage_shock)])
+      disp(['High Wage Post No Shock: ', num2str(high_wage_no_shock)])
+      disp(['Low Wage Post No Shock: ', num2str(low_wage_no_shock)])
    end
    
-   % max operator is in case of mass points
-   bottom_five_wages = wages_by_bin(max(bottom_five - 1,1));
+   % wages by each part of theta grid
+   % for steady state ratio
+   wages_by_bin = high_wage_ss .* theta_grid + low_wage_ss .* (1 - theta_grid);   
    
-   top_five = size(steady_state,1);
+   % calculate wage premium at steady state
+   % this is defined as 75% wages / 25% wages
+   bottom_twentyfive = 1;
+   cumulative_density = 0;
+   
+   % iterate up until reaching point above 25% of mass
+   while(cumulative_density < 0.25)
+       cumulative_density = cumulative_density + steady_state(bottom_twentyfive);
+       bottom_twentyfive = bottom_twentyfive + 1;
+   end
+   
+   % go back a single cell and calc wages
+   % max operator is in case of mass points at bottom
+   bottom_twentyfive_wages = wages_by_bin(max(bottom_twentyfive - 1,1));
+   
+   % same idea but iterate backwards from the top
+   % until you reach the 75%
+   top_twentyfive = size(steady_state,1);
    cumulative_density = 0;
    
    while(cumulative_density < 0.25)
-       cumulative_density = cumulative_density + steady_state(top_five);
-       top_five = top_five - 1;
+       cumulative_density = cumulative_density + steady_state(top_twentyfive);
+       top_twentyfive = top_twentyfive - 1;
    end
    
    % min operator is in case of mass points
-   top_five_wages = wages_by_bin(min(top_five + 1,end));
+   top_twentyfive_wages = wages_by_bin(min(top_twentyfive + 1,end));
    
    if calc_irfs > 0
    
@@ -105,14 +155,33 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        s0_pz_intercept = c_0_tilde_no_delta_pz(2:end, :);
        s1_pz_intercept = c_1_tilde_no_delta_pz(2:end, :);
 
-       
-       [sswg, ss_dist_mat, ss_wage_mat] = calc_wage_growth(s0_trans, ...
+       % calculate wage growth given 
+       [sswg_shockwage, ss_dist_mat_shockwage, ss_wage_mat_shockwage] = calc_wage_growth(s0_trans, ...
                                s1_trans, s0_intercept, ...
-                               s1_intercept, omega, ...
+                               s1_intercept, 1, ... % omega = 1
                                theta_grid, n_periods, ...
-                               high_wage, low_wage, ...
+                               high_wage_shock, low_wage_shock, ...
                                wages_by_bin');
        
+       
+       [sswg_noshockwage, ss_dist_mat_noshockwage, ss_wage_mat_noshockwage] = calc_wage_growth(s0_trans, ...
+                               s1_trans, s0_intercept, ...
+                               s1_intercept, 0, ... % omega = 0
+                               theta_grid, n_periods, ...
+                               high_wage_no_shock, low_wage_no_shock, ...
+                               wages_by_bin');
+                           
+       % steady state wage growth & abs_wage growth, 
+       % taking into account wage changes given
+       % shocks
+       sswg = omega * sswg_shockwage + (1 - omega) * sswg_noshockwage;
+       
+       % steady state distributions and wages used for the 10th percentil
+       % calculations later
+       ss_dist_mat = omega * ss_dist_mat_shockwage + (1 - omega) * ss_dist_mat_noshockwage;
+       ss_wage_mat = omega * ss_wage_mat_shockwage + (1 - omega) * ss_wage_mat_noshockwage;
+       
+       % expected wage growth & abs wage growth from the steady state
        expected_wage_growth = steady_state' * sswg(:,1);
        expected_abs_wage_growth = steady_state' * sswg(:,2);
        
@@ -124,9 +193,9 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                                s1_intercept,s0_pz_trans, s1_pz_trans, ...
                                s0_pz_intercept, s1_pz_intercept, omega, ...
                                theta_grid, n_periods, ...
-                               high_wage, low_wage, ...
+                               high_wage_no_shock, low_wage_no_shock, ...
                                wages_by_bin', ...
-                               0);
+                               0); % shock
 
        % this version shocks in the first period
        exposed_shockwg = calc_shock_wage_growth(s0_trans, ...
@@ -134,7 +203,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                                         s1_intercept, s0_pz_trans, s1_pz_trans, ...
                                         s0_pz_intercept, s1_pz_intercept, omega,... 
                                         theta_grid, n_periods, ... 
-                                        high_wage_tp1, low_wage_tp1, ...
+                                        high_wage_shock, low_wage_shock, ...
                                         wages_by_bin', ...
                                         1);
        
@@ -144,7 +213,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                                s1_intercept,s0_pz_trans, s1_pz_trans, ...
                                s0_pz_intercept, s1_pz_intercept, omega, ...
                                theta_grid, n_periods, ...
-                               high_wage, low_wage, ...
+                               high_wage_no_shock, low_wage_no_shock, ...
                                wages_by_bin', ...
                                0);
 
@@ -159,7 +228,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                                         s1_intercept, s0_pz_trans, s1_pz_trans, ...
                                         s0_pz_intercept, s1_pz_intercept, omega,... 
                                         theta_grid, n_periods, ... 
-                                        high_wage_tp1, low_wage_tp1, ...
+                                        high_wage_shock, low_wage_shock, ...
                                         wages_by_bin', ...
                                         0);
        
@@ -174,12 +243,12 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        if make_plots > 0
            figure
            plot(targets,q)
-           title('Quantiles of wage growth distribution')
-           xline(0.05)
-           xline(0.25)
-           xline(0.5)
-           xline(0.75)
-           xline(0.95)
+           title('Quantiles of wage growth distribution');
+           xline(0.05);
+           xline(0.25);
+           xline(0.5);
+           xline(0.75);
+           xline(0.95);
            
            %TODO: we could add lines by income group. This might be a
            %pretty useful diagnostic to make sure things don't work for the
@@ -196,7 +265,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                                   s1_intercept, s0_pz_trans, s1_pz_trans, ...
                                   s0_pz_intercept, s1_pz_intercept, omega,... 
                                   theta_grid, n_periods, ... 
-                                  high_wage, low_wage, ...
+                                  high_wage_no_shock, low_wage_no_shock, ...
                                   wages_by_bin', tenth_pctile, 0);
 
        exposed_shock_lt_pctile_probs = calc_wage_growth_lt_pctile_shock(s0_trans, ...
@@ -204,7 +273,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                                   s1_intercept, s0_pz_trans, s1_pz_trans, ...
                                   s0_pz_intercept, s1_pz_intercept, omega,... 
                                   theta_grid, n_periods, ... 
-                                  high_wage_tp1, low_wage_tp1, ...
+                                  high_wage_shock, low_wage_shock, ...
                                   wages_by_bin', tenth_pctile, 1);
                               
        unexposed_cf_lt_pctile_probs = calc_wage_growth_lt_pctile_shock(s0_trans, ...
@@ -212,7 +281,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                                   s1_intercept, s0_pz_trans, s1_pz_trans, ...
                                   s0_pz_intercept, s1_pz_intercept, omega,... 
                                   theta_grid, n_periods, ... 
-                                  high_wage, low_wage, ...
+                                  high_wage_no_shock, low_wage_no_shock, ...
                                   wages_by_bin', tenth_pctile, 0);
 
        unexposed_shock_lt_pctile_probs = calc_wage_growth_lt_pctile_shock(s0_trans, ...
@@ -220,7 +289,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                                   s1_intercept, s0_pz_trans, s1_pz_trans, ...
                                   s0_pz_intercept, s1_pz_intercept, omega,... 
                                   theta_grid, n_periods, ... 
-                                  high_wage_tp1, low_wage_tp1, ...
+                                  high_wage_shock, low_wage_shock, ...
                                   wages_by_bin', tenth_pctile, 0);
 
        agg_shock_exposed_wg = zeros(5, 1);
@@ -249,7 +318,9 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        ss_cdf = [cumsum(steady_state)];
        
        if make_plots > 0
-          plot(ss_cdf); 
+          figure
+          plot(theta_grid, ss_cdf);
+          title('Theta CDF');
        end
        
        for i = 1:length(quantile_targets)
@@ -316,7 +387,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        % diagonal matrix of indicators for income bins and interactions of
        % income bins with T
        D = [repmat(diag(ones(5, 1)), 4, 1), repmat(diag(ones(5, 1)), 4, 1) .* T];
-              
+       
        y_vec_wg = [agg_shock_unexposed_wg; agg_noshock_unexposed_wg; ...
            agg_shock_exposed_wg; agg_noshock_exposed_wg];
        
@@ -420,22 +491,25 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        tenth_pctile_probs = zeros(5, 1);
    end
    
-   lshare = (H_star * high_wage + L_star * low_wage) / Y_star;
-   lshare_shock = (H_shock * high_wage_tp1 + L_shock * low_wage_tp1) / Y_shock;
+   lshare = (H_star * high_wage_ss + L_star * low_wage_ss) / Y_star;
+   lshare_shock = (H_shock * high_wage_shock + L_shock * low_wage_shock) / Y_shock;
       
    lshare_irf_sign = ((log(lshare_shock) - log(lshare)) > 0) * abs(log(lshare_shock) - log(lshare)) * 100;
    
    lshare_irf = (log(lshare_shock) - log(lshare)) * agg_scale_factor;
    
-   premium = top_five_wages / bottom_five_wages;
+   premium = top_twentyfive_wages / bottom_twentyfive_wages;
    
    if make_plots > 0
        
       figure
-      theta_plot_x_axis = (high_wage * theta_grid + (low_wage) * (1 - theta_grid) ) ./ ...
-          ((low_wage * (1 - min(theta_grid))) + high_wage * min(theta_grid));
+      theta_plot_x_axis = (high_wage_ss * theta_grid + (low_wage_ss) * (1 - theta_grid) ) ./ ...
+          ((low_wage_ss * (1 - min(theta_grid))) + high_wage_ss * min(theta_grid));
       plot(cumsum(steady_state), theta_plot_x_axis, "-o");
       title("Density by Wage / W_l")
+      xlabel('Cumulative Density on Theta Grid')
+      ylabel('Wages normalized by Low Wage')
+      
    end
    
   tenth_pctile_gradient = tenth_pctile_probs(5) - tenth_pctile_probs(1); % changed this from ratio to difference
