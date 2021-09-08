@@ -39,7 +39,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    shock_state = shock_vars(2:end);
  
    
-   shock_vec = [xi_shock; shock_state(1:(end - 1))];
+   shock_vec = [xi_shock; shock_state(1:(end))];
    for i=1:(n_periods - 1)
        shock_vec = (1 - omega) * (A_0 * shock_vec + int_for_xi_0) + ...
            omega  * (A_1 * shock_vec + int_for_xi_1);
@@ -47,7 +47,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    
    %Note: if we add a nonzero mass with zero skill, almost nothing would
    %change, except that we would have 1-p0 in place of 1 here. 
-   shock_vec = [shock_vec; 1 - sum(shock_vec(2:end))];
+   %shock_vec = [shock_vec; 1 - sum(shock_vec(2:end))];
    
    % We also might want to put the zero in on the grid somewhere, in which case we
    %need to tweak things to be the following
@@ -83,14 +83,14 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    no_shock_state = no_shock_vars(2:end);
    
    % remove top of grid for iteration
-   no_shock_vec = [xi_no_shock; no_shock_state(1:(end - 1))];
+   no_shock_vec = [xi_no_shock; no_shock_state(1:(end))];
    
    % iterate forward the rest of n_periods
    for i=1:(n_periods - 1)
        no_shock_vec = (1 - omega) * (A_0 * no_shock_vec + int_for_xi_0) + ...
            omega  * (A_1 * no_shock_vec + int_for_xi_1);
    end
-   no_shock_vec = [no_shock_vec; 1 - sum(no_shock_vec(2:end))];
+   % no_shock_vec = [no_shock_vec; 1 - sum(no_shock_vec(2:end))];
 
    xi_no_shock = no_shock_vec(1,:);
    no_shock_state = no_shock_vec(2:end,:);
