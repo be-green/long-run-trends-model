@@ -1,3 +1,9 @@
+
+n_gridpoints = 120;
+scale_period = 12;
+n_periods = 1;
+nstarts = 20;
+
 run_number = strrep(datestr(datetime), ':', '_');
 
 fminconoptions = optimoptions(@fmincon,'MaxIterations',1000, 'Display', ...
@@ -11,7 +17,7 @@ addpath('C:/Program Files/Artelys/Knitro 12.4.0/knitromatlab/');
 
 koptions = 'knitro_options.opt';
 
-method = "fmincon";
+method = "patternsearch";
 
 patternoptions = optimoptions('patternsearch','Display','iter','PlotFcn',[], ...
     'MaxIterations',1000, 'MaxFunctionEvaluations', 20000);
@@ -24,12 +30,9 @@ patternoptions = optimoptions('patternsearch','Display','iter','PlotFcn',[], ...
 % nstarts is # of starts given to multistart
 % hyperparams is misc hyperparameters:
 % (1) theta0: level of H at bottom rung of ladder
-n_gridpoints = 120;
-scale_period = 12;
-n_periods = 1;
-nstarts = 20;
+
 parse_fcn_name = 'parse_model_params_v4';
-hyperparams = struct('theta0', 0.001, 'scale_period', scale_period, ...
+hyperparams = struct('theta0', 0.03, 'scale_period', scale_period, ...
     'n_gridpoints', n_gridpoints, 'n_periods', n_periods, 'H_inside', 0, ...
     'parse_fcn_name', parse_fcn_name);
 
@@ -108,7 +111,7 @@ parfor i = 1:nstarts
     fprintf(fid, ['n_gridpoints = [',num2str(n_gridpoints),'];\n' ]);
     fprintf(fid, ['n_periods = [',num2str(n_periods),'];\n' ]);
     fprintf(fid, ['scale_factor = [',num2str(scale_period),'];\n' ]);
-    fprintf(fid, 'lrtmodel(sol, 0, 1, n_gridpoints, parse_fcn_name, n_periods, scale_period, hyperparams);');
+    fprintf(fid, 'lrtmodel(sol, 1, hyperparams);');
     fclose(fid);
     
     addpath(outdir);

@@ -1,8 +1,10 @@
-timestamp = '02-Sep-2021 16_42_14';
+timestamp = '03-Sep-2021 15_46_34';
 
 function_vals = [];
 sols = [];
 exit_flags = [];
+
+load(['./model-output_',timestamp, '/hyperparams.mat'])
 
 for i = 1:1000
    try
@@ -16,7 +18,6 @@ for i = 1:1000
        % so we can hack it by running publish code
         outdir = ['./model-output_',timestamp, '/model-run-number',num2str(i)];
 %         addpath(outdir);
-        load([outdir, '/hyperparams.mat')
         load([outdir,'/runfeedback.mat'])
 %         fid = fopen([outdir, '/publishcode.m']);
 %         % we want the second line, this gets it
@@ -107,4 +108,4 @@ close all
 n_gridpoints=80;
 trial = top_sols(1,:);
 
-lrtmodel(trial, 0, 1, n_gridpoints, 'parse_model_params_v3', 1, 12, hyperparams);
+lrtmodel(trial, 1, hyperparams);

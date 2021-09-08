@@ -59,8 +59,8 @@ lower = [0.001, ... phi
     0,   ... L curvature exponent
     0.2 , ... Mean of xi
     0, ... p_z, bounded by last constraint to be > alpha
-    0.001, ... lambda
-    0.001,... % mu
+    0.001, ... mu
+    0.001,... % lambda
     0.5, ...% fraction of xi mean coming from kappa shocks vs intercept
     0.02/hyperparams.scale_period, ... % g
     0, ... % p0 share
@@ -72,11 +72,11 @@ upper = [0.7, ... % phi
          0.7,  ... % alpha
          0.3 * growth_rate, ...    % d * omega * alpha (omega = 1 per year)
          3, ...H diff from L (curvature exponent)
-         0.85,    ...L curvature exponent
+         1,    ...L curvature exponent
          5, ... Mean of xi
          1, ... pz (bounded by last constraint > alpha)
-         0.999, ... lamba
-         0.999,....% mu
+         0.999, ... mu
+         0.75,....% lambda
          1.5, ... % fraction of xi mean coming from kappa shocks vs intercept; above one xi_intercept can go negative
          0.2/hyperparams.scale_period, ... g
          0.375 ...  % p0 share
