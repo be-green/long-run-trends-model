@@ -1,10 +1,10 @@
 
-n_gridpoints = 120;
+n_gridpoints = 200;
 scale_period = 12;
 n_periods = 1;
-nstarts = 200;
+nstarts = 23;
      
-weight_vec = [30; 5; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
+weight_vec = [30; 0; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
          0; 0; 0; 0; 0; ... abs wage moments
          10; 8; 8; 8; 30; ... wage moments
          30; ... wage difference between 5 and 4
@@ -13,7 +13,7 @@ weight_vec = [30; 5; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IR
          0; 0; ... E(awg), E(wg)
          3; 3; 3; 3; 3; ...
          6; ... % p10(5) - p10(1)
-         10]; % aggregate standard deviation / sqrt(60)
+         20]; % aggregate standard deviation / sqrt(60)
      
 run_number = strrep(datestr(datetime), ':', '_');
 

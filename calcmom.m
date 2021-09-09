@@ -263,14 +263,14 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        % this calculates E(WG) and E(WG^2) for every eventuality
        % the first of these is also used in calculating the quantiles of
        % wages
-       % the second used in calculating variances via E(X^2) - E(X)
+       % the second used in calculating variances via E(X^2) - E(X)^2
        % we first calculate X^2 - X for each paths in our grid
        % and then weight them by the probability associated w/ each
        % gridpoint, calculated as the P(starting_point) * P(ending_point |
        % starting_point) and subsequently aggregating
        first_moments = reshape(ss_wage_mat,length(theta_grid)^2, 1);
        second_moments = reshape(ss_wage_mat.^2,length(theta_grid)^2, 1);
-       aggregate_variance = (second_moments - first_moments)' * dist_vec;
+       aggregate_variance = second_moments' * dist_vec  - (first_moments' * dist_vec)^2;
        
        % sd is sqrt var
        aggregate_sd = sqrt(aggregate_variance);

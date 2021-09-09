@@ -357,7 +357,7 @@ emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
              -0.06313; 0.3171; ... expected wage growth, expected abs wage growth
              tenth_pctile_probs; ...
              tenth_pctile_probs(5)-tenth_pctile_probs(1); ... % Difference higher high income p10 vs. lowest income p10
-             0.592]; % aggregate standard deviation / sqrt(60)
+             0.592 / sqrt(60)]; % aggregate standard deviation / sqrt(60)
     
 weight_vec = hyperparams.weight_vec;
 
@@ -376,12 +376,12 @@ if make_plots > 0
            'E(WG)', 'E(AWG)', ...
            'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]', 'P10 Gradient', 'Aggregate SD'},...
            'Ordinal',true);
-      bar(momlabels([3:15, (end - 6):(end - 1)])', [theor_mom([3:4, 8:(18),(end - 6):(end - 1)]), ...
-          emp_mom([3:4, 8:(18), (end - 6):(end - 1)])])
+      bar(momlabels([3:15, (end - 6):(end)])', [theor_mom([3:4, 8:(18),(end - 6):(end)]), ...
+          emp_mom([3:4, 8:(18), (end - 6):(end)])])
      title('Moment Matching (excluding signs & levels)')
      
      figure
-     bar(momlabels([1:2, end])', [theor_mom([1:2, end]), emp_mom([1:2, end])])
+     bar(momlabels([1:2])', [theor_mom([1:2]), emp_mom([1:2])])
      title('Labor Share & Wage Ratio')
      
      figure
