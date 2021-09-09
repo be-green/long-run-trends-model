@@ -7,7 +7,6 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
     c_1_tilde_no_delta_pz, p_z, calc_irfs, make_plots, ...
     scale_period, H_inside)
 
-    
    % scaling factors to convert from one shock units to 1 SD units
    agg_scale_factor = sqrt(scale_period) * sqrt(omega * (1 - omega));
    irf_scale_factor = sqrt(scale_period) * sqrt(omega * alpha / p_z * (1 - omega * alpha / p_z));
@@ -26,6 +25,10 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    high_wage_ss = w_h(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
    low_wage_ss = w_l(H_star, L_star, xi_star, rho, sigma, mu, lambda, v, H_inside);
    
+   % xi has an intercept that we need to include
+   % that isn't just in the A_0 and A_1 matrices
+   % grab that from the intercept terms in the VECM representation
+   % since they are the same in both cases.
    int_for_xi_0 = zeros(size(A_0, 1), 1);
    int_for_xi_0(1) = c_0_tilde(1);
    int_for_xi_1 = zeros(size(A_0, 1), 1);
@@ -34,15 +37,9 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    % get single shock distribution for wage calculations
    shock_vars = A_1 * [xi_star; steady_state] + int_for_xi_1;
    
-   % need to add back xi's intercept
-   xi_shock = shock_vars(1);
-   shock_state = shock_vars(2:end);
- 
-   
-   shock_vec = [xi_shock; shock_state(1:(end))];
    for i=1:(n_periods - 1)
-       shock_vec = (1 - omega) * (A_0 * shock_vec + int_for_xi_0) + ...
-           omega  * (A_1 * shock_vec + int_for_xi_1);
+       shock_vars = (1 - omega) * (A_0 * shock_vars + int_for_xi_0) + ...
+           omega  * (A_1 * shock_vars + int_for_xi_1);
    end
    
    %Note: if we add a nonzero mass with zero skill, almost nothing would
@@ -52,8 +49,8 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    % We also might want to put the zero in on the grid somewhere, in which case we
    %need to tweak things to be the following
    % shock_vec = [shock_vec(1); p0; shock_vec(2:end); 1-p0 - sum(shock_vec(2:end))];
-   xi_shock = shock_vec(1,:);
-   shock_state = shock_vec(2:end,:);
+   xi_shock = shock_vars(1,:);
+   shock_state = shock_vars(2:end,:);
    
    % H & L after a shock + n_periods - 1 iteration
    H_shock = theta_grid * shock_state; %if we add the zero to theta_grid, this doesn't change
@@ -109,7 +106,7 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    high_wage_no_shock = w_h(H_no_shock, L_no_shock, xi_no_shock, rho, sigma, mu, lambda, v, H_inside);
    low_wage_no_shock = w_l(H_no_shock, L_no_shock, xi_no_shock, rho, sigma, mu, lambda, v, H_inside);
    
-   
+   % display some stuff because it's helpful
    if(make_plots>0)
       disp(['High Wage Post Shock: ', num2str(high_wage_shock)])
       disp(['Low Wage Post Shock: ', num2str(low_wage_shock)])
@@ -151,17 +148,21 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
    
    if calc_irfs > 0
    
+       % the transition matrices for the theta grid have no 
+       % death, so we grab all values except the xi iterations
+       % for the purposes of shocks
        s0_trans = A_0_no_delta(2:end, 2:end);
        s1_trans = A_1_no_delta(2:end, 2:end);
        s0_intercept = int_for_xi_0(2:end, :);
        s1_intercept = int_for_xi_1(2:end, :);
        
+       % this is the same thing as above except w/ the fall probability
+       % set to pz instead of alpha
        s0_pz_trans = A_0_no_delta_pz(2:end, 2:end);
        s1_pz_trans = A_1_no_delta_pz(2:end, 2:end);
        s0_pz_intercept = int_for_xi_0(2:end, :);
        s1_pz_intercept = int_for_xi_0(2:end, :);
 
-       % calculate wage growth given 
        [sswg_shockwage, ss_dist_mat_shockwage, ss_wage_mat_shockwage] = calc_wage_growth(s0_trans, ...
                                s1_trans, s0_intercept, ...
                                s1_intercept, 1, ... % omega = 1
@@ -237,12 +238,31 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                                         wages_by_bin', ...
                                         0);
        
-       quantile_dist_vec = reshape(ss_dist_mat * diag(steady_state), length(theta_grid)^2, 1);
-       quantile_wage_vec = reshape(ss_wage_mat,length(theta_grid)^2, 1);
+       % grab the aggregate steady state wage response matrix
+       % weight it by the steady state density at each theta gridpoint
+       % then re-shape it to calculate a single vector to calculate a
+       % weighted quantile
+       dist_vec = reshape(ss_dist_mat * diag(steady_state), length(theta_grid)^2, 1);
+       
+       % this calculates E(WG) and E(WG^2) for every eventuality
+       % the first of these is also used in calculating the quantiles of
+       % wages
+       % the second used in calculating variances via E(X^2) - E(X)
+       % we first calculate X^2 - X for each paths in our grid
+       % and then weight them by the probability associated w/ each
+       % gridpoint, calculated as the P(starting_point) * P(ending_point |
+       % starting_point) and subsequently aggregating
+       first_moments = reshape(ss_wage_mat,length(theta_grid)^2, 1);
+       second_moments = reshape(ss_wage_mat.^2,length(theta_grid)^2, 1);
+       aggregate_variance = (second_moments - first_moments)' * dist_vec;
+       
+       % sd is sqrt var
+       aggregate_sd = sqrt(aggregate_variance);
+       
        targets = 0.01:0.01:0.99;
        q = zeros(size(targets));
        for i = 1:length(targets)
-           q(i) = weighted_quantile(quantile_wage_vec, quantile_dist_vec, targets(i));
+           q(i) = weighted_quantile(first_moments, dist_vec, targets(i));
        end 
        
        if make_plots > 0
@@ -263,8 +283,10 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        
        
        % steady state wage growth percentile
-       tenth_pctile = weighted_quantile(quantile_wage_vec, quantile_dist_vec, 0.1);
+       tenth_pctile = weighted_quantile(first_moments, dist_vec, 0.1);
        
+       % this calculates the probability of falling below the 10th
+       % percentile given that you are exposed and there is no shock
        exposed_cf_lt_pctile_probs = calc_wage_growth_lt_pctile_shock(s0_trans, ...
                                   s1_trans,s0_intercept,...
                                   s1_intercept, s0_pz_trans, s1_pz_trans, ...
@@ -273,6 +295,8 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                                   high_wage_no_shock, low_wage_no_shock, ...
                                   wages_by_bin', tenth_pctile, 0);
 
+       % this calculates the probability of falling below the 10th
+       % percentile given that you are exposed and there is a shock
        exposed_shock_lt_pctile_probs = calc_wage_growth_lt_pctile_shock(s0_trans, ...
                                   s1_trans,s0_intercept,...
                                   s1_intercept, s0_pz_trans, s1_pz_trans, ...
@@ -280,7 +304,9 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                                   theta_grid, n_periods, ... 
                                   high_wage_shock, low_wage_shock, ...
                                   wages_by_bin', tenth_pctile, 1);
-                              
+       
+       % this calculates the probability of falling below the 10th
+       % percentile given that you are unexposed and there is no shock                              
        unexposed_cf_lt_pctile_probs = calc_wage_growth_lt_pctile_shock(s0_trans, ...
                                   s1_trans,s0_intercept,...
                                   s1_intercept, s0_pz_trans, s1_pz_trans, ...
@@ -288,7 +314,9 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                                   theta_grid, n_periods, ... 
                                   high_wage_no_shock, low_wage_no_shock, ...
                                   wages_by_bin', tenth_pctile, 0);
-
+                              
+       % this calculates the probability of falling below the 10th
+       % percentile given that you are unexposed and there is a shock
        unexposed_shock_lt_pctile_probs = calc_wage_growth_lt_pctile_shock(s0_trans, ...
                                   s1_trans,s0_intercept,...
                                   s1_intercept, s0_pz_trans, s1_pz_trans, ...
@@ -297,6 +325,8 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
                                   high_wage_shock, low_wage_shock, ...
                                   wages_by_bin', tenth_pctile, 0);
 
+                              
+       % pre allocated for aggregated versions of the responses
        agg_shock_exposed_wg = zeros(5, 1);
        agg_noshock_exposed_wg = zeros(5, 1);
        agg_shock_unexposed_wg = zeros(5, 1);
@@ -530,5 +560,6 @@ function mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
        expected_wage_growth; ...
        expected_abs_wage_growth; ...
        tenth_pctile_probs;
-       tenth_pctile_gradient];
+       tenth_pctile_gradient;
+       aggregate_sd];
 end

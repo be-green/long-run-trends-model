@@ -2,8 +2,19 @@
 n_gridpoints = 120;
 scale_period = 12;
 n_periods = 1;
-nstarts = 20;
-
+nstarts = 200;
+     
+weight_vec = [30; 5; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
+         0; 0; 0; 0; 0; ... abs wage moments
+         10; 8; 8; 8; 30; ... wage moments
+         30; ... wage difference between 5 and 4
+         0; 0; 0; 0; 0; ... E(awg | income)
+         0; 0; 0; 0; 0; ... E(wg | income)
+         0; 0; ... E(awg), E(wg)
+         3; 3; 3; 3; 3; ...
+         6; ... % p10(5) - p10(1)
+         10]; % aggregate standard deviation / sqrt(60)
+     
 run_number = strrep(datestr(datetime), ':', '_');
 
 fminconoptions = optimoptions(@fmincon,'MaxIterations',1000, 'Display', ...
@@ -34,7 +45,7 @@ patternoptions = optimoptions('patternsearch','Display','iter','PlotFcn',[], ...
 parse_fcn_name = 'parse_model_params_v4';
 hyperparams = struct('theta0', 0.03, 'scale_period', scale_period, ...
     'n_gridpoints', n_gridpoints, 'n_periods', n_periods, 'H_inside', 0, ...
-    'parse_fcn_name', parse_fcn_name);
+    'parse_fcn_name', parse_fcn_name, 'weight_vec', weight_vec);
 
 % scale_period * 5 is because within build_constraints the scale factor is
 % divided by 5
