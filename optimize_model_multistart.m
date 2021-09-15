@@ -1,19 +1,20 @@
 
-n_gridpoints = 200;
+n_gridpoints = 120;
 scale_period = 12;
 n_periods = 1;
-nstarts = 23;
-     
-weight_vec = [30; 0; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
+nstarts = 100;
+parse_fcn_name = 'parse_model_params_v5';
+
+weight_vec = [30; 20; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
          0; 0; 0; 0; 0; ... abs wage moments
-         10; 8; 8; 8; 30; ... wage moments
-         30; ... wage difference between 5 and 4
+         15; 8; 8; 8; 30; ... wage moments
+         25; ... wage difference between 5 and 4
          0; 0; 0; 0; 0; ... E(awg | income)
          0; 0; 0; 0; 0; ... E(wg | income)
          0; 0; ... E(awg), E(wg)
-         3; 3; 3; 3; 3; ...
+         5; 5; 5; 5; 5; ...
          6; ... % p10(5) - p10(1)
-         20]; % aggregate standard deviation / sqrt(60)
+         0]; % aggregate standard deviation / sqrt(60)
      
 run_number = strrep(datestr(datetime), ':', '_');
 
@@ -31,7 +32,7 @@ koptions = 'knitro_options.opt';
 method = "patternsearch";
 
 patternoptions = optimoptions('patternsearch','Display','iter','PlotFcn',[], ...
-    'MaxIterations',1000, 'MaxFunctionEvaluations', 20000);
+    'MaxIterations',2000, 'MaxFunctionEvaluations', 20000);
 
 % n_gripoints is number of gridopints used on the 0-1 interval
 % scale_period is used to represent scaling of "rfsim5" measure in
@@ -42,8 +43,7 @@ patternoptions = optimoptions('patternsearch','Display','iter','PlotFcn',[], ...
 % hyperparams is misc hyperparameters:
 % (1) theta0: level of H at bottom rung of ladder
 
-parse_fcn_name = 'parse_model_params_v4';
-hyperparams = struct('theta0', 0.03, 'scale_period', scale_period, ...
+hyperparams = struct('theta0', 0.025, 'scale_period', scale_period, ...
     'n_gridpoints', n_gridpoints, 'n_periods', n_periods, 'H_inside', 0, ...
     'parse_fcn_name', parse_fcn_name, 'weight_vec', weight_vec);
 
@@ -57,6 +57,8 @@ elseif strcmp(parse_fcn_name,'parse_model_params_v3')
     [ upper, lower, Aineq, bineq] = build_constraints_v3(scale_period * 5,n_gridpoints, hyperparams);
 elseif strcmp(parse_fcn_name,'parse_model_params_v4')
     [ upper, lower, Aineq, bineq] = build_constraints_v4(hyperparams);
+elseif strcmp(parse_fcn_name,'parse_model_params_v5')
+    [ upper, lower, Aineq, bineq] = build_constraints_v5(hyperparams);
 else
     error('Parse function not coded yet!')
 end     
@@ -68,7 +70,6 @@ startvals = sim_with_constraints(nstarts, upper, lower, Aineq, bineq, parse_fcn_
     end
 save(['model-output_',run_number,'/starting-values.mat'], 'startvals')
 save(['model-output_',run_number,'/hyperparams.mat'], 'hyperparams')
-
 
 % evaluate objective at one, just as a sanity check;
 lrtmodel(startvals(1,:), 1, hyperparams)
