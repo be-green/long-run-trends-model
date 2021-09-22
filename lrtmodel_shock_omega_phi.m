@@ -1,4 +1,5 @@
-function [loss, emp_mom, theor_mom, diff_coefs, reg_coefs] = lrtmodel(paramvec, make_plots, hyperparams)
+function [loss, emp_mom, theor_mom, wh, wl, Y, H, lshare, xi, twenty_fifth_pctile, seventy_fifth_pctile] =...
+    lrtmodel_shock_omega_phi(paramvec, make_plots, hyperparams, omega_shock_amount, phi_shock_amount)
 
 H_inside = hyperparams.H_inside;
 n_gridpoints = hyperparams.n_gridpoints; 
@@ -62,8 +63,6 @@ A_1(2,2) = 1;
 % Displacement shock happens last. Below, we will redistribute mass from
 % alpha_param * A_0 across different columns, incorporating the hc loss
 A_1(3:end, 3:end) = A_0(3:end, 3:end) * (1 - alpha_param);
-
-
 
 % VAR Intercept Term
 % first term corresponds to xi
@@ -180,8 +179,6 @@ for i = 1:length(new_theta)
       lower_fall_weight(i,:) = 1 - upper_fall_weight(i,:);
    end
    
-   % TODO: this seems to only address the diagonal. What about one above
-   % the diagonal (since people learn too)?
    A_1(3:end,upper_fall_index(i,:) + 2) = A_1(3:end,upper_fall_index(i,:) + 2)...
        + alpha_param * upper_fall_weight(i,:)*A_0(3:end,i+2);
    A_1(3:end,lower_fall_index(i,:) + 2) = A_1(3:end,lower_fall_index(i,:) + 2)...
@@ -313,9 +310,7 @@ xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
 %     A_1_tilde_no_delta_pz, c_0_tilde_no_delta_pz, ...
 %     c_1_tilde_no_delta_pz, p_z), [0; 0], options); 
 % normcdf(lambdamu)
-
-
-[theor_mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
+theor_mom = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
     kappa, rho, sigma_param, alpha_param, phi, xi_var, ...
     A_0, A_1, ...
     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
@@ -366,6 +361,73 @@ loss_vec = (theor_mom - emp_mom) ./ (0.01 + abs(emp_mom)) .* weight_vec;
 %  
 % [emp_mom, theor_mom]
 
+omega = omega + omega_shock_amount;
+phi = phi + phi_shock_amount;
+
+
+% VAR Intercept Term
+% first term corresponds to xi
+A_0_shock_params = zeros(n_coefs, n_coefs);
+
+% xi depreciation
+A_0_shock_params(1,1) = 1 - g;
+A_0_shock_params(2, 2) = 1;
+
+% fill in theta section
+% phi is probability of moving
+% p_up is probability that the move is upwards
+% p_down is probability that the move is downwards
+for i = 3:n_coefs 
+   A_0_shock_params(i, i) = (1 - phi);
+   if i == 3
+     A_0_shock_params(i, i) = 1 - phi * p_up;
+     A_0_shock_params(i, i + 1) = phi * p_up;
+
+   elseif i < n_coefs 
+     A_0_shock_params(i, i + 1) = phi * p_up;
+     A_0_shock_params(i, i - 1) = phi * p_down;
+   else
+       % can't go past 1
+     A_0_shock_params(i, i - 1) = phi * p_down;
+     A_0_shock_params(i, i) = 1 - phi * p_down;
+   end
+end
+
+A_0_shock_params(3:end, 3:end) = A_0_shock_params(3:end, 3:end) * (1 - delta);
+A_0_shock_params(3:end,3) = A_0_shock_params(3:end,3) + delta;
+
+
+% VAR Intercept Term
+% first term corresponds to xi
+A_1_shock_params = zeros(n_coefs, n_coefs);
+
+% xi depreciation
+A_1_shock_params(1,1) = 1 - g;
+
+% folks who don't move
+A_1_shock_params(2,2) = 1;
+
+
+% Displacement shock happens last. Below, we will redistribute mass from
+% alpha_param * A_0 across different columns, incorporating the hc loss
+A_1_shock_params(3:end, 3:end) = A_0_shock_params(3:end, 3:end) * (1 - alpha_param);
+
+for i = 1:length(new_theta)    
+   % TODO: this seems to only address the diagonal. What about one above
+   % the diagonal (since people learn too)?
+   A_1_shock_params(3:end,upper_fall_index(i,:) + 2) = A_1_shock_params(3:end,upper_fall_index(i,:) + 2)...
+       + alpha_param * upper_fall_weight(i,:)*A_0_shock_params(3:end,i+2);
+   A_1_shock_params(3:end,lower_fall_index(i,:) + 2) = A_1_shock_params(3:end,lower_fall_index(i,:) + 2)...
+       + alpha_param * lower_fall_weight(i,:)*A_0_shock_params(3:end,i+2);
+
+end
+
+% transpose for use w/ Bianchi formulas
+% VAR format
+
+A_0_shock_params = A_0_shock_params';
+A_1_shock_params = A_1_shock_params';
+
 if make_plots > 0
    figure
    momlabels = categorical(1:34, 1:34, {'Labor Share', 'Wage Ratios', 'Output IRF','LShare IRF',...
@@ -412,20 +474,9 @@ loss_vec = [loss_vec; bottom_density_loss; top_density_loss];
 % miss = miss .* weight_vec ./ sum(miss .* weight_vec);
 % 
 % figure(3)
-if make_plots > 0
-labels = categorical(1:39, 1:39, {'Labor Share', 'Wage Ratio','Output IRF','LShare IRF',...
-    'Output ','Wage Sign', 'Lshare IRF sign', ...
-     'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
-     'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]', 'WG[95,100] - WG[75,95]',...
-     'E(WG[0,25])','E(WG[25,50])','E(WG[50,75])','E(WG[75,95])','E(WG[95,100])',...
-     'E(AWG[0,25])','E(AWG[25,50])','E(AWG[50,75])','E(AWG[75,95])','E(AWG[95,100])', ...
-     'E(WG)', 'E(AWG)', ...
-     'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]', 'P10 Gradient', 'Aggregate SD',...
-     'Bottom Density Penalty', 'Top Density Penalty'}, 'Ordinal',true);
 
-figure
-bar(labels', loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
-title('Weighted Percent Loss Contribution')
+
+   dist_over_time = steady_state;
 
    H_star = theta_grid * steady_state;
    L_star = 1 - H_star;
@@ -461,25 +512,11 @@ title('Weighted Percent Loss Contribution')
    xi(1) = xi_star;
    wh(1) = high_wage;
    wl(1) = low_wage;
+   Y(1) = Y_star;
+   X(1) = X_star;
    lshare(1) = (H(1) * wh(1) + L(1) * wl(1)) / Y_star;
    
-   H(2) = theta_grid * shock_state;
-   L(2) = 1 - H(2);
-   xi(2) = xi_shock;
-   wh(2) = w_h(H(2), L(2), xi(2), rho, sigma_param, mu, lambda, v, H_inside);
-   wl(2) = w_l(H(2), L(2), xi(2), rho, sigma_param, mu, lambda, v, H_inside);
-   X_shock = calc_X(xi(2), H(2), L(2), lambda, rho, H_inside);
-   Y_shock = calc_Y(H(2), L(2), X_shock, mu, sigma_param, v, H_inside);
-   lshare(2) = (H(2) * wh(2) + L(2) * wl(2)) / Y_shock;
-   
-   X(1) = X_star;
-   Y(1) = Y_star;
-   
-   X(2) = X_shock;
-   Y(2) = Y_shock;
-   
-   
-   shock_vec = [xi_shock; shock_state(1:(end))];
+   shock_vec = [xi_star; steady_state(1:(end))];
    
    % this just adds kappa in times of trouble
    % and the xi intercept term in good times
@@ -488,98 +525,98 @@ title('Weighted Percent Loss Contribution')
    int_for_xi_1 = zeros(size(A_0, 1), 1);
    int_for_xi_1(1) = c_1_tilde(1);
    
-   for i=1:(scale_period * 5 - 1)
-       shock_vec = (1 - omega) * (A_0 * shock_vec + int_for_xi_0) + ...
-           omega  * (A_1 * shock_vec + int_for_xi_1);
+   
+   for i=1:(scale_period * 60)
+       shock_vec = (1 - omega) * (A_0_shock_params * shock_vec + int_for_xi_0) + ...
+           omega  * (A_1_shock_params * shock_vec + int_for_xi_1);
           
-       xi(i + 2) = shock_vec(1,:);
+       xi(i + 1) = shock_vec(1,:);
        shock_state = shock_vec(3:end,:);
-
+       dist_over_time = [dist_over_time, shock_vec(2:end)];
 
        shock_vec_for_calcs = [p0_share; shock_state];
 
-       H(i + 2) = theta_grid * shock_vec_for_calcs;
-       L(i + 2) = 1 - H(i + 2);
+       H(i + 1) = theta_grid * shock_vec_for_calcs;
+       L(i + 1) = 1 - H(i + 1 );
 
        % shock state production values
-       X(i + 2) = calc_X(xi(i + 2),H(i + 2), L(i + 2), lambda, rho, H_inside);
-       Y(i + 2) = calc_Y(H(i + 2), L(i + 2), X(i + 2), mu, sigma_param, v, H_inside);
+       X(i + 1) = calc_X(xi(i + 1),H(i + 1), L(i + 1), lambda, rho, H_inside);
+       Y(i + 1) = calc_Y(H(i + 1), L(i + 1), X(i + 1), mu, sigma_param, v, H_inside);
 
 
        % high and low wages at shock state
-       wh(i + 2) = w_h(H(i + 2), L(i + 2), xi(i + 2), rho, sigma_param, mu, lambda, v, H_inside);
-       wl(i + 2) = w_l(H(i + 2), L(i + 2), xi(i + 2), rho, sigma_param, mu, lambda, v, H_inside);
-       lshare(i + 2) = (H(i + 2) * wh(i + 2) + L(i + 2) * wl(i + 2)) / Y(i + 2);
-
+       wh(i + 1) = w_h(H(i + 1), L(i + 1), xi(i + 1), rho, sigma_param, mu, lambda, v, H_inside);
+       wl(i + 1) = w_l(H(i + 1), L(i + 1), xi(i + 1), rho, sigma_param, mu, lambda, v, H_inside);
+       lshare(i + 1) = (H(i + 1) * wh(i + 1) + L(i + 1) * wl(i + 1)) / Y(i + 1);
    end
    
-addpath('matlab2tikz/src/')
    
-figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (wh(1:scale_period*5)./wh(1) - 1)*agg_scale_factor, '.-')
-title("High Wage")
+    twenty_fifth_pctile = zeros(size(dist_over_time, 2), 1);
+    seventy_fifth_pctile = zeros(size(dist_over_time, 2), 1);
+    for i=1:(scale_period * 60)
+        current_wages = wh(i) * theta_grid + wl(i) * (1 - theta_grid);
+        twenty_fifth_pctile(i,:) = wl(i);
+        seventy_fifth_pctile(i,:) =  weighted_quantile_between_grid(current_wages, dist_over_time(:, i), 0.75);
+    end
+    
+   if make_plots > 0
+    labels = categorical(1:39, 1:39, {'Labor Share', 'Wage Ratio','Output IRF','LShare IRF',...
+        'Output ','Wage Sign', 'Lshare IRF sign', ...
+         'AWG[0,25]','AWG[25,50]','AWG[50,75]','AWG[75,95]','AWG[95,100]', ...
+         'WG[0,25]','WG[25,50]','WG[50,75]','WG[75,95]','WG[95,100]', 'WG[95,100] - WG[75,95]',...
+         'E(WG[0,25])','E(WG[25,50])','E(WG[50,75])','E(WG[75,95])','E(WG[95,100])',...
+         'E(AWG[0,25])','E(AWG[25,50])','E(AWG[50,75])','E(AWG[75,95])','E(AWG[95,100])', ...
+         'E(WG)', 'E(AWG)', ...
+         'P(10)[0,25]','P(10)[25,50]','P(10)[50,75]','P(10)[75,95]','P(10)[95,100]', 'P10 Gradient', 'Aggregate SD',...
+         'Bottom Density Penalty', 'Top Density Penalty'}, 'Ordinal',true);
 
-figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (wl(1:scale_period*5)./wl(1) - 1)*agg_scale_factor, '.-')
-title("Low Wage")
+    figure
+    bar(labels', loss_vec .* loss_vec ./ (loss_vec' * loss_vec))
+    title('Weighted Percent Loss Contribution')
+    addpath('matlab2tikz/src/')
 
-figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (L(1:scale_period*5)./L(1) - 1)*agg_scale_factor, '.-')
-title("L Skill Level")
+    figure
+    plot([0, (1:(scale_period * 60 - 1))]'./scale_period, (wh(1:scale_period * 60)./wh(1) - 1)*agg_scale_factor, '.-')
+    title("High Wage")
 
-figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (H(1:scale_period*5)./H(1) - 1)*agg_scale_factor, '.-')
-title("H Skill Level")
+    figure
+    plot([0, (1:(scale_period * 60 - 1))]'./scale_period, (wl(1:scale_period * 60)./wl(1) - 1)*agg_scale_factor, '.-')
+    title("Low Wage")
 
-figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (xi(1:scale_period*5)./xi(1) - 1)*agg_scale_factor, '.-')
-title("Technology Level")
 
-wage_diff = wh - wl;
-figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (wage_diff(1:scale_period*5)./wage_diff(1) - 1)*agg_scale_factor, '.-')
-title("High Wage - Low Wage")
+    figure
+    plot([0, (1:(scale_period * 60 - 1))]'./scale_period, (L(1:scale_period * 60)./L(1) - 1)*agg_scale_factor, '.-')
+    title("L Skill Level")
+    matlab2tikz('../figures/L_irf.tex', 'showInfo', false)
 
-figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (lshare(1:scale_period*5)./lshare(1) - 1)*agg_scale_factor, '.-')
-title('Labor Share')
+    figure
+    plot([0, (1:(scale_period * 60 - 1))]'./scale_period, (H(1:scale_period * 60)./H(1) - 1)*agg_scale_factor, '.-')
+    title("H Skill Level")
+    matlab2tikz('../figures/H_irf.tex', 'showInfo', false)
 
-figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (X(1:scale_period*5)./X(1) - 1)*agg_scale_factor, '.-')
-title("Composite Good")
+    figure
+    plot([0, (1:(scale_period * 60 - 1))]'./scale_period, (xi(1:scale_period * 60)./xi(1) - 1)*agg_scale_factor, '.-')
+    title("Technology Level")
 
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (Y(1:scale_period*5)./Y(1) - 1)*agg_scale_factor, '.-')
-title("Output Level")
+    wage_diff = wh - wl;
+    figure
+    plot([0, (1:(scale_period * 60 - 1))]'./scale_period, (wage_diff(1:scale_period * 60)./wage_diff(1) - 1)*agg_scale_factor, '.-')
+    title("High Wage - Low Wage")
 
-% 
-% figure
-% plot([0, (1:(length(wh) - 1))]', (wh(1:end)), '.-')
-% title("High Wage")
-% 
-% plot([0, (1:(length(wh) - 1))]', (wl(1:end)), '.-')
-% title("Low Wage")
-% 
-% plot([0, (1:(length(wh) - 1))]', (L(1:end)), '.-')
-% title("L Skill Level")
-% 
-% plot([0, (1:(length(wh) - 1))]', (H(1:end)), '.-')
-% title("H Skill Level")
-% 
-% plot([0, (1:(length(wh) - 1))]', (xi(1:end)), '.-')
-% title("Technology Level")
-% 
-% wage_diff = wh - wl;
-% plot([0, (1:(length(wh) - 1))]', (wage_diff(1:end)), '.-')
-% title("High Wage - Low Wage")
-% 
-% plot([0, (1:(length(wh) - 1))]', (lshare(1:end)), '.-')
-% title("Labor Share")
-% 
-% plot([0, (1:(length(wh) - 1))]', (X(1:end)), '.-')
-% title("Composite Good")
-% 
-% plot([0, (1:(length(wh) - 1))]', (Y(1:end)), '.-')
-% title("Output Level")
+    figure
+    plot([0, (1:(scale_period * 60 - 1))]'./scale_period, (lshare(1:scale_period * 60)./lshare(1) - 1)*agg_scale_factor, '.-')
+    title('Labor Share')
+
+
+    figure
+    plot([0, (1:(scale_period * 60 - 1))]'./scale_period, (X(1:scale_period * 60)./X(1) - 1)*agg_scale_factor, '.-')
+    title("Composite Good")
+
+    plot([0, (1:(scale_period * 60 - 1))]'./scale_period, (Y(1:scale_period * 60)./Y(1) - 1)*agg_scale_factor, '.-')
+    title("Output Level")
+
+    plot([0, (1:(scale_period * 60))]'./scale_period, [twenty_fifth_pctile, seventy_fifth_pctile], '.-')
+    title("Inequality over Time")
 
     level_names = {'High Wage', 'Low Wage', 'Wage Difference', ...
         'Output', 'Composite Good', 'Low Skill Amount', 'High Skill', ...
@@ -591,9 +628,7 @@ title("Output Level")
 
 
 
-end
-
-
+   end
 
 if any(isnan(loss_vec) | ~isreal(loss_vec))
     loss = 1e16;
