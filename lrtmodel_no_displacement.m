@@ -1,4 +1,4 @@
-function [loss, emp_mom, theor_mom, diff_coefs, reg_coefs] = lrtmodel(paramvec, make_plots, hyperparams)
+function [loss, emp_mom, theor_mom, diff_coefs, reg_coefs] = lrtmodel_no_displacement(paramvec, make_plots, hyperparams)
 
 H_inside = hyperparams.H_inside;
 n_gridpoints = hyperparams.n_gridpoints; 
@@ -291,6 +291,7 @@ if make_plots > 0
     plot(theta_grid,steady_state)
     title('Steady state theta density')
 end
+
 % steady state values
 H_star = theta_grid * steady_state;
 L_star = 1 - H_star;
@@ -315,7 +316,7 @@ xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
 % normcdf(lambdamu)
 
 
-[theor_mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
+[theor_mom, diff_coefs, reg_coefs] = calcmom_no_displacement(lambda, mu, theta_grid, steady_state, xi_star, ...
     kappa, rho, sigma_param, alpha_param, phi, xi_var, ...
     A_0, A_1, ...
     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
@@ -334,11 +335,11 @@ emp_abs_wage_growth = ...
      0.0009579; ...
      0.004768; ...
      0.007638; ...
-     0.02014] - 0.02;
+     0.02014];
 
-emp_wage_growth = [-0.01486; -0.01008; -0.01178; -0.01167; -0.02467] - 0.02;
+emp_wage_growth = [-0.01486; -0.01008; -0.01178; -0.01167; -0.02467];
 
-tenth_pctile_probs = [0.00286; 0.002619; 0.003889; 0.003941; 0.01255] - 0.02;
+tenth_pctile_probs = [0.00286; 0.002619; 0.003889; 0.003941; 0.01255];
 
 top_density_loss = (steady_state(end) > 0.01) * abs((steady_state(end) - 0.01)) * 100;
 bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 00;
@@ -495,7 +496,6 @@ title('Weighted Percent Loss Contribution')
        xi(i + 2) = shock_vec(1,:);
        shock_state = shock_vec(3:end,:);
 
-
        shock_vec_for_calcs = [p0_share; shock_state];
 
        H(i + 2) = theta_grid * shock_vec_for_calcs;
@@ -518,38 +518,53 @@ addpath('matlab2tikz/src/')
 figure
 plot([0, (1:(scale_period*5 - 1))]'./scale_period, (wh(1:scale_period*5)./wh(1) - 1)*agg_scale_factor, '.-')
 title("High Wage")
+matlab2tikz('../figures/high_wage_irf.tex', 'showInfo', false)
 
 figure
 plot([0, (1:(scale_period*5 - 1))]'./scale_period, (wl(1:scale_period*5)./wl(1) - 1)*agg_scale_factor, '.-')
 title("Low Wage")
+matlab2tikz('../figures/low_wage_irf.tex', 'showInfo', false)
+
 
 figure
 plot([0, (1:(scale_period*5 - 1))]'./scale_period, (L(1:scale_period*5)./L(1) - 1)*agg_scale_factor, '.-')
 title("L Skill Level")
+matlab2tikz('../figures/L_irf.tex', 'showInfo', false)
 
 figure
 plot([0, (1:(scale_period*5 - 1))]'./scale_period, (H(1:scale_period*5)./H(1) - 1)*agg_scale_factor, '.-')
 title("H Skill Level")
+matlab2tikz('../figures/H_irf.tex', 'showInfo', false)
 
 figure
 plot([0, (1:(scale_period*5 - 1))]'./scale_period, (xi(1:scale_period*5)./xi(1) - 1)*agg_scale_factor, '.-')
 title("Technology Level")
+matlab2tikz('../figures/technology_irf.tex', 'showInfo', false)
+
 
 wage_diff = wh - wl;
 figure
 plot([0, (1:(scale_period*5 - 1))]'./scale_period, (wage_diff(1:scale_period*5)./wage_diff(1) - 1)*agg_scale_factor, '.-')
 title("High Wage - Low Wage")
 
+matlab2tikz('../figures/wage_diff_irf.tex', 'showInfo', false)
+
+
 figure
 plot([0, (1:(scale_period*5 - 1))]'./scale_period, (lshare(1:scale_period*5)./lshare(1) - 1)*agg_scale_factor, '.-')
 title('Labor Share')
 
+matlab2tikz('../figures/labor_share_irf.tex', 'showInfo', false)
+
+
 figure
 plot([0, (1:(scale_period*5 - 1))]'./scale_period, (X(1:scale_period*5)./X(1) - 1)*agg_scale_factor, '.-')
 title("Composite Good")
+matlab2tikz('../figures/composite_good_irf.tex', 'showInfo', false)
 
 plot([0, (1:(scale_period*5 - 1))]'./scale_period, (Y(1:scale_period*5)./Y(1) - 1)*agg_scale_factor, '.-')
 title("Output Level")
+matlab2tikz('../figures/output_irf.tex', 'showInfo', false)
 
 % 
 % figure
@@ -592,9 +607,6 @@ title("Output Level")
 
 
 end
-
-
-
 if any(isnan(loss_vec) | ~isreal(loss_vec))
     loss = 1e16;
 else

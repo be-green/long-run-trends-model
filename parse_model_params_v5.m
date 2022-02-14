@@ -88,7 +88,7 @@ alpha = (paramvec(2,:));
 % initial states
 
 % use alpha to get omega from alpha_x_omega
-alpha_x_omega = paramvec(12, :);
+alpha_x_omega = paramvec(10, :);
 omega = alpha_x_omega / alpha;
 
 % get d from d_omega_alpha / omega_alpha
@@ -132,14 +132,14 @@ mu = paramvec(6,:); % outer nest
 % g = exp(log(g + 1) / (scale_period)) - 1;
 
 % DRS parameter. Fixed at 1 in this iteration
-v = paramvec(11,:);
+v = 1;
 
 
 % setting up theta grid
 theta0 = hyperparams.theta0;
 
 % share of people who never ladder climb
-p0_share = paramvec(10,:);
+p0_share = 0.375;
 
 % probability, conditional on moving, that the direction is up
 % down probability is 1 - p_up

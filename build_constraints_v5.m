@@ -25,21 +25,21 @@ max_d = 0.6;
 % growth_rate * phi * (2p_up - 1) -  d* omega * alpha >= dlogtheta_lb
 % ie -dlogtheta_lb <= d*omega*alpha - phi * growth_rate
 bineq = -dlogtheta_lb;
-Aineq = [-log(1 + growth_rate), 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+Aineq = [-log(1 + growth_rate), 0, 1, 0, 0, 0, 0, 0, 0, 0];
 
 % growth_rate * phi * (2p_up - 1) -  d* omega * alpha <= dlogtheta_ub
 bineq = [bineq;dlogtheta_ub];
-Aineq = [Aineq;log(1 + growth_rate), 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+Aineq = [Aineq;log(1 + growth_rate), 0, -1, 0, 0, 0, 0, 0, 0, 0];
 
 % d = paramvec(3) / (alpha * omega). So if we want d >= min_d, that is isomorphic to
 % having alpha * omega * min_d <= paramvec(3), so -paramvec(3) +alpha * omega * min_d <= 0
 bineq = [bineq;0];
-Aineq = [Aineq; 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, min_d];
+Aineq = [Aineq; 0, 0, -1, 0, 0, 0, 0, 0, 0, min_d];
 
 % d = paramvec(3) / (alpha * omega). So if we want d <= max_d, that is isomorphic to
 % having (alpha * omega) * max_d >= paramvec(3), so -(alpha * omega) * min_d + paramvec(3) <= 0
 bineq = [bineq;0];
-Aineq = [Aineq; 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -max_d];
+Aineq = [Aineq; 0, 0, 1, 0, 0, 0, 0, 0, 0, -max_d];
 
 lower = [0.001, ... phi
     0.05, ... alpha
@@ -50,8 +50,6 @@ lower = [0.001, ... phi
     0.001,... % lambda
     0.01, ...% kappa
     0.02/hyperparams.scale_period, ... % g
-    0.1, ... % p0 share
-    0.66, ... % drs parameter
     1/( 5 * hyperparams.scale_period)]; % alpha * omega 
 
 upper = [0.7, ... % phi
@@ -63,7 +61,5 @@ upper = [0.7, ... % phi
          0.8,....% lambda
          0.4, ... % fraction of xi mean coming from kappa shocks vs intercept; above one xi_intercept can go negative
          0.2/hyperparams.scale_period, ... g
-         0.375 ...  % p0 share
-         1 ... % drs parameter
          min(0.3 * growth_rate / min_d, 0.7)]; % alpha * omega
      
