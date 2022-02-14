@@ -334,11 +334,11 @@ emp_abs_wage_growth = ...
      0.0009579; ...
      0.004768; ...
      0.007638; ...
-     0.02014];
+     0.02014] - 0.02;
 
-emp_wage_growth = [-0.01486; -0.01008; -0.01178; -0.01167; -0.02467];
+emp_wage_growth = [-0.01486; -0.01008; -0.01178; -0.01167; -0.02467] - 0.02;
 
-tenth_pctile_probs = [0.00286; 0.002619; 0.003889; 0.003941; 0.01255];
+tenth_pctile_probs = [0.00286; 0.002619; 0.003889; 0.003941; 0.01255] - 0.02;
 
 top_density_loss = (steady_state(end) > 0.01) * abs((steady_state(end) - 0.01)) * 100;
 bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 00;
