@@ -27,13 +27,13 @@ best_post_bugfix = [0.195103100011429   0.315190716313622       0.00245505658480
     
 weight_vec = [30; 0; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
          0; 0; 0; 0; 0; ... abs wage moments
-         25; 8; 8; 20; 40; ... wage moments
+         40; 8; 8; 20; 50; ... wage moments
          40; ... wage difference between 5 and 4
          0; 0; 0; 0; 0; ... E(awg | income)
          0; 0; 0; 0; 0; ... E(wg | income)
          0; 0; ... E(awg), E(wg)
-         5; 5; 5; 5; 19; ...
-         20; ... % p10(5) - p10(1)
+         2; 2; 2; 2; 10; ...
+         10; ... % p10(5) - p10(1)
          0]; % aggregate standard deviation / sqrt(60)
 
 n_gridpoints = 120;
@@ -71,8 +71,11 @@ patternoptions = optimoptions('patternsearch','Display','iter','PlotFcn',[], ...
 %       (14): nu, (v), the DRS parameter
 %       (15): alpha * omega, the shock probability parameter
 [csol, closs] = patternsearch(@(x) lrtmodel(x, 0, hyperparams), ...
-                                        best_post_bugfix, ...
+                                        csol, ...
                                         Aineq, bineq, [], [], ...
                                         lower, ...
                                         upper,...  
                                         [], patternoptions);
+
+                                    
+lrtmodel(csol, 1, hyperparams)
