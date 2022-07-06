@@ -108,7 +108,6 @@ A_1_no_delta(2,2) = 1;
 
 A_1_no_delta(3:end, 3:end) = A_0_no_delta(3:end, 3:end) * (1 - alpha_param);
 
-
 % VAR Intercept Term
 % first term corresponds to xi
 A_0_no_delta_pz = zeros(n_coefs, n_coefs);
@@ -138,7 +137,6 @@ for i = 3:n_coefs
      A_0_no_delta_pz(i, i) = 1 - phi * p_down;
    end
 end
-
 
 % VAR Intercept Term, for "exposed" workers
 % first term corresponds to xi
@@ -209,7 +207,6 @@ A_1_no_delta = A_1_no_delta';
 
 A_0_no_delta_pz = A_0_no_delta_pz';
 A_1_no_delta_pz = A_1_no_delta_pz';
-
 
 % next, we will define subsetted matrices which omit the final column (this
 % imposes the restriction that probabilities sum to 1)
@@ -345,7 +342,7 @@ bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 0
 % half_income_from_low_skill = low_wage *(1-theta_0) / (low_wage * (1-theta_0) +  theta_0 * high_wage) >= 0.5;
 
 
-expected_wage_growth_by_income = [0.006216; -0.08353; -0.08933; -0.09111; -0.1197];
+expected_wage_growth_by_income = [0.006216; -0.08353; -0.08933; -0.09111; -0.1197] * 2;
 expected_abs_wage_growth_by_income = [0.4466; 0.2961; 0.2559; 0.2437; 0.2792];
 
 emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
@@ -355,7 +352,7 @@ emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
              expected_wage_growth_by_income; ...
              expected_abs_wage_growth_by_income; ...
              -0.06313; 0.3171; ... expected wage growth, expected abs wage growth
-             tenth_pctile_probs; ...
+             tenth_pctile_probs * 2; ...
              tenth_pctile_probs(5)-tenth_pctile_probs(1); ... % Difference higher high income p10 vs. lowest income p10
              0.592 / sqrt(60)]; % aggregate standard deviation / sqrt(60)
     

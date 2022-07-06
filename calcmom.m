@@ -70,7 +70,6 @@ function [mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_s
    
    y_irf = (log(Y_shock) - log(Y_star)) *  agg_scale_factor;
    
-   
    % Do the same thing as abovefor no shock 
    % single no shock period
    no_shock_vars = A_0 * [xi_star; steady_state];
@@ -91,7 +90,6 @@ function [mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_s
 
    xi_no_shock = no_shock_vec(1,:);
    no_shock_state = no_shock_vec(2:end,:);
-   
    
    % H & L after a shock + n_periods - 1 iteration
    H_no_shock = theta_grid * no_shock_state; %if we add the zero to theta_grid, this doesn't change
@@ -433,7 +431,6 @@ function [mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_s
            ss_wg_by_income(i, 1) = sswg(bin_indices, 1)' * pweights;
            ss_awg_by_income(i, 1) = sswg(bin_indices, 2)' * pweights;
        end
-      
        
        % which outcomes are associated with shocks
        S = [ones(5, 1); zeros(5, 1); ones(5, 1); zeros(5, 1);];
@@ -457,7 +454,7 @@ function [mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_s
        e_xy_wg = zeros(11, 1);
        e_xy_awg = zeros(11, 1);
        e_xy_pctile = zeros(11, 1);
-        
+       
        probvec = [agg_prob; agg_prob; agg_prob; agg_prob];
        b =  alpha / p_z ;
        b_vec = b * T + (1 - b) * (1 - T);
@@ -492,7 +489,7 @@ function [mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_s
            e_xy_pctile(i,:) = agg_prob(i - 6) * b * (D_i .* (omega * (S) + ...
                (1 - omega) * ((1 - S))))' * y_vec_pctile;
        end
-              
+       
        % Compute the E[x * x'] moments needed for the ols formula
        first_col_off_diag_elems = [omega * agg_prob', omega * alpha / p_z * agg_prob']';
        
@@ -501,7 +498,6 @@ function [mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_s
            diag(omega * alpha / p_z * agg_prob')],...
            [diag(omega * alpha / p_z * agg_prob'); ...
            diag(omega * alpha / p_z * agg_prob')]]]];
-       
        
        wage_growth = (xtx) \ e_xy_wg;
        wage_growth = wage_growth((end - 4):end) .* irf_scale_factor;
