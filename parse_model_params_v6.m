@@ -152,6 +152,10 @@ gamma = paramvec(13, :);
 p_up = (gamma / phi + 1) / 2;
 p_down = 1 - p_up;
 
+if p_up > 1 | p_up < 0
+   error('invalid p_up or p_down')
+end
+
 if theta_order == 0
     % growth_rate = paramvec(8,:);
     % n_gridpoints = floor(-log(theta0) / log(1 + growth_rate));
