@@ -1,4 +1,4 @@
-function [mom, diff_coefs, reg_coefs] = calcmom_no_displacement(lambda, mu, theta_grid, steady_state, xi_star, ...
+function [mom, diff_coefs, reg_coefs, p10_diff_coefs, p10_reg_coefs] = calcmom_no_displacement(lambda, mu, theta_grid, steady_state, xi_star, ...
     kappa, rho, sigma, alpha, phi, xi_var, A_0, A_1, ...
     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
     A_0_no_delta, A_1_no_delta, c_0_tilde_no_delta, ...
@@ -454,11 +454,12 @@ function [mom, diff_coefs, reg_coefs] = calcmom_no_displacement(lambda, mu, thet
            agg_shock_exposed_pctile; agg_noshock_exposed_pctile];
        
        diff_coefs = [agg_shock_unexposed_wg - agg_noshock_unexposed_wg, agg_shock_exposed_wg - agg_noshock_exposed_wg].* irf_scale_factor;
-       
+       p10_diff_coefs = [agg_shock_unexposed_pctile - agg_noshock_unexposed_pctile, ...
+           agg_shock_exposed_pctile - agg_noshock_exposed_pctile].* irf_scale_factor;
        e_xy_wg = zeros(11, 1);
        e_xy_awg = zeros(11, 1);
        e_xy_pctile = zeros(11, 1);
-        
+       
        probvec = [agg_prob; agg_prob; agg_prob; agg_prob];
        b =  alpha / p_z ;
        b_vec = b * T + (1 - b) * (1 - T);
@@ -513,7 +514,7 @@ function [mom, diff_coefs, reg_coefs] = calcmom_no_displacement(lambda, mu, thet
        
        tenth_pctile_probs = (xtx) \ e_xy_pctile;
        tenth_pctile_probs = tenth_pctile_probs((end - 4):end) .* irf_scale_factor;
-       
+       p10_reg_coefs = tenth_pctile_probs;
    if make_plots > 0
        
       figure

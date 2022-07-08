@@ -1,4 +1,5 @@
-function [loss, emp_mom, theor_mom, wh, wl, Y, H, lshare, xi, twenty_fifth_pctile, seventy_fifth_pctile] =...
+function [loss, emp_mom, theor_mom, wh, wl, Y, H, lshare, xi, twenty_fifth_pctile, seventy_fifth_pctile, ...
+percent_from_top_five, percent_from_top_one, ss_dist, ss_wage_grid] =...
     lrtmodel_shock_omega_phi(paramvec, make_plots, hyperparams, omega_shock_amount, phi_shock_amount)
 
 H_inside = hyperparams.H_inside;
@@ -280,6 +281,7 @@ w = repmat(eye((n_coefs-2)),1,2);
 mu_ss = w * q;
 
 steady_state = [p0_share; [mu_ss(2:end); (1 - p0_share) - sum(mu_ss(2:end))] ];
+ss_dist = steady_state;
 
 theta_grid = [0, theta_grid];
 
@@ -550,6 +552,40 @@ loss_vec = [loss_vec; bottom_density_loss; top_density_loss];
        lshare(i + 1) = (H(i + 1) * wh(i + 1) + L(i + 1) * wl(i + 1)) / Y(i + 1);
    end
    
+    wages = wh * theta_grid + wl * (1 - theta_grid);
+
+    wage_ts = zeros(size(dist_over_time, 2), 1);
+    top_five_wages = zeros(size(dist_over_time, 2), 1);
+    top_one_wages = zeros(size(dist_over_time, 2), 1);
+    for t = 1:size(dist_over_time, 2)
+       wage_ts(t, :) = wages(t, :) * dist_over_time(:, t);
+
+       
+       fifth_pts = cumsum(dist_over_time(:, t)) > 0.95;
+       first_pts = cumsum(dist_over_time(:, t)) > 0.99;
+       
+       if sum(dist_over_time(fifth_pts, t)) < 0.05
+           fifth_pts(sum(fifth_pts == 0)) = 1;
+       end
+       
+       if sum(dist_over_time(first_pts, t)) < 0.01
+            first_pts(sum(first_pts == 0)) = 1;
+       end
+       
+       
+       fifth_dist = dist_over_time(fifth_pts, t);
+       fifth_dist(1) = fifth_dist(1) - (sum(fifth_dist) - 0.05);
+       
+       first_dist = dist_over_time(first_pts, t);
+       first_dist(1) = first_dist(1) - (sum(first_dist) - 0.01);
+       
+       top_five_wages(t, :) = wages(t, fifth_pts) * fifth_dist;
+       top_one_wages(t, :) = wages(t,first_pts) * first_dist;
+
+    end
+
+    percent_from_top_one = top_one_wages ./ wage_ts;
+    percent_from_top_five = top_five_wages ./ wage_ts;
    
     twenty_fifth_pctile = zeros(size(dist_over_time, 2), 1);
     seventy_fifth_pctile = zeros(size(dist_over_time, 2), 1);
@@ -587,12 +623,10 @@ loss_vec = [loss_vec; bottom_density_loss; top_density_loss];
     figure
     plot([0, (1:(scale_period * 60 - 1))]'./scale_period, (L(1:scale_period * 60)./L(1) - 1)*agg_scale_factor, '.-')
     title("L Skill Level")
-    matlab2tikz('../figures/L_irf.tex', 'showInfo', false)
 
     figure
     plot([0, (1:(scale_period * 60 - 1))]'./scale_period, (H(1:scale_period * 60)./H(1) - 1)*agg_scale_factor, '.-')
     title("H Skill Level")
-    matlab2tikz('../figures/H_irf.tex', 'showInfo', false)
 
     figure
     plot([0, (1:(scale_period * 60 - 1))]'./scale_period, (xi(1:scale_period * 60)./xi(1) - 1)*agg_scale_factor, '.-')

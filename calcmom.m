@@ -1,4 +1,4 @@
-function [mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
+function [mom, diff_coefs, reg_coefs, p10_diff_coefs, p10_reg_coefs] = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
     kappa, rho, sigma, alpha, phi, xi_var, A_0, A_1, ...
     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
     A_0_no_delta, A_1_no_delta, c_0_tilde_no_delta, ...
@@ -447,7 +447,9 @@ function [mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_s
            agg_shock_exposed_wg; agg_noshock_exposed_wg];
               
        diff_coefs = [agg_shock_unexposed_wg - agg_noshock_unexposed_wg, agg_shock_exposed_wg - agg_noshock_exposed_wg].*irf_scale_factor;
-
+       p10_diff_coefs = [agg_shock_unexposed_pctile - agg_noshock_unexposed_pctile, ...
+           agg_shock_exposed_pctile - agg_noshock_exposed_pctile].* irf_scale_factor;
+       
        y_vec_awg = [agg_shock_unexposed_awg; agg_noshock_unexposed_awg; ...
            agg_shock_exposed_awg; agg_noshock_exposed_awg];
        
@@ -457,7 +459,7 @@ function [mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_s
        e_xy_wg = zeros(11, 1);
        e_xy_awg = zeros(11, 1);
        e_xy_pctile = zeros(11, 1);
-        
+       
        probvec = [agg_prob; agg_prob; agg_prob; agg_prob];
        b =  alpha / p_z ;
        b_vec = b * T + (1 - b) * (1 - T);
@@ -492,7 +494,7 @@ function [mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_s
            e_xy_pctile(i,:) = agg_prob(i - 6) * b * (D_i .* (omega * (S) + ...
                (1 - omega) * ((1 - S))))' * y_vec_pctile;
        end
-              
+       
        % Compute the E[x * x'] moments needed for the ols formula
        first_col_off_diag_elems = [omega * agg_prob', omega * alpha / p_z * agg_prob']';
        
@@ -501,7 +503,6 @@ function [mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_s
            diag(omega * alpha / p_z * agg_prob')],...
            [diag(omega * alpha / p_z * agg_prob'); ...
            diag(omega * alpha / p_z * agg_prob')]]]];
-       
        
        wage_growth = (xtx) \ e_xy_wg;
        wage_growth = wage_growth((end - 4):end) .* irf_scale_factor;
@@ -512,11 +513,11 @@ function [mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_s
        
        tenth_pctile_probs = (xtx) \ e_xy_pctile;
        tenth_pctile_probs = tenth_pctile_probs((end - 4):end) .* irf_scale_factor;
-       
+       p10_reg_coefs = tenth_pctile_probs;
+
    if make_plots > 0
        
       figure
-      
       
       subplot(2, 1, 1);
       bar([agg_shock_unexposed_wg, agg_shock_exposed_wg, agg_noshock_exposed_wg]);
@@ -542,6 +543,27 @@ function [mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_s
       bar(wage_growth);
       title("Regression Coefs")
    
+      figure
+      
+      subplot(2, 1, 1);
+      bar([agg_shock_unexposed_pctile, agg_shock_exposed_pctile, agg_noshock_exposed_pctile]);
+      legend('Shock Unexposed','Shock Exposed','No Shock','Location','southoutside', ...
+          'Orientation', 'horizontal');
+      title("Breakdown Numbers")
+      
+      subplot(2, 1, 2);
+      bar([agg_shock_unexposed_pctile - agg_noshock_unexposed_pctile,  ... 
+          agg_shock_exposed_pctile - agg_noshock_exposed_pctile]);
+      legend('Shock Unexposed - No Shock Unexposed',...
+          'Shock Exposed - No Shock Exposed','Location','southoutside', ...
+          'Orientation', 'horizontal');
+      title("Diff Coefs")
+      
+      subplot(3, 1, 3);
+      bar([agg_shock_exposed_pctile - agg_noshock_exposed_pctile - ...
+          (agg_shock_unexposed_pctile - agg_noshock_unexposed_pctile)]);
+      title("Diff in Diff Coefs")
+    
    end
        
    else 

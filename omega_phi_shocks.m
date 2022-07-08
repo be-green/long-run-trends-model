@@ -52,64 +52,102 @@ omega_shock_amount = 0.0230;
 % if omega goes up by (omega + x), we need phi to increase by xd / g
 % this approximation is a touch too low though, adding a fudge factor
 % so as to match the steady state H from the the original calibration
-fudge_factor = 0.005;
+
+fudge_factor = fminsearch(@(x) h_diff_loss(x, omega_shock_amount), 0.01);
 phi_shock_amount = omega_shock_amount * alpha * d / growth_rate + fudge_factor;
 
 [omega_shock_loss, omega_shock_emp_mom, omega_shock_theor_mom, ...
     omega_shock_wh, omega_shock_wl, omega_shock_Y, omega_shock_H, omega_shock_lshare,...
-    omega_shock_xi, omega_shock_twenty_fifth_pctile, omega_shock_seventy_fifth_pctile] = ...
+    omega_shock_xi, omega_shock_twenty_fifth_pctile, omega_shock_seventy_fifth_pctile,...
+    omega_shock_income_share_top_five, omega_shock_income_share_top_one, omega_shock_ss_dist] = ...
     lrtmodel_shock_omega_phi(final_cal, 0, hyperparams, omega_shock_amount, 0);
 
 [both_shock_loss, both_shock_emp_mom, both_shock_theor_mom, ...
     both_shock_wh, both_shock_wl, both_shock_Y, both_shock_H, both_shock_lshare,...
-    both_shock_xi, both_shock_twenty_fifth_pctile, both_shock_seventy_fifth_pctile] = ...
+    both_shock_xi, both_shock_twenty_fifth_pctile, both_shock_seventy_fifth_pctile, ...
+    both_shock_income_share_top_five, both_shock_income_share_top_one, omega_phi_shock_ss_dist] = ...
     lrtmodel_shock_omega_phi(final_cal, 0, hyperparams, omega_shock_amount, phi_shock_amount);
 
+addpath('matlab2tikz/src/')
 num_obs = 720;
 
 figure
 
-subplot(3, 2, 1)
 plot([0, (1:(num_obs - 1))]'./scale_period, [omega_shock_lshare(1:num_obs), both_shock_lshare(1:num_obs)], '.-')
-title("Labor Share")
+% title("Labor Share")
 xlabel("Years")
 ylabel("Share of Output from Wage Labor")
 
-subplot(3, 2, 2)
+matlab2tikz('../figures/lshare_transition_path.tikz', 'height', '2.154in', 'width', '3.028in')
+
 plot([0, (1:(num_obs - 1))]'./scale_period, [omega_shock_Y(1:num_obs) ./ omega_shock_Y(1) - 1, both_shock_Y(1:num_obs) ./ both_shock_Y(1) - 1], '.-')
-title("Output per Worker")
+% title("Output per Worker")
 xlabel("Years")
 ylabel("% Change from Steady State")
 
-subplot(3, 2, 3)
-plot([0, (1:(num_obs - 1))]'./scale_period, [omega_shock_seventy_fifth_pctile(1:num_obs) ./ omega_shock_twenty_fifth_pctile(1:num_obs) - 1, ...
-   both_shock_seventy_fifth_pctile(1:num_obs) ./ both_shock_twenty_fifth_pctile(1:num_obs) - 1], '.-')
-title("Inequality (75th Pctile Wages / 25th Pctile Wages)")
+matlab2tikz('../figures/output_transition_path.tikz', 'height', '2.154in', 'width', '3.028in')
+
+
+plot([0, (1:(num_obs - 1))]'./scale_period, [omega_shock_seventy_fifth_pctile(1:num_obs) ./ omega_shock_twenty_fifth_pctile(1:num_obs), ...
+   both_shock_seventy_fifth_pctile(1:num_obs) ./ both_shock_twenty_fifth_pctile(1:num_obs)], '.-')
+% title("Inequality (75th Pctile Wages / 25th Pctile Wages)")
 ylabel("Ratio of Wage Levels")
 xlabel("Years")
+matlab2tikz('../figures/inequality_transition_path.tikz', 'height', '2.154in', 'width', '3.028in')
 
-subplot(3, 2, 4)
+
 plot([0, (1:(num_obs - 1))]'./scale_period, [(omega_shock_wh(1:num_obs) - omega_shock_wl(1:num_obs)) ./ (omega_shock_wh(1) - omega_shock_wl(1)) - 1, ...
     (both_shock_wh(1:num_obs) - both_shock_wl(1:num_obs)) / (both_shock_wh(1) - both_shock_wl(1)) - 1], '.-')
-title("Wage Premium")
+% title("Skill Premium (w_h - w_l)")
 ylabel("% Change from Steady State")
 xlabel("Years")
+matlab2tikz('../figures/skill_premium_transition_path.tikz', 'height', '2.154in', 'width', '3.028in')
 
-subplot(3, 2, 5)
 plot([0, (1:(num_obs - 1))]'./scale_period, [omega_shock_H(1:num_obs) ./ omega_shock_H(1) - 1, both_shock_H(1:num_obs) ./both_shock_H(1) - 1], '.-')
-title("Skill at Task H")
+% title("Skill at Task H")
 ylabel("% Change from Steady State")
 xlabel("Years")
+matlab2tikz('../figures/H_transition_path.tikz', 'height', '2.154in', 'width', '3.028in')
 
-subplot(3, 2, 6)
 plot([0, (1:(num_obs - 1))]'./scale_period, [omega_shock_xi(1:num_obs) ./ omega_shock_xi(1) - 1, both_shock_xi(1:num_obs) ./both_shock_xi(1) - 1], '.-')
-title("Technology")
+% title("Technology")
 xlabel("Years")
 ylabel("% Change from Steady State")
+matlab2tikz('../figures/xi_transition_path.tikz', 'height', '2.154in', 'width', '3.028in')
 
-Lgnd = legend('Increase in Shock Frequency', 'Increase in Shock Frequency and Learning Rate');
-Lgnd.Position(1) = 0.01;
-Lgnd.Position(2) = 0.4;
+plot([0, (1:(num_obs - 1))]'./scale_period, ...
+    [omega_shock_income_share_top_five(1:num_obs), ...
+    both_shock_income_share_top_five(1:num_obs)], '.-')
+% title("Labor Share")
+xlabel("Years")
+ylabel("Share of Wages Earned by Top 5% of Earners")
+matlab2tikz('../figures/top_five_income_share_transition_path.tikz', 'height', '2.154in', 'width', '3.028in')
 
-sgtitle("Transition Paths for Increase in Shock Frequency and Learning Rate");
+plot([0, (1:(num_obs - 1))]'./scale_period, ...
+    [omega_shock_income_share_top_one(1:num_obs), ...
+    both_shock_income_share_top_one(1:num_obs)], '.-')
+% title("Labor Share")
+xlabel("Years")
+ylabel("Share of Wages Earned by Top 1% of Earners")
+matlab2tikz('../figures/top_one_income_share_transition_path.tikz', 'height', '2.154in', 'width', '3.028in')
+
+csvwrite('../figures/top_one_percent_income_share_data;year|omega_shock|omega+phi_shock.csv', ...
+[[0, (1:(num_obs - 1))]'./scale_period, ...
+    [omega_shock_income_share_top_one(1:num_obs), ...
+    both_shock_income_share_top_one(1:num_obs)]]);
+
+csvwrite('../figures/top_five_percent_income_share_data;year|omega_shock|omega+phi_shock.csv', ...
+[[0, (1:(num_obs - 1))]'./scale_period, ...
+    [omega_shock_income_share_top_five(1:num_obs), ...
+    both_shock_income_share_top_five(1:num_obs)]]);
+
+
+close all
+
+% Lgnd = legend('Increase in Shock Frequency', 'Increase in Shock Frequency and Learning Rate');
+% Lgnd.Position(1) = 0.01;
+% Lgnd.Position(2) = 0.4;
+% 
+% sgtitle("Transition Paths for Increase in Shock Frequency and Learning Rate");
+
 

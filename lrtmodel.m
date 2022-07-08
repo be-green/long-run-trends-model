@@ -1,4 +1,4 @@
-function [loss, emp_mom, theor_mom, diff_coefs, reg_coefs] = lrtmodel(paramvec, make_plots, hyperparams)
+function [loss, emp_mom, theor_mom, diff_coefs, reg_coefs, p10_diff_coefs, p10_reg_coefs] = lrtmodel(paramvec, make_plots, hyperparams)
 
 H_inside = hyperparams.H_inside;
 n_gridpoints = hyperparams.n_gridpoints; 
@@ -286,6 +286,10 @@ steady_state = [p0_share; [mu_ss(2:end); (1 - p0_share) - sum(mu_ss(2:end))] ];
 
 theta_grid = [0, theta_grid];
 
+% csvwrite(['../figures/theta_grid_at_ss;omega=', num2str(round(omega, 2)), '.csv'], [theta_grid', steady_state])
+% csvwrite(['../figures/log_theta_grid_at_ss;omega=', num2str(round(omega, 2)), '.csv'], [log(theta_grid(2:end)), steady_state(2:end)])
+
+
 if make_plots > 0
     figure
     plot(theta_grid,steady_state)
@@ -299,6 +303,7 @@ xi_star = mu_ss(1);
 % figure(2)
 % plot(shock_state)
 xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
+
 
 % fsolve() for 2 x 2 system
 % choose mu and lambda to match labor share = 0.66
@@ -315,7 +320,7 @@ xi_var = kappa^2 / (2 * g - g^2) * (1 - omega) * (omega);
 % normcdf(lambdamu)
 
 
-[theor_mom, diff_coefs, reg_coefs] = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
+[theor_mom, diff_coefs, reg_coefs, p10_diff_coefs, p10_reg_coefs] = calcmom(lambda, mu, theta_grid, steady_state, xi_star, ...
     kappa, rho, sigma_param, alpha_param, phi, xi_var, ...
     A_0, A_1, ...
     c_0_tilde, c_1_tilde, omega, n_periods, v, ...
@@ -477,10 +482,13 @@ title('Weighted Percent Loss Contribution')
    
    X(2) = X_shock;
    Y(2) = Y_shock;
-   
+   dist_over_time = steady_state;
+
    
    shock_vec = [xi_shock; shock_state(1:(end))];
    
+   dist_over_time = [dist_over_time, shock_vars(2:end)];
+
    % this just adds kappa in times of trouble
    % and the xi intercept term in good times
    int_for_xi_0 = zeros(size(A_0, 1), 1);
@@ -494,6 +502,7 @@ title('Weighted Percent Loss Contribution')
           
        xi(i + 2) = shock_vec(1,:);
        shock_state = shock_vec(3:end,:);
+       dist_over_time = [dist_over_time, shock_vec(2:end)];
 
 
        shock_vec_for_calcs = [p0_share; shock_state];
@@ -513,44 +522,128 @@ title('Weighted Percent Loss Contribution')
 
    end
    
-addpath('matlab2tikz/src/')
    
-figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (wh(1:scale_period*5)./wh(1) - 1)*agg_scale_factor, '.-')
-title("High Wage")
+csvwrite('../figures/theta_grid_over_time.csv', [theta_grid', dist_over_time(:, [1, 2, end])])
+csvwrite('../figures/log_theta_grid_over_time.csv', [log(theta_grid(2:end)'), dist_over_time(2:end, [1, 2, end])])
+   
+addpath('matlab2tikz/src/')
+
+wages = wh * theta_grid + wl * (1 - theta_grid);
+
+wage_ts = zeros(size(dist_over_time, 2), 1);
+top_five_wages = zeros(size(dist_over_time, 2), 1);
+top_one_wages = zeros(size(dist_over_time, 2), 1);
+for t = 1:size(dist_over_time, 2)
+   wage_ts(t, :) = wages(t, :) * dist_over_time(:, t);
+   nf_pctile = weighted_quantile_between_grid(wages(t,:)', dist_over_time(:, t), 0.95);
+   nn_pctile = weighted_quantile_between_grid(wages(t,:)', dist_over_time(:, t), 0.99);
+
+   top_five_wages(t, :) = wages(t, wages(t,:) > nf_pctile) * dist_over_time(wages(t,:) > nf_pctile, t) ./ sum(dist_over_time(wages(t,:) > nf_pctile, t)) * 0.05;
+   top_one_wages(t, :) = wages(t, wages(t,:) > nn_pctile) * dist_over_time(wages(t,:) > nn_pctile, t) ./ sum(dist_over_time(wages(t,:) > nn_pctile, t)) * 0.01;
+
+end
+
+percent_from_top_one = top_one_wages ./ wage_ts;
+
+percent_from_top_five = top_five_wages ./ wage_ts;
 
 figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (wl(1:scale_period*5)./wl(1) - 1)*agg_scale_factor, '.-')
-title("Low Wage")
+plot([0, (1:(scale_period*5 - 1))]'./scale_period, (wh(1:scale_period*5)./wh(1) - 1)*agg_scale_factor * 100, '.-')
+ylabel('% change from steady state');
+xlabel('Years');
+matlab2tikz('../figures/wh_irf.tikz', 'height', '2.154in', 'width', '3.028in');
 
 figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (L(1:scale_period*5)./L(1) - 1)*agg_scale_factor, '.-')
-title("L Skill Level")
+plot([0, (1:(scale_period*5 - 1))]'./scale_period, (percent_from_top_five(1:scale_period*5)./percent_from_top_five(1) - 1)*agg_scale_factor * 100, '.-')
+ylabel('% change from steady state');
+xlabel('Years');
+matlab2tikz('../figures/percent_contribution_from_top_five_irf.tikz', 'height', '2.154in', 'width', '3.028in');
+
 
 figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (H(1:scale_period*5)./H(1) - 1)*agg_scale_factor, '.-')
-title("H Skill Level")
+plot([0, (1:(scale_period*5 - 1))]'./scale_period, (percent_from_top_one(1:scale_period*5)./percent_from_top_one(1) - 1)*agg_scale_factor * 100, '.-')
+ylabel('% change from steady state');
+xlabel('Years');
+matlab2tikz('../figures/percent_contribution_from_top_one_irf.tikz', 'height', '2.154in', 'width', '3.028in');
+
 
 figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (xi(1:scale_period*5)./xi(1) - 1)*agg_scale_factor, '.-')
-title("Technology Level")
+plot([0, (1:(scale_period*5 - 1))]'./scale_period, (percent_from_top_five(1:scale_period*5))*agg_scale_factor * 100, '.-')
+ylabel('% of Wages from Top 5% of Earners');
+xlabel('Years');
+matlab2tikz('../figures/percent_contribution_from_top_five_irf_levels.tikz', 'height', '2.154in', 'width', '3.028in');
+
+
+figure
+plot([0, (1:(scale_period*5 - 1))]'./scale_period, (percent_from_top_one(1:scale_period*5))*agg_scale_factor * 100, '.-')
+ylabel('% of Wages from Top 1% of Earners');
+xlabel('Years');
+matlab2tikz('../figures/percent_contribution_from_top_one_irf_levels.tikz', 'height', '2.154in', 'width', '3.028in');
+
+
+
+figure
+plot([0, (1:(scale_period*5 - 1))]'./scale_period, (wl(1:scale_period*5)./wl(1) - 1)*agg_scale_factor * 100, '.-')
+% title("Low Wage")
+ylabel('% change from steady state');
+xlabel('Years');
+matlab2tikz('../figures/wl_irf.tikz', 'height', '2.154in', 'width', '3.028in');
+
+figure
+plot([0, (1:(scale_period*5 - 1))]'./scale_period, (L(1:scale_period*5)./L(1) - 1)*agg_scale_factor * 100, '.-')
+ylabel('% change from steady state');
+xlabel('Years');
+% title("L Skill Level")
+matlab2tikz('../figures/L_irf.tikz', 'height', '2.154in', 'width', '3.028in');
+ 
+% h_plot_data = [[0, (1:(scale_period*5 - 1))]'./scale_period, (H(1:scale_period*5)./H(1) - 1)*agg_scale_factor * 100];
+% csvwrite('../figures/h_plot_data.csv', h_plot_data)
+% 
+% l_plot_data = [[0, (1:(scale_period*5 - 1))]'./scale_period, (L(1:scale_period*5)./L(1) - 1)*agg_scale_factor * 100];
+% csvwrite('../figures/l_plot_data.csv', l_plot_data)
+
+figure
+plot([0, (1:(scale_period*5 - 1))]'./scale_period, (H(1:scale_period*5)./H(1) - 1)*agg_scale_factor * 100, '.-')
+ylabel('% change from steady state');
+xlabel('Years');
+% title("H Skill Level")
+matlab2tikz('../figures/H_irf.tikz', 'height', '2.154in', 'width', '3.028in');
+
+figure
+plot([0, (1:(scale_period*5 - 1))]'./scale_period, (xi(1:scale_period*5)./xi(1) - 1)*agg_scale_factor * 100, '.-')
+ylabel('% change from steady state');
+xlabel('Years');
+% title("Technology Level")
+matlab2tikz('../figures/xi_irf.tikz', 'height', '2.154in', 'width', '3.028in');
 
 wage_diff = wh - wl;
 figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (wage_diff(1:scale_period*5)./wage_diff(1) - 1)*agg_scale_factor, '.-')
-title("High Wage - Low Wage")
+plot([0, (1:(scale_period*5 - 1))]'./scale_period, (wage_diff(1:scale_period*5)./wage_diff(1) - 1)*agg_scale_factor * 100, '.-')
+ylabel('% change from steady state');
+xlabel('Years');
+% title("High Wage - Low Wage")
+
+matlab2tikz('../figures/skill_premium_irf.tikz', 'height', '2.154in', 'width', '3.028in');
 
 figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (lshare(1:scale_period*5)./lshare(1) - 1)*agg_scale_factor, '.-')
-title('Labor Share')
+plot([0, (1:(scale_period*5 - 1))]'./scale_period, (lshare(1:scale_period*5)./lshare(1) - 1)*agg_scale_factor * 100, '.-')
+ylabel('% change from steady state');
+xlabel('Years');
+% title('Labor Share')
+matlab2tikz('../figures/lshare_irf.tikz', 'height', '2.154in', 'width', '3.028in');
 
 figure
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (X(1:scale_period*5)./X(1) - 1)*agg_scale_factor, '.-')
-title("Composite Good")
+plot([0, (1:(scale_period*5 - 1))]'./scale_period, (X(1:scale_period*5)./X(1) - 1)*agg_scale_factor * 100, '.-')
+ylabel('% change from steady state');
+xlabel('Years');
+% title("Composite Good")
+matlab2tikz('../figures/X_irf.tikz', 'height', '2.154in', 'width', '3.028in');
 
-plot([0, (1:(scale_period*5 - 1))]'./scale_period, (Y(1:scale_period*5)./Y(1) - 1)*agg_scale_factor, '.-')
-title("Output Level")
-
+plot([0, (1:(scale_period*5 - 1))]'./scale_period, (Y(1:scale_period*5)./Y(1) - 1)*agg_scale_factor * 100, '.-')
+ylabel('% change from steady state');
+xlabel('Years');
+% title("Output Level")
+matlab2tikz('../figures/Y_irf.tikz', 'height', '2.154in', 'width', '3.028in');
 % 
 % figure
 % plot([0, (1:(length(wh) - 1))]', (wh(1:end)), '.-')

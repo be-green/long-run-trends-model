@@ -23,20 +23,25 @@ hyperparams = struct('theta0', 0.03, 'scale_period', scale_period, ...
     'parse_fcn_name', parse_fcn_name, 'weight_vec', weight_vec);
 
 % calculating this stuff to scale shocks correctly
-[loss, emp_mom, theor_mom, plot_diff_coefs, plot_reg_coefs] = lrtmodel(final_cal, 0, hyperparams);
+[loss, emp_mom, theor_mom, plot_diff_coefs, plot_reg_coefs, plot_diff_coefs_p10, plot_reg_coefs_p10] = lrtmodel(final_cal, 0, hyperparams);
 
-[loss_no_disp, emp_mom_no_disp, theor_mom_no_disp, plot_diff_coefs_no_disp, plot_reg_coefs_no_disp] = lrtmodel_no_displacement(final_cal, 0, hyperparams);
-
+[loss_no_disp, emp_mom_no_disp, theor_mom_no_disp, ...
+    plot_diff_coefs_no_disp, plot_reg_coefs_no_disp, plot_diff_coefs_p10_no_disp, plot_reg_coefs_p10_no_disp] = ...
+    lrtmodel_no_displacement(final_cal, 0, hyperparams);
 
 barplotdata = [plot_diff_coefs(:, :), plot_diff_coefs_no_disp(:, 1)];
 barplotlabels = categorical(1:5, 1:5, {'[0, 25)', '[25, 50)', '[50, 75)', '[75, 95)', '[95, 100]' });
+
+addpath('matlab2tikz/src/')
 
 figure
 bar(barplotlabels, barplotdata', 'grouped')
 legend("Unexposed Workers", "Exposed Workers", "No Displacement")
 xlabel("Income Bin")
 ylabel("Difference in Wage Growth")
-title("Difference in Post-Shock Wage Growth for Unexposed Workers, Exposed Workers, and without Displacement")
+% title("Difference in Post-Shock Wage Growth for Unexposed Workers, Exposed Workers, and without Displacement")
+
+matlab2tikz('../figures/diff_coefs_wage_growth.tikz');
 
 barplotdata = [plot_reg_coefs, plot_reg_coefs_no_disp];
 barplotlabels = categorical(1:5, 1:5, {'[0, 25)', '[25, 50)', '[50, 75)', '[75, 95)', '[95, 100]' });
@@ -46,5 +51,27 @@ bar(barplotlabels, barplotdata', 'grouped')
 legend("With Displacement", "No Displacement")
 xlabel("Income Bin")
 ylabel("Difference in Wage Growth")
-title("Regression Coefficients in Post-Shock Wage Growth With and Without Displacement")
+% title("Regression Coefficients in Post-Shock Wage Growth With and Without Displacement")
+matlab2tikz('../figures/reg_coefs_wage_growth.tikz');
+
+
+barplotdata = [plot_diff_coefs_p10(:, :), plot_diff_coefs_p10_no_disp(:, 1)];
+barplotlabels = categorical(1:5, 1:5, {'[0, 25)', '[25, 50)', '[50, 75)', '[75, 95)', '[95, 100]' });
+
+figure
+bar(barplotlabels, barplotdata', 'grouped')
+legend("Unexposed Workers", "Exposed Workers", "No Displacement")
+xlabel("Income Bin")
+ylabel("Difference in Probability of WG < 10th Pctile")
+title("Difference in Post-Shock Large Fall Probability for Unexposed Workers, Exposed Workers, and without Displacement")
+
+barplotdata = [plot_reg_coefs_p10, plot_reg_coefs_p10_no_disp];
+barplotlabels = categorical(1:5, 1:5, {'[0, 25)', '[25, 50)', '[50, 75)', '[75, 95)', '[95, 100]' });
+
+figure
+bar(barplotlabels, barplotdata', 'grouped')
+legend("With Displacement", "No Displacement")
+xlabel("Income Bin")
+ylabel("Difference in Probability of WG < 10th Pctile")
+title("Regression Coefficients in Post-Shock Large Fall Probability With and Without Displacement")
 
