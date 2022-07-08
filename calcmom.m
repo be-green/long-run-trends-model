@@ -70,7 +70,6 @@ function [mom, diff_coefs, reg_coefs, p10_diff_coefs, p10_reg_coefs] = calcmom(l
    
    y_irf = (log(Y_shock) - log(Y_star)) *  agg_scale_factor;
    
-   
    % Do the same thing as abovefor no shock 
    % single no shock period
    no_shock_vars = A_0 * [xi_star; steady_state];
@@ -91,7 +90,6 @@ function [mom, diff_coefs, reg_coefs, p10_diff_coefs, p10_reg_coefs] = calcmom(l
 
    xi_no_shock = no_shock_vec(1,:);
    no_shock_state = no_shock_vec(2:end,:);
-   
    
    % H & L after a shock + n_periods - 1 iteration
    H_no_shock = theta_grid * no_shock_state; %if we add the zero to theta_grid, this doesn't change
@@ -433,7 +431,6 @@ function [mom, diff_coefs, reg_coefs, p10_diff_coefs, p10_reg_coefs] = calcmom(l
            ss_wg_by_income(i, 1) = sswg(bin_indices, 1)' * pweights;
            ss_awg_by_income(i, 1) = sswg(bin_indices, 2)' * pweights;
        end
-      
        
        % which outcomes are associated with shocks
        S = [ones(5, 1); zeros(5, 1); ones(5, 1); zeros(5, 1);];

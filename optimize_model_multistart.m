@@ -2,8 +2,8 @@
 n_gridpoints = 120;
 scale_period = 12;
 n_periods = 1;
-nstarts = 100;
-parse_fcn_name = 'parse_model_params_v5';
+nstarts = 2;
+parse_fcn_name = 'parse_model_params_v6';
 
 weight_vec = [30; 20; 25; 25; 1; 1; 1;... labor share, wage ratio, labor share IRF, output IRF, % 3 sign restrictions
          0; 0; 0; 0; 0; ... abs wage moments
@@ -34,7 +34,7 @@ method = "patternsearch";
 patternoptions = optimoptions('patternsearch','Display','iter','PlotFcn',[], ...
     'MaxIterations',2000, 'MaxFunctionEvaluations', 20000);
 
-% n_gripoints is number of gridopints used on the 0-1 interval
+% n_gridpoints is number of gridopints used on the 0-1 interval
 % scale_period is used to represent scaling of "rfsim5" measure in
 % regressions
 % n_periods is the number of periods used w/ IRFs
@@ -59,6 +59,8 @@ elseif strcmp(parse_fcn_name,'parse_model_params_v4')
     [ upper, lower, Aineq, bineq] = build_constraints_v4(hyperparams);
 elseif strcmp(parse_fcn_name,'parse_model_params_v5')
     [ upper, lower, Aineq, bineq] = build_constraints_v5(hyperparams);
+elseif strcmp(parse_fcn_name,'parse_model_params_v6')
+    [ upper, lower, Aineq, bineq] = build_constraints_v6(hyperparams);
 else
     error('Parse function not coded yet!')
 end     

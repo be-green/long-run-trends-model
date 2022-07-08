@@ -15,7 +15,7 @@ eval(['[phi,alpha_param,lambda,mu,hc_loss,n_periods,g,delta,omega,sigma_param,rh
 end 
 
 % need that single obs for xi
-n_coefs = 2 + n_gridpoints;
+n_coefs = 1 + n_gridpoints;
 
 % VAR Intercept Term
 % first term corresponds to xi
@@ -23,15 +23,14 @@ A_0 = zeros(n_coefs, n_coefs);
 
 % xi depreciation
 A_0(1,1) = 1 - g;
-A_0(2, 2) = 1;
 
 % fill in theta section
 % phi is probability of moving
 % p_up is probability that the move is upwards
 % p_down is probability that the move is downwards
-for i = 3:n_coefs 
+for i = 2:n_coefs 
    A_0(i, i) = (1 - phi);
-   if i == 3
+   if i == 2
      A_0(i, i) = 1 - phi * p_up;
      A_0(i, i + 1) = phi * p_up;
 
@@ -45,8 +44,8 @@ for i = 3:n_coefs
    end
 end
 
-A_0(3:end, 3:end) = A_0(3:end, 3:end) * (1 - delta);
-A_0(3:end,3) = A_0(3:end,3) + delta;
+A_0(2:end, 2:end) = A_0(2:end, 2:end) * (1 - delta);
+A_0(2:end,2) = A_0(2:end,2) + delta;
 
 
 % VAR Intercept Term
@@ -56,14 +55,9 @@ A_1 = zeros(n_coefs, n_coefs);
 % xi depreciation
 A_1(1,1) = 1 - g;
 
-% folks who don't move
-A_1(2,2) = 1;
-
 % Displacement shock happens last. Below, we will redistribute mass from
 % alpha_param * A_0 across different columns, incorporating the hc loss
-A_1(3:end, 3:end) = A_0(3:end, 3:end) * (1 - alpha_param);
-
-
+A_1(2:end, 2:end) = A_0(2:end, 2:end) * (1 - alpha_param);
 
 % VAR Intercept Term
 % first term corresponds to xi
@@ -72,17 +66,13 @@ A_0_no_delta = zeros(n_coefs, n_coefs);
 % xi depreciation
 A_0_no_delta(1,1) = 1 - g;
 
-% p0 doesn't move
-A_0_no_delta(2, 2) = 1;
-
-
 % fill in theta section
 % phi is probability of moving
 % p_up is probability that the move is upwards
 % p_down is probability that the move is downwards
-for i = 3:n_coefs 
+for i = 2:n_coefs 
    A_0_no_delta(i, i) = (1 - phi);
-   if i == 3
+   if i == 2
      A_0_no_delta(i, i) = 1 - phi * p_up;
      A_0_no_delta(i, i + 1) = phi * p_up;
 
@@ -103,11 +93,7 @@ A_1_no_delta = zeros(n_coefs, n_coefs);
 % xi depreciation
 A_1_no_delta(1,1) = 1 - g;
 
-% folks who never move
-A_1_no_delta(2,2) = 1;
-
-A_1_no_delta(3:end, 3:end) = A_0_no_delta(3:end, 3:end) * (1 - alpha_param);
-
+A_1_no_delta(2:end, 2:end) = A_0_no_delta(2:end, 2:end) * (1 - alpha_param);
 
 % VAR Intercept Term
 % first term corresponds to xi
@@ -116,16 +102,13 @@ A_0_no_delta_pz = zeros(n_coefs, n_coefs);
 % xi depreciation
 A_0_no_delta_pz(1,1) = 1 - g;
 
-% folks who don't move
-A_0_no_delta_pz(2,2) = 1;
-
 % fill in theta section
 % phi is probability of moving
 % p_up is probability that the move is upwards
 % p_down is probability that the move is downwards
-for i = 3:n_coefs 
+for i = 2:n_coefs 
    A_0_no_delta_pz(i, i) = (1 - phi);
-   if i == 3
+   if i == 2
      A_0_no_delta_pz(i, i) = 1 - phi * p_up;
      A_0_no_delta_pz(i, i + 1) = phi * p_up;
 
@@ -139,7 +122,6 @@ for i = 3:n_coefs
    end
 end
 
-
 % VAR Intercept Term, for "exposed" workers
 % first term corresponds to xi
 A_1_no_delta_pz = zeros(n_coefs, n_coefs);
@@ -147,10 +129,7 @@ A_1_no_delta_pz = zeros(n_coefs, n_coefs);
 % xi depreciation
 A_1_no_delta_pz(1,1) = 1 - g;
  
-% folks who don't move
-A_1_no_delta_pz(2, 2) = 1;
-
-A_1_no_delta_pz(3:end, 3:end) = A_0_no_delta_pz(3:end, 3:end) * (1 - p_z);
+A_1_no_delta_pz(2:end, 2:end) = A_0_no_delta_pz(2:end, 2:end) * (1 - p_z);
 
 % transpose for use w/ Bianchi formulas
 % VAR format
@@ -182,20 +161,20 @@ for i = 1:length(new_theta)
    
    % TODO: this seems to only address the diagonal. What about one above
    % the diagonal (since people learn too)?
-   A_1(3:end,upper_fall_index(i,:) + 2) = A_1(3:end,upper_fall_index(i,:) + 2)...
-       + alpha_param * upper_fall_weight(i,:)*A_0(3:end,i+2);
-   A_1(3:end,lower_fall_index(i,:) + 2) = A_1(3:end,lower_fall_index(i,:) + 2)...
-       + alpha_param * lower_fall_weight(i,:)*A_0(3:end,i+2);
+   A_1(2:end,upper_fall_index(i,:) + 1) = A_1(2:end,upper_fall_index(i,:) + 1)...
+       + alpha_param * upper_fall_weight(i,:)*A_0(2:end,i+1);
+   A_1(2:end,lower_fall_index(i,:) + 1) = A_1(2:end,lower_fall_index(i,:) + 1)...
+       + alpha_param * lower_fall_weight(i,:)*A_0(2:end,i+1);
    
-   A_1_no_delta(3:end,upper_fall_index(i,:) + 2) = A_1_no_delta(3:end,upper_fall_index(i,:) + 2)...
-       + alpha_param * upper_fall_weight(i,:)*A_0_no_delta(3:end,i+2);
-   A_1_no_delta(3:end,lower_fall_index(i,:) + 2) = A_1_no_delta(3:end,lower_fall_index(i,:) + 2)...
-       + alpha_param * lower_fall_weight(i,:)*A_0_no_delta(3:end,i+2);
+   A_1_no_delta(2:end,upper_fall_index(i,:) + 1) = A_1_no_delta(2:end,upper_fall_index(i,:) + 1)...
+       + alpha_param * upper_fall_weight(i,:)*A_0_no_delta(2:end,i+1);
+   A_1_no_delta(2:end,lower_fall_index(i,:) + 1) = A_1_no_delta(2:end,lower_fall_index(i,:) + 1)...
+       + alpha_param * lower_fall_weight(i,:)*A_0_no_delta(2:end,i+1);
    
-  A_1_no_delta_pz(3:end,upper_fall_index(i,:) + 2) = A_1_no_delta_pz(3:end,upper_fall_index(i,:) + 2)...
-       + p_z * upper_fall_weight(i,:)*A_0_no_delta_pz(3:end,i+2);
-  A_1_no_delta_pz(3:end,lower_fall_index(i,:) + 2) = A_1_no_delta_pz(3:end,lower_fall_index(i,:) + 2)...
-       + p_z * lower_fall_weight(i,:)*A_0_no_delta_pz(3:end,i+2);
+  A_1_no_delta_pz(2:end,upper_fall_index(i,:) + 1) = A_1_no_delta_pz(2:end,upper_fall_index(i,:) + 1)...
+       + p_z * upper_fall_weight(i,:)*A_0_no_delta_pz(2:end,i+1);
+  A_1_no_delta_pz(2:end,lower_fall_index(i,:) + 1) = A_1_no_delta_pz(2:end,lower_fall_index(i,:) + 1)...
+       + p_z * lower_fall_weight(i,:)*A_0_no_delta_pz(2:end,i+1);
 end
 
 % transpose for use w/ Bianchi formulas
@@ -210,7 +189,6 @@ A_1_no_delta = A_1_no_delta';
 A_0_no_delta_pz = A_0_no_delta_pz';
 A_1_no_delta_pz = A_1_no_delta_pz';
 
-
 % next, we will define subsetted matrices which omit the final column (this
 % imposes the restriction that probabilities sum to 1)
 A_0_tilde = A_0(1:(end-1),1:(end-1));
@@ -219,8 +197,8 @@ A_1_tilde = A_1(1:(end-1),1:(end-1));
 c_0_tilde = [xi_constant; A_0(2:end-1,end)];
 c_1_tilde = [kappa+xi_constant; A_1(2:end-1,end)];
 
-A_0_tilde(3:end,3:end) = A_0_tilde(3:end,3:end)- repmat(c_0_tilde(3:end,1),1,size(c_0_tilde,1)-2);
-A_1_tilde(3:end,3:end) = A_1_tilde(3:end,3:end)- repmat(c_1_tilde(3:end,1),1,size(c_1_tilde,1)-2);
+A_0_tilde(2:end,2:end) = A_0_tilde(2:end,2:end)- repmat(c_0_tilde(2:end,1),1,size(c_0_tilde,1)-1);
+A_1_tilde(2:end,2:end) = A_1_tilde(2:end,2:end)- repmat(c_1_tilde(2:end,1),1,size(c_1_tilde,1)-1);
 
 % next, we will define subsetted matrices which omit the final column (this
 % imposes the restriction that probabilities sum to 1)
@@ -230,10 +208,10 @@ A_1_tilde_no_delta = A_1_no_delta(1:(end-1),1:(end-1));
 c_0_tilde_no_delta = [xi_constant; A_0_no_delta(2:end-1,end)];
 c_1_tilde_no_delta = [kappa+xi_constant; A_1_no_delta(2:end-1,end)];
 
-A_0_tilde_no_delta(3:end,3:end) = A_0_tilde_no_delta(3:end,3:end)- repmat(c_0_tilde_no_delta(3:end,1),1,...
-    size(c_0_tilde_no_delta,1)-2);
-A_1_tilde_no_delta(3:end,3:end) = A_1_tilde_no_delta(3:end,3:end)- repmat(c_1_tilde_no_delta(3:end,1),1,...
-    size(c_1_tilde_no_delta,1)-2);
+A_0_tilde_no_delta(2:end,2:end) = A_0_tilde_no_delta(2:end,2:end)- repmat(c_0_tilde_no_delta(2:end,1),1,...
+    size(c_0_tilde_no_delta,1)- 1);
+A_1_tilde_no_delta(2:end,2:end) = A_1_tilde_no_delta(2:end,2:end)- repmat(c_1_tilde_no_delta(2:end,1),1,...
+    size(c_1_tilde_no_delta,1)-1);
 
 % next, we will define subsetted matrices which omit the final column (this
 % imposes the restriction that probabilities sum to 1)
@@ -243,10 +221,10 @@ A_1_tilde_no_delta_pz = A_1_no_delta_pz(1:(end-1),1:(end-1));
 c_0_tilde_no_delta_pz = [xi_constant; A_0_no_delta_pz(2:end-1,end)];
 c_1_tilde_no_delta_pz = [kappa+xi_constant; A_1_no_delta_pz(2:end-1,end)];
 
-A_0_tilde_no_delta_pz(3:end,3:end) = A_0_tilde_no_delta_pz(3:end,3:end)- ...
-    repmat(c_0_tilde_no_delta_pz(3:end,1),1,size(c_0_tilde_no_delta_pz,1)-2);
-A_1_tilde_no_delta_pz(3:end,3:end) = A_1_tilde_no_delta_pz(3:end,3:end)- ...
-    repmat(c_1_tilde_no_delta_pz(3:end,1),1,size(c_1_tilde_no_delta_pz,1)-2);
+A_0_tilde_no_delta_pz(2:end,2:end) = A_0_tilde_no_delta_pz(2:end,2:end)- ...
+    repmat(c_0_tilde_no_delta_pz(2:end,1),1,size(c_0_tilde_no_delta_pz,1)-1);
+A_1_tilde_no_delta_pz(2:end,2:end) = A_1_tilde_no_delta_pz(2:end,2:end)- ...
+    repmat(c_1_tilde_no_delta_pz(2:end,1),1,size(c_1_tilde_no_delta_pz,1)-1);
 
 % transition matrix
 T = [[1 - omega, omega]; [1 - omega, omega]];
@@ -262,29 +240,18 @@ H = T';
 % Note: because of the presence of the absorbing state in the first entry
 % of the state vector, the solution for the steady state is indeterminate.
 % So, we need to make some additional restrictions (drop first elemnt of probability vector)
-c_0_tilde2 = c_0_tilde([1, 3:end]);
-c_1_tilde2 = c_1_tilde([1, 3:end]);
-% need to change the intercepts to scale down by mass in the absorbing
-% state, since modeled probabilities need to sum to 1-p0_share, not 1
-c_0_tilde2(2:end) = c_0_tilde2(2:end)*(1-p0_share);
-c_1_tilde2(2:end) = c_1_tilde2(2:end)*(1-p0_share);
+C = blkdiag(c_0_tilde, c_1_tilde);
 
-A_0_tilde2 = A_0_tilde([1, 3:end],[1, 3:end]);
-A_1_tilde2 = A_1_tilde([1, 3:end],[1, 3:end]);
+bianchi_omega = blkdiag(A_0_tilde, A_1_tilde) * kron(H,eye(n_coefs-1));
+q = (eye((n_coefs-1)*2) - bianchi_omega) \ (C * piVec);         % eq. (3)
+bianchi_omegatilde = [bianchi_omega, C*H; zeros(2, (n_coefs-1)*2), H];  % eq. (5)
 
-C = blkdiag(c_0_tilde2, c_1_tilde2);
-%C = blkdiag([0, 0, repelem(0, n_gridpoints - 1)]', [kappa, 0, repelem(0, n_gridpoints - 1)]');
-
-bianchi_omega = blkdiag(A_0_tilde2, A_1_tilde2) * kron(H,eye(n_coefs-2));
-q = (eye((n_coefs-2)*2) - bianchi_omega) \ (C * piVec);         % eq. (3)
-bianchi_omegatilde = [bianchi_omega, C*H; zeros(2, (n_coefs-2)*2), H];  % eq. (5)
-
-w = repmat(eye((n_coefs-2)),1,2);
+w = repmat(eye((n_coefs-1)),1,2);
 mu_ss = w * q;
 
-steady_state = [p0_share; [mu_ss(2:end); (1 - p0_share) - sum(mu_ss(2:end))] ];
+steady_state = [mu_ss(2:end); 1 - sum(mu_ss(2:end))];
 
-theta_grid = [0, theta_grid];
+theta_grid = [theta_grid];
 
 % csvwrite(['../figures/theta_grid_at_ss;omega=', num2str(round(omega, 2)), '.csv'], [theta_grid', steady_state])
 % csvwrite(['../figures/log_theta_grid_at_ss;omega=', num2str(round(omega, 2)), '.csv'], [log(theta_grid(2:end)), steady_state(2:end)])
@@ -339,18 +306,18 @@ emp_abs_wage_growth = ...
      0.0009579; ...
      0.004768; ...
      0.007638; ...
-     0.02014];
+     0.02014] - 0.02;
 
-emp_wage_growth = [-0.01486; -0.01008; -0.01178; -0.01167; -0.02467];
+emp_wage_growth = [-0.01486; -0.01008; -0.01178; -0.01167; -0.02467] - 0.02;
 
-tenth_pctile_probs = [0.00286; 0.002619; 0.003889; 0.003941; 0.01255];
+tenth_pctile_probs = [0.00286; 0.002619; 0.003889; 0.003941; 0.01255] - 0.02;
 
 top_density_loss = (steady_state(end) > 0.01) * abs((steady_state(end) - 0.01)) * 100;
 bottom_density_loss = (steady_state(1) > 0.1) * abs((steady_state(1) - 0.1)) * 00;
 % half_income_from_low_skill = low_wage *(1-theta_0) / (low_wage * (1-theta_0) +  theta_0 * high_wage) >= 0.5;
 
 
-expected_wage_growth_by_income = [0.006216; -0.08353; -0.08933; -0.09111; -0.1197];
+expected_wage_growth_by_income = [0.006216; -0.08353; -0.08933; -0.09111; -0.1197] * 2;
 expected_abs_wage_growth_by_income = [0.4466; 0.2961; 0.2559; 0.2437; 0.2792];
 
 emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
@@ -360,7 +327,7 @@ emp_mom = [0.66; 2.45; 0.0281; -0.0125; 0; 0; 0; ...
              expected_wage_growth_by_income; ...
              expected_abs_wage_growth_by_income; ...
              -0.06313; 0.3171; ... expected wage growth, expected abs wage growth
-             tenth_pctile_probs; ...
+             tenth_pctile_probs * 2; ...
              tenth_pctile_probs(5)-tenth_pctile_probs(1); ... % Difference higher high income p10 vs. lowest income p10
              0.592 / sqrt(60)]; % aggregate standard deviation / sqrt(60)
     
@@ -501,11 +468,10 @@ title('Weighted Percent Loss Contribution')
            omega  * (A_1 * shock_vec + int_for_xi_1);
           
        xi(i + 2) = shock_vec(1,:);
-       shock_state = shock_vec(3:end,:);
-       dist_over_time = [dist_over_time, shock_vec(2:end)];
 
+       shock_state = shock_vec(2:end,:);
 
-       shock_vec_for_calcs = [p0_share; shock_state];
+       shock_vec_for_calcs = [shock_state];
 
        H(i + 2) = theta_grid * shock_vec_for_calcs;
        L(i + 2) = 1 - H(i + 2);
